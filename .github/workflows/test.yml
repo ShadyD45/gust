@@ -1,0 +1,121 @@
+# Unit and package tests (Go, Python SDK, TypeScript SDK).
+name: test
+run-name: "test : ${{ github.head_ref || github.ref_name }}"
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/*.png"
+      - "LICENSE"
+      - ".gitignore"
+      - "benchmarks/RESULTS.md"
+      - "benchmarks/fixtures/*.json"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/*.png"
+      - "LICENSE"
+      - ".gitignore"
+      - "benchmarks/RESULTS.md"
+      - "benchmarks/fixtures/*.json"
+  workflow_dispatch:
+
+concurrency:
+  group: test-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    name: Go tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Test
+        run: |
+          set -euo pipefail
+          go test ./... -count=1 | tee "${{ runner.temp }}/go-test.log"
+          {
+            echo "## Go tests"
+            echo ""
+            echo "**PASS** — \`go test ./...\`"
+            echo ""
+            echo "<details><summary>Log tail</summary>"
+            echo ""
+            echo '```'
+            tail -n 40 "${{ runner.temp }}/go-test.log"
+            echo '```'
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  python:
+    name: Python SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pytest
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pytest
+          python -m pytest sdk/python -q | tee "${{ runner.temp }}/pytest.log"
+          {
+            echo "## Python SDK"
+            echo ""
+            echo "**PASS** — \`pytest sdk/python\`"
+            echo ""
+            echo '```'
+            cat "${{ runner.temp }}/pytest.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  typescript:
+    name: TypeScript SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: npm test
+        working-directory: sdk/typescript
+        run: |
+          set -euo pipefail
+          npm test | tee "${{ runner.temp }}/npm-test.log"
+          {
+            echo "## TypeScript SDK"
+            echo ""
+            echo "**PASS** — \`npm test\` (sdk/typescript)"
+            echo ""
+            echo '```'
+            cat "${{ runner.temp }}/npm-test.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

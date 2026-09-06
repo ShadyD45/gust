@@ -55,7 +55,8 @@ func ValidateAssertion(a *Assertion, idx int) error {
 	}
 	switch a.Type {
 	case AssertTaskSuccess, AssertToolCall, AssertForbiddenToolCall, AssertRequiredTool,
-		AssertToolSequence, AssertMaxSteps, AssertMaxLatency, AssertSchemaValid, AssertErrorRecovery:
+		AssertToolSequence, AssertMaxSteps, AssertMaxLatency, AssertSchemaValid, AssertErrorRecovery,
+		AssertLLMJudge:
 	default:
 		return fmt.Errorf("assertions[%d].type %q is invalid", idx, a.Type)
 	}

@@ -21,6 +21,7 @@ type SamplingConfig struct {
 	FixtureEndpoint string                // mock tool proxy; passed to Runner.Run
 	FixtureProvider ports.FixtureProvider // optional; Reset after each sample when concurrency is 1
 	MinSamples      int                   // override for INSUFFICIENT_SAMPLES; 0 → use policy default 5
+	EvalContext     ports.EvaluationContext
 }
 
 // Sampler orchestrates parallel sampling and Wilson classification.
@@ -89,9 +90,7 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 			if cfg.FixtureProvider != nil && concurrency == 1 {
 				_ = cfg.FixtureProvider.Reset()
 			}
-			report, err := s.analyzeEngine.AnalyzeRun(ctx, run, cfg.Scenario.Assertions, ports.EvaluationContext{
-				ScenarioID: cfg.Scenario.ID,
-			})
+			report, err := s.analyzeEngine.AnalyzeRun(ctx, run, cfg.Scenario.Assertions, withScenarioID(cfg.EvalContext, cfg.Scenario.ID))
 			if err != nil {
 				results[idx].err = err
 				return
@@ -160,4 +159,9 @@ func isHardConstraintFailure(ev api.EvaluationResult) bool {
 	default:
 		return false
 	}
+}
+
+func withScenarioID(evalCtx ports.EvaluationContext, scenarioID string) ports.EvaluationContext {
+	evalCtx.ScenarioID = scenarioID
+	return evalCtx
 }

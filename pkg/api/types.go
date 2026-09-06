@@ -189,6 +189,7 @@ const (
 	AssertMaxLatency        AssertionType = "max_latency_ms"
 	AssertSchemaValid       AssertionType = "schema_valid"
 	AssertErrorRecovery     AssertionType = "error_recovery"
+	AssertLLMJudge          AssertionType = "llm_judge"
 )
 
 type ReliabilityConfig struct {
@@ -212,6 +213,20 @@ type Policy struct {
 	HardConstraints HardConstraints   `json:"hard_constraints" yaml:"hard_constraints"`
 	Reliability     PolicyReliability `json:"reliability" yaml:"reliability"`
 	Regression      PolicyRegression  `json:"regression,omitempty" yaml:"regression,omitempty"`
+	// AllowLLMJudge enables llm_judge assertions. Default false keeps CI offline and bit-identical.
+	AllowLLMJudge bool `json:"allow_llm_judge,omitempty" yaml:"allow_llm_judge,omitempty"`
+	// LLMJudge holds calibration state for the optional judge.
+	LLMJudge PolicyLLMJudge `json:"llm_judge,omitempty" yaml:"llm_judge,omitempty"`
+}
+
+// PolicyLLMJudge gates whether judge results may escape soft criticality.
+type PolicyLLMJudge struct {
+	// Calibrated is true only after Spearman ρ ≥ MinSpearman on a versioned calibration set.
+	Calibrated bool `json:"calibrated,omitempty" yaml:"calibrated,omitempty"`
+	// MinSpearman defaults to 0.7 when unset and Calibrated is evaluated.
+	MinSpearman float64 `json:"min_spearman,omitempty" yaml:"min_spearman,omitempty"`
+	// SpearmanRho is the last measured correlation (informational).
+	SpearmanRho float64 `json:"spearman_rho,omitempty" yaml:"spearman_rho,omitempty"`
 }
 
 type HardConstraints struct {

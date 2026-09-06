@@ -206,12 +206,29 @@ or pull a trace QA already sent to Langfuse (`gust ingest langfuse --trace-id �
 
 ## Keeping CI cheap
 
-This repository's own workflow, [`.github/workflows/ci.yml`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/ci.yml), is a working example of the cost discipline worth copying:
+This repository splits CI into three workflows (Linux-only, free-tier friendly):
 
-- `paths-ignore` for docs and images so documentation changes do not burn runner minutes.
+| Workflow | What it runs | Summary |
+| --- | --- | --- |
+| [`test`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/test.yml) | `go test ./...`, Python pytest, TypeScript `npm test` | Per-language pass + log tail |
+| [`smoke`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/smoke.yml) | Demo, SDK record→analyze, Mode 3 exec e2e | Checklist of e2e gates |
+| [`benchmark`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/benchmark.yml) | `gust aee report` + mock judge calibrate | Markdown AEE table; opens a PR to refresh [`benchmarks/RESULTS.md`](https://github.com/ShadyD45/gust/blob/main/benchmarks/RESULTS.md) and [`docs/benchmarks/results.md`](https://github.com/ShadyD45/gust/blob/main/docs/benchmarks/results.md) (does not push to `main`) |
+
+Shared habits:
+
+- `paths-ignore` for docs/images (and RESULTS.md) so doc-only changes do not burn runner minutes.
 - `concurrency` with `cancel-in-progress` to kill superseded runs.
-- Linux-only (Windows runners bill at 2x, macOS at 10x).
-- Build the binary once and pass it to downstream steps with `--bin` rather than rebuilding.
+- Build the binary once per job and reuse it (`--bin` / `--skip-build`).
+- `gust aee report` and `gust test` append to `$GITHUB_STEP_SUMMARY` automatically when that env var is set.
+
+### Free-tier notes
+
+Public repos get generous Actions minutes; private repos share a monthly pool. Three workflows look like “more CI,” but:
+
+- They run **in parallel**, so wall-clock is closer to the slowest job, not the sum.
+- `cancel-in-progress` drops superseded PR pushes.
+- Doc-only commits are skipped via `paths-ignore`.
+- The RESULTS.md / docs site publish job only runs on `main` / `workflow_dispatch` and opens a **PR** (compatible with branch protection + CODEOWNERS review).
 
 ## Other CI systems
 

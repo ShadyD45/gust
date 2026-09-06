@@ -1,0 +1,84 @@
+# End-to-end smoke: demo, SDK record→analyze, Mode 3 exec.
+name: smoke
+run-name: "smoke : ${{ github.head_ref || github.ref_name }}"
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/*.png"
+      - "LICENSE"
+      - ".gitignore"
+      - "benchmarks/RESULTS.md"
+      - "benchmarks/fixtures/*.json"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/*.png"
+      - "LICENSE"
+      - ".gitignore"
+      - "benchmarks/RESULTS.md"
+      - "benchmarks/fixtures/*.json"
+  workflow_dispatch:
+
+concurrency:
+  group: smoke-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build
+        run: go build -o gust ./cmd/gust
+
+      - name: Summary preamble
+        run: |
+          {
+            echo "## Smoke"
+            echo ""
+            echo "End-to-end checks against the built \`gust\` binary."
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Demo smoke
+        run: |
+          chmod +x demo/run.sh
+          ./demo/run.sh --bin "${{ github.workspace }}/gust" --skip-build
+          echo "- **PASS** Demo (\`demo/run.sh\`)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: SDK smoke (record → analyze)
+        run: |
+          python sdk/python/examples/record_and_analyze.py \
+            --out "${{ runner.temp }}/sdk_run.json" \
+            --gust "${{ github.workspace }}/gust"
+          echo "- **PASS** Python SDK record → analyze" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Mode 3 exec e2e
+        run: |
+          ./gust test testdata/scenarios/http_agent.yaml \
+            --runner exec --samples 2 --concurrency 2 \
+            --policy testdata/policy-smoke.yaml \
+            -- python sdk/python/examples/mode3_sample.py
+          echo "- **PASS** Mode 3 exec e2e" >> "$GITHUB_STEP_SUMMARY"

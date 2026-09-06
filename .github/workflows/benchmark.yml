@@ -1,0 +1,139 @@
+# Self-AEE + judge calibration.
+# On main, opens a PR to refresh benchmarks/RESULTS.md (safe with branch protection).
+name: benchmark
+run-name: "benchmark : ${{ github.head_ref || github.ref_name }}"
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/*.png"
+      - "LICENSE"
+      - ".gitignore"
+      - "benchmarks/RESULTS.md"
+      - "benchmarks/fixtures/*.json"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/*.png"
+      - "LICENSE"
+      - ".gitignore"
+      - "benchmarks/RESULTS.md"
+      - "benchmarks/fixtures/*.json"
+  workflow_dispatch:
+
+concurrency:
+  group: benchmark-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  aee:
+    name: AEE self-report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build -o gust ./cmd/gust
+
+      - name: AEE report
+        run: |
+          ./gust aee report \
+            --out benchmarks/fixtures/gust_self_aee.json \
+            --doc benchmarks/RESULTS.md \
+            --site-doc docs/benchmarks/results.md
+
+      - name: Judge calibrate (mock harness)
+        run: |
+          ./gust judge calibrate \
+            --provider mock \
+            --dataset testdata/judge/calibration/v1.json \
+            --out "${{ runner.temp }}/judge-cal.json"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aee-report
+          path: |
+            benchmarks/RESULTS.md
+            benchmarks/fixtures/gust_self_aee.json
+            docs/benchmarks/results.md
+          if-no-files-found: error
+
+  publish-results:
+    name: Open RESULTS.md PR
+    needs: aee
+    # Only from main (or manual). Never push to main — open a PR so branch protection works.
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: aee-report
+          path: .
+
+      - name: Open or update PR
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(benchmarks): refresh AEE self-report"
+          title: "chore(benchmarks): refresh AEE self-report"
+          body: |
+            ## Summary
+            Automated refresh of gust's AEE self-benchmark after a successful `benchmark` run on `main`.
+
+            - Updates `benchmarks/RESULTS.md`
+            - Updates `benchmarks/fixtures/gust_self_aee.json`
+            - Updates `docs/benchmarks/results.md` (docs site)
+
+            ## Test plan
+            - [ ] Confirm AEE tables look sane (DR / FPR / throughput / H7)
+            - [ ] Merge when green
+
+            _Opened by the `benchmark` workflow — safe with a protected `main` branch._
+          branch: chore/aee-self-report
+          delete-branch: true
+          add-paths: |
+            benchmarks/RESULTS.md
+            benchmarks/fixtures/gust_self_aee.json
+            docs/benchmarks/results.md
+
+      - name: Summary
+        run: |
+          {
+            echo "## AEE results PR"
+            echo ""
+            if [ "${{ steps.cpr.outputs.pull-request-number }}" != "" ]; then
+              echo "**PR:** #${{ steps.cpr.outputs.pull-request-number }} — ${{ steps.cpr.outputs.pull-request-url }}"
+              echo ""
+              echo "Operation: \`${{ steps.cpr.outputs.pull-request-operation }}\`"
+            else
+              echo "_No changes — \`benchmarks/RESULTS.md\` already up to date._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

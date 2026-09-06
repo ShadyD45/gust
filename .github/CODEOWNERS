@@ -1,0 +1,9 @@
+# Default reviewers for every PR.
+# Requires the account to have write access to this repository.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+*       @ShadyD45
+
+# Keep ownership explicit for CI and publish paths.
+.github/workflows/   @ShadyD45
+benchmarks/          @ShadyD45

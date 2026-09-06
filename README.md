@@ -77,6 +77,9 @@ gust reads a JSON document describing what your agent did, so integration is a r
 | [Modes cookbook](docs/usage/modes-cookbook.md)         | Every command, all nine assertion types, fixtures, failure injection, policies |
 | [OTel ingestion](docs/usage/otel-ingest.md)            | Point an existing OTLP exporter at gust (HTTP/gRPC), or pull a Langfuse trace  |
 | [CI integration](docs/usage/ci-github-actions.md)      | Exit codes; gust on the runner, agent in the job or QA — not production        |
+| [AEE methodology](docs/usage/aee-methodology.md)       | How the self-benchmark is measured                                         |
+| [Benchmarks (site)](docs/benchmarks/)                  | Metrics explained, latest numbers, more proof                              |
+| [AEE latest results](benchmarks/RESULTS.md)            | CI-refreshed self-report (detection rate, FPR, throughput, H7)             |
 
 
 ## Extend it
@@ -110,14 +113,25 @@ sdk/python/               Python capture SDK, Mode 3 harness, LangChain adapter
 sdk/typescript/           TypeScript capture SDK (stdlib / Node 18+)
 spec/schemas/             JSON Schema contracts (Draft 2020-12)
 demo/                     End-to-end MVP demo scripts
-docs/                     GitHub Pages site (usage, extending, architecture)
+docs/                     GitHub Pages site (usage, benchmarks, extending, architecture)
+benchmarks/               AEE self-report (RESULTS.md refreshed by CI)
 ```
 
 ## Status
 
 MVP Phases 1–9 complete (library, Mode 3, policy, scenario extraction, CLI, demo, CI).
 
-Phase 10–11 have landed. Live ingest is network-first: OTLP/HTTP + gRPC, `POST /v1/runs`, Langfuse pull, and Mode 3 env injection. Remaining post-MVP work — stats v2, continuous eval, clustering, multi-agent/AEE — is tracked in internal engineering plans (maintainers only).
+Phase 10–12 have landed (OTel ingest, SDKs, optional LLM judge, AEE self-benchmark). Remaining post-MVP work — stats v2, continuous eval, clustering, multi-agent — is tracked in internal engineering plans (maintainers only).
+
+## Self-benchmark (AEE)
+
+gust continuously measures its own evaluation suite (mutation detection / FPR, throughput, reproducibility, Wilson H7). Latest numbers:
+
+**→ [benchmarks/RESULTS.md](benchmarks/RESULTS.md)** (refreshed via CI PR on `main`)
+
+```bash
+./gust aee report
+```
 
 ## Requirements
 

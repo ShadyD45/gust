@@ -487,14 +487,15 @@ func (e *SchemaValidationEvaluator) Evaluate(ctx context.Context, run api.AgentR
 	return res, nil
 }
 
-// RegisterBuiltinEvaluators registers all 10 built-in evaluators with the registry.
+// RegisterBuiltinEvaluators registers all built-in evaluators with the registry.
 func RegisterBuiltinEvaluators(r *registry.Registry) {
 	for _, e := range AllBuiltinEvaluators() {
 		_ = r.RegisterEvaluator(e)
 	}
 }
 
-// AllBuiltinEvaluators returns the complete list of 10 MVP evaluators.
+// AllBuiltinEvaluators returns the complete list of built-in evaluators
+// (10 deterministic MVP evaluators plus the opt-in llm_judge adapter).
 func AllBuiltinEvaluators() []ports.Evaluator {
 	return []ports.Evaluator{
 		&TaskSuccessEvaluator{},
@@ -507,5 +508,6 @@ func AllBuiltinEvaluators() []ports.Evaluator {
 		&MaxLatencyEvaluator{},
 		&ErrorRecoveryEvaluator{},
 		&SchemaValidationEvaluator{},
+		NewLLMJudgeEvaluator(nil),
 	}
 }

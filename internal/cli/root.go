@@ -41,6 +41,8 @@ func NewRoot() *cobra.Command {
 		newCompareCmd(),
 		newScenarioCmd(),
 		newIngestCmd(),
+		newJudgeCmd(),
+		newAEECmd(),
 	)
 	return root
 }
@@ -86,19 +88,25 @@ func loadPolicy(path string) (api.Policy, error) {
 	return p, nil
 }
 
-// activeEvaluators returns the built-in suite plus any evaluators registered
-// with the default registry (custom Go evaluators, wire plugins).
+// activeEvaluators returns the built-in suite merged with registry entries.
+// Registry entries override builtins of the same name (so a Tier-2 llm_judge
+// plugin using an official provider SDK replaces the Go generic adapter).
 func activeEvaluators() []ports.Evaluator {
-	list := evaluators.AllBuiltinEvaluators()
-	seen := make(map[string]struct{}, len(list))
-	for _, e := range list {
-		seen[e.Name()] = struct{}{}
+	byName := make(map[string]ports.Evaluator)
+	var order []string
+	for _, e := range evaluators.AllBuiltinEvaluators() {
+		byName[e.Name()] = e
+		order = append(order, e.Name())
 	}
 	for _, e := range registry.DefaultRegistry.ListEvaluators() {
-		if _, dup := seen[e.Name()]; dup {
-			continue
+		if _, exists := byName[e.Name()]; !exists {
+			order = append(order, e.Name())
 		}
-		list = append(list, e)
+		byName[e.Name()] = e
+	}
+	list := make([]ports.Evaluator, 0, len(order))
+	for _, name := range order {
+		list = append(list, byName[name])
 	}
 	return list
 }

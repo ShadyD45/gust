@@ -24,6 +24,10 @@ Task-oriented walkthroughs live in [Extending]({% link extending/index.md %}); t
 3. Assertion types resolve to the evaluator of the same name; extend `resolveEvaluatorName` only when remapping an existing type.
 4. Prefer structured `evidence` maps for CI/debug output.
 
+## Optional LLM judge
+
+`ports.JudgeProvider` backs the built-in `llm_judge` evaluator. Major providers use **official Python SDKs** (`gust_sdk.judge`: OpenAI, Anthropic, Google GenAI, Ollama) loaded with `--judge-plugin` (registry overrides the Go builtin). Go ships only `mock` and a thin `generic` OpenAI-compatible HTTP adapter for custom endpoints. See [LLM judge]({% link usage/llm-judge.md %}). Policy flag `allow_llm_judge` defaults to false.
+
 ## Adding a mutator
 
 1. Implement `ports.Mutator` with typed outcomes: `applied` | `skipped` | `error`.

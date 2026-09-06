@@ -22,6 +22,15 @@ Then gate it::
 """
 
 from gust_sdk.fixtures import FixtureClient, FixtureError
+from gust_sdk.judge import (
+    AnthropicJudge,
+    GenericJudge,
+    GoogleJudge,
+    LLMJudgePlugin,
+    OllamaJudge,
+    OpenAIJudge,
+    create_judge,
+)
 from gust_sdk.recorder import (
     SCHEMA_VERSION,
     INGEST_URL_ENV,
@@ -38,12 +47,19 @@ __all__ = [
     "SCHEMA_VERSION",
     "INGEST_URL_ENV",
     "AgentRunError",
+    "AnthropicJudge",
     "EvaluatorPlugin",
     "FixtureClient",
     "FixtureError",
+    "GenericJudge",
+    "GoogleJudge",
+    "LLMJudgePlugin",
+    "OllamaJudge",
+    "OpenAIJudge",
     "RunRecorder",
     "SpanHandle",
     "apply_sample_id",
+    "create_judge",
     "run_sample",
     "serve",
     "serve_sample",

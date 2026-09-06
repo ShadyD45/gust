@@ -39,6 +39,13 @@ func (r *Registry) RegisterEvaluator(e ports.Evaluator) error {
 	return nil
 }
 
+// ReplaceEvaluator registers or overwrites an evaluator (used for judge plugins).
+func (r *Registry) ReplaceEvaluator(e ports.Evaluator) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.evaluators[e.Name()] = e
+}
+
 func (r *Registry) GetEvaluator(name string) (ports.Evaluator, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

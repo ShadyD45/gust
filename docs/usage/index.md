@@ -54,6 +54,9 @@ How to wire the job: [CI integration]({% link usage/ci-github-actions.md %}). Ho
 | [OTel ingestion]({% link usage/otel-ingest.md %}) | Point an existing OTLP exporter at gust, or pull a Langfuse trace |
 | [CI integration]({% link usage/ci-github-actions.md %}) | gust on the CI runner; agent in the job or QA; exit codes |
 | [Compatibility]({% link usage/compatibility.md %}) | SDK × schema × CLI and framework adapter versions |
+| [LLM judge]({% link usage/llm-judge.md %}) | Opt-in soft judge via official provider SDKs |
+| [AEE methodology]({% link usage/aee-methodology.md %}) | How the self-benchmark is measured |
+| [Benchmarks]({% link benchmarks/index.md %}) | Metrics explained, latest AEE numbers, more proof |
 
 Custom evaluators, runners, and cross-language plugins: [Extending]({% link extending/index.md %}).
 

@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-09-06T19:16:05.3398538Z",
+  "detection_rate": 1,
+  "false_positive_rate": 0,
+  "mutants_applied": 16,
+  "mutants_detected": 16,
+  "eval_throughput_cps": 19177920.88739898,
+  "analyze_duration_ns": 0,
+  "reproducibility": 1,
+  "repro_hash": "sha256:cd08ad1640705a9d4ab226b71800cfe0f5bb74a6046b419b207c55f6ff2f9364",
+  "h7": {
+    "pass_case": "100/100 -\u003e PASS",
+    "flaky_case": "20/20 -\u003e FLAKY",
+    "fail_case": "17/20 -\u003e FAIL",
+    "all_correct": true
+  },
+  "aee_score": 0.9999999999999999,
+  "passed": true
+}

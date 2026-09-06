@@ -1,0 +1,1696 @@
+{
+  "version": "1.0",
+  "description": "Synthetic seed calibration set (≥50). Replace with human labels before production enablement.",
+  "cases": [
+    {
+      "id": "cal_001",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.1,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_001",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1000"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_002",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.36,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_002",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1001"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_003",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.5700000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_003",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1002"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_004",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.8,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_004",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1003"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_005",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.96,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_005",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1004"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_006",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.12000000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_006",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1005"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_007",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.35,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_007",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1006"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_008",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.56,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_008",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1007"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_009",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.8200000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_009",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1008"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_010",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.95,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_010",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1009"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_011",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.11,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_011",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1010"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_012",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.37,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_012",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1011"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_013",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.55,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_013",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1012"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_014",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.81,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_014",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1013"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_015",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.97,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_015",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1014"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_016",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.1,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_016",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1015"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_017",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.36,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_017",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1016"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_018",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.5700000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_018",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1017"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_019",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.8,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_019",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1018"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_020",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.96,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_020",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1019"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_021",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.12000000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_021",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1020"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_022",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.35,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_022",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1021"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_023",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.56,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_023",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1022"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_024",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.8200000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_024",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1023"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_025",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.95,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_025",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1024"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_026",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.11,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_026",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1025"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_027",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.37,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_027",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1026"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_028",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.55,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_028",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1027"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_029",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.81,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_029",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1028"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_030",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.97,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_030",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1029"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_031",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.1,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_031",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1030"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_032",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.36,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_032",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1031"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_033",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.5700000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_033",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1032"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_034",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.8,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_034",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1033"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_035",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.96,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_035",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1034"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_036",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.12000000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_036",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1035"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_037",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.35,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_037",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1036"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_038",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.56,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_038",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1037"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_039",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.8200000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_039",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1038"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_040",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.95,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_040",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1039"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_041",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.11,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_041",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1040"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_042",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.37,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_042",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1041"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_043",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.55,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_043",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1042"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_044",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.81,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_044",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1043"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_045",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.97,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_045",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1044"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    },
+    {
+      "id": "cal_046",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.1,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_046",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1045"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "error"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "failed"
+        }
+      }
+    },
+    {
+      "id": "cal_047",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.36,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_047",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1046"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "partial answer only"
+        }
+      }
+    },
+    {
+      "id": "cal_048",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.5700000000000001,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_048",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1047"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "order noted"
+        }
+      }
+    },
+    {
+      "id": "cal_049",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.8,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_049",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1048"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully for the customer."
+        }
+      }
+    },
+    {
+      "id": "cal_050",
+      "rubric": "The agent should clearly confirm the order cancellation in a helpful tone.",
+      "human_score": 0.96,
+      "threshold": 0.7,
+      "run": {
+        "schema_version": "0.5",
+        "run_id": "cal_run_050",
+        "agent": {
+          "name": "support",
+          "version": "1.0"
+        },
+        "task": {
+          "id": "cancel",
+          "input": "cancel order 1049"
+        },
+        "trace": [
+          {
+            "span_id": "s1",
+            "name": "cancel_order",
+            "type": "tool",
+            "start_time": "2026-01-01T00:00:00Z",
+            "end_time": "2026-01-01T00:00:00.001Z",
+            "status": {
+              "code": "ok"
+            }
+          }
+        ],
+        "outcome": {
+          "status": "completed",
+          "output": "Order cancelled successfully with confirmation id and polite closing."
+        }
+      }
+    }
+  ]
+}

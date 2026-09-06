@@ -4,7 +4,7 @@ Post-MVP work that turns gust from a Go-native MVP into production-ready **test 
 
 Read after the MVP index: [`../mvp/README.md`](../mvp/README.md) and the master [`../roadmap.md`](../roadmap.md).
 
-Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel`, docs in [`../../usage/otel-ingest.md`](../../usage/otel-ingest.md)) and the Phase 11 Python capture SDK ([`sdk/python/`](../../../sdk/python/)). User-facing guides live in [`docs/usage/`](../../usage/) and [`docs/extending/`](../../extending/).
+Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel`, docs in [`../../usage/otel-ingest.md`](../../usage/otel-ingest.md)), Phase 11 Python/TypeScript SDKs + LangChain adapter, and Phase 12 optional LLM judge (`gust_sdk.judge` official SDK wrappers + `gust judge calibrate` / `gust aee report`). User-facing guides live in [`docs/usage/`](../../usage/) and [`docs/extending/`](../../extending/).
 
 ## Goals
 
@@ -23,7 +23,7 @@ Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel
 | **13** | [phase-13-stats-regression-v2.md](phase-13-stats-regression-v2.md) | Stats / regression v2 |
 | **14** | [phase-14-continuous-eval.md](phase-14-continuous-eval.md) | Production continuous eval |
 | **15** | [phase-15-failure-clustering.md](phase-15-failure-clustering.md) | Failure mining |
-| **16** | [phase-16-multi-agent-leaderboard.md](phase-16-multi-agent-leaderboard.md) | Multi-agent & AEE |
+| **16** | [phase-16-multi-agent-leaderboard.md](phase-16-multi-agent-leaderboard.md) | Multi-agent & self-AEE (incl. AEE proof hardening backlog) |
 
 ## Suggested sequencing
 
@@ -32,7 +32,7 @@ Phase 10 (ingestion) ──► Phase 11 (SDKs/adapters) ──► Phase 14 (cont
          │                        │
          │                        └──► Phase 15 (clustering)
          └──► Phase 13 (stats v2) ──► Phase 12 (judge, gated)
-                                      Phase 16 (leaderboard, last)
+                                      Phase 16 (multi-agent + self-AEE)
 ```
 
 **Principle:** ship deterministic, offline-capable core first; add network/LLM-dependent features only behind explicit gates and calibration thresholds.

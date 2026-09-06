@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"gust/internal/core/analyze"
-	"gust/internal/ports"
 	"gust/pkg/api"
 )
 
@@ -17,17 +16,25 @@ func newAnalyzeCmd() *cobra.Command {
 	var policyPath string
 	var asJSON bool
 	var assertionsPath string
+	var judgePlugin string
 
 	cmd := &cobra.Command{
 		Use:   "analyze <run.json>",
 		Short: "Mode 1: evaluate assertions against a captured AgentRun",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cleanup, err := loadJudgePlugin(judgePlugin)
+			if err != nil {
+				return err
+			}
+			defer cleanup()
+
 			run, err := loadJSON[api.AgentRun](args[0])
 			if err != nil {
 				return err
 			}
-			if _, err := loadPolicy(policyPath); err != nil {
+			pol, err := loadPolicy(policyPath)
+			if err != nil {
 				return err
 			}
 
@@ -37,9 +44,7 @@ func newAnalyzeCmd() *cobra.Command {
 			}
 
 			engine := analyze.NewEngine(activeEvaluators())
-			report, err := engine.AnalyzeRun(context.Background(), run, assertions, ports.EvaluationContext{
-				ScenarioID: run.RunID,
-			})
+			report, err := engine.AnalyzeRun(context.Background(), run, assertions, evalContextFromPolicy(pol, run.RunID))
 			if err != nil {
 				return err
 			}
@@ -63,6 +68,7 @@ func newAnalyzeCmd() *cobra.Command {
 	cmd.Flags().StringVar(&policyPath, "policy", "", "policy YAML/JSON")
 	cmd.Flags().StringVar(&assertionsPath, "assertions", "", "optional assertions JSON file")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "machine-readable JSON output")
+	cmd.Flags().StringVar(&judgePlugin, "judge-plugin", "", "Tier-2 LLM judge plugin (e.g. sdk/python/examples/llm_judge_plugin.py)")
 	return cmd
 }
 

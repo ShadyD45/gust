@@ -43,7 +43,7 @@ This master roadmap outlines the progression of the project from inception (Phas
 | - Phase 13: Statistical Regression Engine v2 (Bootstrap CI, Effect Sizes)             |
 | - Phase 14: Production Continuous Evaluation & Automated PII-Redacted Mining          |
 | - Phase 15: Failure Clustering & Deduplication Engine                                 |
-| - Phase 16: Multi-Agent Coordination Evaluators & Public AEE Leaderboard              |
+| - Phase 16: Multi-Agent Coordination Evaluators & AEE Self-Benchmark                  |
 +---------------------------------------------------------------------------------------+
 ```
 
@@ -105,4 +105,4 @@ Detailed engineering plans: **[`docs/plans/framework/`](framework/README.md)**.
 | **13** | Statistical Regression Engine v2 | Upgrade to bootstrap confidence intervals, Cohen's $d$ effect sizes, and dynamic sample size recommendation. | Non-parametric distributions, power analysis |
 | **14** | Production Continuous Eval | Sample live production traces with default PII redaction and automated `TestScenario` proposal generation. | Streaming sampler, differential privacy |
 | **15** | Failure Mining & Clustering | Group similar production failures using semantic clustering to eliminate duplicate test scenario proposals. | Vector/DBSCAN clustering, deduplication |
-| **16** | Multi-Agent & Public Leaderboard | Multi-agent handoff/coordination evaluators; Agent Evaluation Effectiveness (AEE) public benchmark against competitors. | Cross-framework benchmark, leaderboard |
+| **16** | Multi-Agent & Self-AEE | Multi-agent handoff/coordination evaluators; AEE remains a gust self-benchmark (no peer-framework leaderboard). | Multi-agent suite, CI self-score |

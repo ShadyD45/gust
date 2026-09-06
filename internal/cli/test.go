@@ -33,6 +33,7 @@ func newTestCmd() *cobra.Command {
 	var otelListen string
 	var otelGRPCListen string
 	var timeoutSec int
+	var judgePlugin string
 
 	cmd := &cobra.Command{
 		Use:   "test <scenario.yaml|dir> [-- command...]",
@@ -44,6 +45,12 @@ func newTestCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cleanup, err := loadJudgePlugin(judgePlugin)
+			if err != nil {
+				return err
+			}
+			defer cleanup()
+
 			paths, err := discoverScenarioPaths(args[0])
 			if err != nil {
 				return fmt.Errorf("discover scenarios in %s: %w", args[0], err)
@@ -159,6 +166,7 @@ func newTestCmd() *cobra.Command {
 					FixtureEndpoint: fixtureEndpoint,
 					FixtureProvider: provider,
 					MinSamples:      pol.Reliability.MinSamplesForVerdict,
+					EvalContext:     evalContextFromPolicy(pol, sc.ID),
 				})
 				if err != nil {
 					return fmt.Errorf("%s: %w", sc.ID, err)
@@ -212,6 +220,7 @@ func newTestCmd() *cobra.Command {
 	cmd.Flags().StringVar(&otelListen, "otel-listen", "", "in-process OTLP/HTTP bind (default 127.0.0.1:0 when otel collection is on)")
 	cmd.Flags().StringVar(&otelGRPCListen, "otel-grpc-listen", "", "in-process OTLP/gRPC bind (default derived from --otel-listen)")
 	cmd.Flags().IntVar(&timeoutSec, "timeout", 0, "per-sample timeout in seconds")
+	cmd.Flags().StringVar(&judgePlugin, "judge-plugin", "", "Tier-2 LLM judge plugin (official SDK wrappers)")
 	return cmd
 }
 

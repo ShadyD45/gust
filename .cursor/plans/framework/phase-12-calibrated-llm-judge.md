@@ -1,5 +1,9 @@
 # Phase 12: Optional Calibrated LLM Judge
 
+## Status
+
+**Shipped (Wave 1).** Optional `llm_judge` evaluator with policy `allow_llm_judge` (default false). Major providers use **official Python SDKs** via `gust_sdk.judge` + `--judge-plugin`. Go ships `mock` + thin `generic` OpenAI-compatible HTTP only. Calibration: `gust judge calibrate` (Spearman ρ ≥ 0.7 on ≥ 50 cases).
+
 ## Objectives
 
 1. Add an optional `JudgeProvider` port for subjective/open-ended checks.
