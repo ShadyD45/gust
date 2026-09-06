@@ -12,13 +12,21 @@ import (
 )
 
 func validRun(id string) api.AgentRun {
+	now := time.Now().UTC()
 	return api.AgentRun{
 		SchemaVersion: api.SchemaVersion,
 		RunID:         id,
 		Agent:         api.AgentInfo{Name: "agent", Version: "1"},
 		Task:          api.TaskInfo{ID: "t", Input: "do it"},
-		Trace:         []api.Span{{SpanID: "s1", Name: "step"}},
-		Outcome:       api.RunOutcome{Status: "completed", Output: "ok"},
+		Trace: []api.Span{{
+			SpanID:    "s1",
+			Name:      "step",
+			Type:      api.SpanTypeAgent,
+			StartTime: now,
+			EndTime:   now.Add(time.Millisecond),
+			Status:    api.SpanStatus{Code: "ok"},
+		}},
+		Outcome: api.RunOutcome{Status: "completed", Output: "ok"},
 	}
 }
 

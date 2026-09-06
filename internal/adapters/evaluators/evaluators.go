@@ -141,15 +141,37 @@ func (e *ToolArgumentsEvaluator) Evaluate(ctx context.Context, run api.AgentRun,
 		return res, nil
 	}
 
-	// Check if any invocation had matching arguments
+	occurrence := "any"
+	if expected.Parameters != nil {
+		occurrence = parseOccurrence(expected.Parameters["occurrence"])
+	}
+
+	candidates, occErr := selectOccurrence(matchedToolSpans, occurrence)
+	if occErr != nil {
+		res.Passed = false
+		res.Score = 0.0
+		res.Message = occErr.Error()
+		res.Evidence = map[string]any{
+			"occurrence":      occurrence,
+			"matching_spans":  len(matchedToolSpans),
+			"expected_arguments": expected.Arguments,
+		}
+		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
+		return res, nil
+	}
+
 	var allDiffs []any
-	for _, sp := range matchedToolSpans {
+	for _, sp := range candidates {
 		actArgs, _ := sp.Attributes["input"].(map[string]any)
 		diffs := evidence.CompareMaps(expected.Arguments, actArgs, "")
 		if len(diffs) == 0 {
 			res.Passed = true
 			res.Score = 1.0
 			res.Message = "tool arguments matched expected specifications"
+			res.Evidence = map[string]any{
+				"occurrence": occurrence,
+				"span_id":    sp.SpanID,
+			}
 			res.ExecutionTimeNs = time.Since(start).Nanoseconds()
 			return res, nil
 		}
@@ -163,11 +185,55 @@ func (e *ToolArgumentsEvaluator) Evaluate(ctx context.Context, run api.AgentRun,
 	res.Score = 0.0
 	res.Message = "tool arguments did not match expected values"
 	res.Evidence = map[string]any{
+		"occurrence":         occurrence,
 		"expected_arguments": expected.Arguments,
 		"discrepancies":      allDiffs,
 	}
 	res.ExecutionTimeNs = time.Since(start).Nanoseconds()
 	return res, nil
+}
+
+// parseOccurrence normalizes occurrence parameters: "any" | "first" | "last" | 1-based index.
+func parseOccurrence(raw any) string {
+	if raw == nil {
+		return "any"
+	}
+	switch v := raw.(type) {
+	case string:
+		s := strings.TrimSpace(strings.ToLower(v))
+		if s == "" {
+			return "any"
+		}
+		return s
+	case int:
+		return fmt.Sprintf("%d", v)
+	case int64:
+		return fmt.Sprintf("%d", v)
+	case float64:
+		return fmt.Sprintf("%d", int(v))
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}
+
+func selectOccurrence(spans []api.Span, occurrence string) ([]api.Span, error) {
+	switch occurrence {
+	case "any", "":
+		return spans, nil
+	case "first":
+		return []api.Span{spans[0]}, nil
+	case "last":
+		return []api.Span{spans[len(spans)-1]}, nil
+	default:
+		var n int
+		if _, err := fmt.Sscanf(occurrence, "%d", &n); err != nil || n < 1 {
+			return nil, fmt.Errorf("invalid occurrence %q (use any|first|last|1-based index)", occurrence)
+		}
+		if n > len(spans) {
+			return nil, fmt.Errorf("occurrence %d out of range (%d matching tool spans)", n, len(spans))
+		}
+		return []api.Span{spans[n-1]}, nil
+	}
 }
 
 // --- 4. ToolSequenceEvaluator ---
@@ -209,19 +275,64 @@ func (e *ToolSequenceEvaluator) Evaluate(ctx context.Context, run api.AgentRun, 
 		}
 	}
 
-	// Verify expected sequence appears in order within actualSeq
-	seqIdx := 0
-	for _, act := range actualSeq {
-		if seqIdx < len(expectedSeq) && act == expectedSeq[seqIdx] {
-			seqIdx++
-		}
+	matchMode := "subsequence"
+	if m, ok := expected.Parameters["match"].(string); ok && strings.TrimSpace(m) != "" {
+		matchMode = strings.ToLower(strings.TrimSpace(m))
 	}
 
-	if seqIdx < len(expectedSeq) {
+	passed := false
+	switch matchMode {
+	case "exact":
+		passed = len(actualSeq) == len(expectedSeq)
+		if passed {
+			for i := range expectedSeq {
+				if actualSeq[i] != expectedSeq[i] {
+					passed = false
+					break
+				}
+			}
+		}
+	case "subsequence":
+		seqIdx := 0
+		for _, act := range actualSeq {
+			if seqIdx < len(expectedSeq) && act == expectedSeq[seqIdx] {
+				seqIdx++
+			}
+		}
+		passed = seqIdx >= len(expectedSeq)
+	default:
 		res.Passed = false
-		res.Score = float64(seqIdx) / float64(len(expectedSeq))
-		res.Message = fmt.Sprintf("expected sequence %v was broken; only matched up to %v", expectedSeq, expectedSeq[:seqIdx])
+		res.Score = 0.0
+		res.Message = fmt.Sprintf("invalid match mode %q (use subsequence|exact)", matchMode)
+		res.Evidence = map[string]any{"match": matchMode}
+		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
+		return res, nil
+	}
+
+	if !passed {
+		matchedPrefix := 0
+		if matchMode == "subsequence" {
+			seqIdx := 0
+			for _, act := range actualSeq {
+				if seqIdx < len(expectedSeq) && act == expectedSeq[seqIdx] {
+					seqIdx++
+				}
+			}
+			matchedPrefix = seqIdx
+		}
+		score := 0.0
+		if len(expectedSeq) > 0 && matchMode == "subsequence" {
+			score = float64(matchedPrefix) / float64(len(expectedSeq))
+		}
+		msg := fmt.Sprintf("expected sequence %v was not satisfied (match=%s)", expectedSeq, matchMode)
+		if matchMode == "subsequence" {
+			msg = fmt.Sprintf("expected sequence %v was broken; only matched up to %v", expectedSeq, expectedSeq[:matchedPrefix])
+		}
+		res.Passed = false
+		res.Score = score
+		res.Message = msg
 		res.Evidence = map[string]any{
+			"match":             matchMode,
 			"expected_sequence": expectedSeq,
 			"actual_sequence":   actualSeq,
 		}
@@ -231,7 +342,8 @@ func (e *ToolSequenceEvaluator) Evaluate(ctx context.Context, run api.AgentRun, 
 
 	res.Passed = true
 	res.Score = 1.0
-	res.Message = "tool sequence satisfied"
+	res.Message = fmt.Sprintf("tool sequence satisfied (match=%s)", matchMode)
+	res.Evidence = map[string]any{"match": matchMode}
 	res.ExecutionTimeNs = time.Since(start).Nanoseconds()
 	return res, nil
 }
@@ -383,9 +495,34 @@ func (e *MaxLatencyEvaluator) Evaluate(ctx context.Context, run api.AgentRun, ex
 		limitMs = expected.Limit
 	}
 
+	latencySource := "wall_clock"
+	if expected != nil && expected.Parameters != nil {
+		if src, ok := expected.Parameters["latency_source"].(string); ok && strings.TrimSpace(src) != "" {
+			latencySource = strings.ToLower(strings.TrimSpace(src))
+		}
+	}
+	if latencySource != "wall_clock" {
+		res.Passed = false
+		res.Score = 0.0
+		res.Message = fmt.Sprintf("unsupported latency_source %q (only wall_clock is supported)", latencySource)
+		res.Evidence = map[string]any{"latency_source": latencySource}
+		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
+		return res, nil
+	}
+
 	var duration time.Duration
 	if len(run.Trace) > 0 {
-		duration = run.Trace[len(run.Trace)-1].EndTime.Sub(run.Trace[0].StartTime)
+		minStart := run.Trace[0].StartTime
+		maxEnd := run.Trace[0].EndTime
+		for _, sp := range run.Trace[1:] {
+			if sp.StartTime.Before(minStart) {
+				minStart = sp.StartTime
+			}
+			if sp.EndTime.After(maxEnd) {
+				maxEnd = sp.EndTime
+			}
+		}
+		duration = maxEnd.Sub(minStart)
 	}
 
 	if duration.Milliseconds() > int64(limitMs) {
@@ -395,6 +532,7 @@ func (e *MaxLatencyEvaluator) Evaluate(ctx context.Context, run api.AgentRun, ex
 		res.Evidence = map[string]any{
 			"actual_latency_ms": duration.Milliseconds(),
 			"max_latency_ms":    limitMs,
+			"latency_source":    latencySource,
 		}
 		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
 		return res, nil
@@ -403,6 +541,10 @@ func (e *MaxLatencyEvaluator) Evaluate(ctx context.Context, run api.AgentRun, ex
 	res.Passed = true
 	res.Score = 1.0
 	res.Message = fmt.Sprintf("latency %d ms within limit", duration.Milliseconds())
+	res.Evidence = map[string]any{
+		"actual_latency_ms": duration.Milliseconds(),
+		"latency_source":    latencySource,
+	}
 	res.ExecutionTimeNs = time.Since(start).Nanoseconds()
 	return res, nil
 }
@@ -419,20 +561,28 @@ func (e *ErrorRecoveryEvaluator) Evaluate(ctx context.Context, run api.AgentRun,
 		EvaluatorVersion: e.Version(),
 	}
 
-	hasErrorSpan := false
-	hasSubsequentRecovery := false
-
-	for i, sp := range run.Trace {
-		if sp.Type == api.SpanTypeError || sp.Status.Code == "error" {
-			hasErrorSpan = true
-			// If there are subsequent steps and overall run completed
-			if i < len(run.Trace)-1 && run.Outcome.Status == "completed" {
-				hasSubsequentRecovery = true
-			}
+	afterErrorTool := ""
+	var recoveryTools []string
+	if expected != nil && expected.Parameters != nil {
+		if t, ok := expected.Parameters["after_error_tool"].(string); ok {
+			afterErrorTool = strings.TrimSpace(t)
 		}
+		recoveryTools = stringListParam(expected.Parameters["recovery_tools"])
 	}
 
-	if !hasErrorSpan {
+	errorIndexes := make([]int, 0)
+	for i, sp := range run.Trace {
+		isError := sp.Type == api.SpanTypeError || sp.Status.Code == "error"
+		if !isError {
+			continue
+		}
+		if afterErrorTool != "" && sp.Name != afterErrorTool {
+			continue
+		}
+		errorIndexes = append(errorIndexes, i)
+	}
+
+	if len(errorIndexes) == 0 {
 		res.Passed = true
 		res.Score = 1.0
 		res.Message = "no errors occurred during trajectory"
@@ -440,23 +590,71 @@ func (e *ErrorRecoveryEvaluator) Evaluate(ctx context.Context, run api.AgentRun,
 		return res, nil
 	}
 
-	if !hasSubsequentRecovery {
-		res.Passed = false
-		res.Score = 0.0
-		res.Message = "agent encountered error and failed to recover"
-		res.Evidence = map[string]any{
-			"error_occurred": true,
-			"outcome_status": run.Outcome.Status,
+	// Causal recovery: a later successful span matching the errored op (or recovery_tools).
+	for _, errIdx := range errorIndexes {
+		errSpan := run.Trace[errIdx]
+		allowed := recoveryTools
+		if len(allowed) == 0 {
+			allowed = []string{errSpan.Name}
 		}
-		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
-		return res, nil
+		for j := errIdx + 1; j < len(run.Trace); j++ {
+			sp := run.Trace[j]
+			if sp.Status.Code == "error" {
+				continue
+			}
+			if nameInList(sp.Name, allowed) {
+				res.Passed = true
+				res.Score = 1.0
+				res.Message = "agent successfully recovered from error"
+				res.Evidence = map[string]any{
+					"error_span_id":    errSpan.SpanID,
+					"error_tool":       errSpan.Name,
+					"recovery_span_id": sp.SpanID,
+					"recovery_tool":    sp.Name,
+				}
+				res.ExecutionTimeNs = time.Since(start).Nanoseconds()
+				return res, nil
+			}
+		}
 	}
 
-	res.Passed = true
-	res.Score = 1.0
-	res.Message = "agent successfully recovered from error"
+	res.Passed = false
+	res.Score = 0.0
+	res.Message = "agent encountered error and failed to recover"
+	res.Evidence = map[string]any{
+		"error_occurred":   true,
+		"outcome_status":   run.Outcome.Status,
+		"after_error_tool": afterErrorTool,
+		"recovery_tools":   recoveryTools,
+	}
 	res.ExecutionTimeNs = time.Since(start).Nanoseconds()
 	return res, nil
+}
+
+func stringListParam(raw any) []string {
+	switch v := raw.(type) {
+	case []string:
+		return v
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, item := range v {
+			if s, ok := item.(string); ok && strings.TrimSpace(s) != "" {
+				out = append(out, s)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
+}
+
+func nameInList(name string, list []string) bool {
+	for _, item := range list {
+		if item == name {
+			return true
+		}
+	}
+	return false
 }
 
 // --- 10. SchemaValidationEvaluator ---

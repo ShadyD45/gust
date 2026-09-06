@@ -25,7 +25,7 @@ gust separates the jobs and measures each with the right instrument:
 | Analyze/Replay are trustworthy | **Reproducibility** (JCS hash stability) |
 | Stochastic agents get honest verdicts | **H7** Wilson vectors (`PASS` / `FLAKY` / `FAIL`) |
 
-That is the “new way”: **test infrastructure for agents**, not another answer-scoring library. See [Metrics explained]({% link benchmarks/metrics.md %}) for definitions, and [Latest results]({% link benchmarks/results.md %}) for the CI-refreshed numbers.
+That is the “new way”: **test infrastructure for agents**, not another answer-scoring library. See [Metrics explained]({% link benchmarks/metrics.md %}) for definitions, and [Latest results]({% link benchmarks/results.md %}) for the published numbers (also [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)).
 
 ## Latest snapshot
 
@@ -44,7 +44,7 @@ Full tables and regenerate commands: [Latest results]({% link benchmarks/results
 | Page | What it covers |
 |------|----------------|
 | [Metrics explained]({% link benchmarks/metrics.md %}) | Meaning, method, and value of each AEE input |
-| [Latest results]({% link benchmarks/results.md %}) | CI-maintained numbers from `gust aee report` |
+| [Latest results]({% link benchmarks/results.md %}) | Published numbers from `gust aee report` (updated locally; see [workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)) |
 | [More proof]({% link benchmarks/more-proof.md %}) | Additional signals beyond the AEE table |
 
 Reproduce anytime:

@@ -60,12 +60,17 @@ func PrintSuiteVerdict(n int, v policy.Verdict) {
 	}
 }
 
-// PrintMutateTerminal renders mutation benchmark.
+// PrintMutateTerminal renders mutation benchmark with an explicit mutation score.
 func PrintMutateTerminal(report *mutate.MutationBenchmarkReport) {
+	escaped := report.MutantsApplied - report.MutantsDetected
+	if escaped < 0 {
+		escaped = 0
+	}
 	fmt.Printf("Mutation testing\n")
-	fmt.Printf("  applied=%d detected=%d skipped=%d\n", report.MutantsApplied, report.MutantsDetected, report.MutantsSkipped)
-	fmt.Printf("  detection_rate=%.1f%%  false_positive_rate=%.1f%%\n",
-		report.DetectionRate*100, report.FalsePositiveRate*100)
+	fmt.Printf("  Mutants: %d | Detected: %d | Escaped: %d | Skipped: %d\n",
+		report.MutantsApplied, report.MutantsDetected, escaped, report.MutantsSkipped)
+	fmt.Printf("  Evaluator mutation score: %.0f%%\n", report.DetectionRate*100)
+	fmt.Printf("  FPR: %.1f%%\n", report.FalsePositiveRate*100)
 }
 
 // PrintRegressionTerminal renders compare output.

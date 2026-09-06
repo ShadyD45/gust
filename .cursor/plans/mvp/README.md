@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-This directory contains the step-by-step engineering implementation plan for the **gust MVP** (Phases 1 through 9), as specified in [`gust_Specification_v0.5.md`](file:///d:/Projects/gust/gust_Specification_v0.5.md).
+This directory contains the step-by-step engineering implementation plan for the **gust MVP** (Phases 1 through 9).
 
 The codebase is built in **Go 1.23+** as a single, statically compiled binary with zero external runtime dependencies. It is architected for maximum extensibility, thread-safe concurrent performance, modular plugin adapters, and clean separation of concerns.
 

@@ -212,7 +212,7 @@ This repository splits CI into three workflows (Linux-only, free-tier friendly):
 | --- | --- | --- |
 | [`test`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/test.yml) | `go test ./...`, Python pytest, TypeScript `npm test` | Per-language pass + log tail |
 | [`smoke`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/smoke.yml) | Demo, SDK record→analyze, Mode 3 exec e2e | Checklist of e2e gates |
-| [`benchmark`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/benchmark.yml) | `gust aee report` + mock judge calibrate | Markdown AEE table; opens a PR to refresh [`benchmarks/RESULTS.md`](https://github.com/ShadyD45/gust/blob/main/benchmarks/RESULTS.md) and [`docs/benchmarks/results.md`](https://github.com/ShadyD45/gust/blob/main/docs/benchmarks/results.md) (does not push to `main`) |
+| [`benchmark`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/benchmark.yml) | `gust aee report` + mock judge calibrate | Job summary + artifacts; [workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml). Checked-in [`benchmarks/RESULTS.md`](https://github.com/ShadyD45/gust/blob/main/benchmarks/RESULTS.md) is updated locally when needed (no auto PR/push) |
 
 Shared habits:
 
@@ -228,8 +228,7 @@ Public repos get generous Actions minutes; private repos share a monthly pool. T
 - They run **in parallel**, so wall-clock is closer to the slowest job, not the sum.
 - `cancel-in-progress` drops superseded PR pushes.
 - Doc-only commits are skipped via `paths-ignore`.
-- The RESULTS.md / docs site publish job only runs on `main` / `workflow_dispatch` and opens a **PR** (compatible with branch protection + CODEOWNERS review).
-
+- The benchmark job is read-only (`contents: read`); it does not push or open PRs.
 ## Other CI systems
 
 Nothing here is GitHub-specific except the step summary. The pattern is always: build or download the binary, run a gust command, let the exit code decide.

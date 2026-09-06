@@ -299,12 +299,9 @@ func (r *AgentRun) Validate() error {
 	default:
 		return fmt.Errorf("%w: unknown outcome status %q", ErrInvalidFieldValue, r.Outcome.Status)
 	}
-	for i, sp := range r.Trace {
-		if sp.SpanID == "" {
-			return fmt.Errorf("%w: trace[%d].span_id is required", ErrMissingRequiredField, i)
-		}
-		if sp.Name == "" {
-			return fmt.Errorf("%w: trace[%d].name is required", ErrMissingRequiredField, i)
+	for i := range r.Trace {
+		if err := ValidateSpan(&r.Trace[i], i); err != nil {
+			return err
 		}
 	}
 	return nil

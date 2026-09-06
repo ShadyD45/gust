@@ -54,11 +54,28 @@ func TestAgentRunValidation(t *testing.T) {
 		t.Errorf("expected error for empty agent name, got nil")
 	}
 
-	// Test invalid span type
-	invalidSpan := validRun.Trace[0]
-	invalidSpan.Type = "unknown_type"
-	if err := ValidateSpan(&invalidSpan, 0); err == nil {
-		t.Errorf("expected error for invalid span type, got nil")
+	// Test invalid span type is rejected by AgentRun.Validate
+	invalidRun = validRun
+	invalidRun.Trace = append([]Span(nil), validRun.Trace...)
+	invalidRun.Trace[0].Type = "unknown_type"
+	if err := invalidRun.Validate(); err == nil {
+		t.Errorf("expected error for invalid span type via AgentRun.Validate, got nil")
+	}
+
+	// Bad status code
+	invalidRun = validRun
+	invalidRun.Trace = append([]Span(nil), validRun.Trace...)
+	invalidRun.Trace[0].Status.Code = "weird"
+	if err := invalidRun.Validate(); err == nil {
+		t.Errorf("expected error for invalid status code, got nil")
+	}
+
+	// End before start
+	invalidRun = validRun
+	invalidRun.Trace = append([]Span(nil), validRun.Trace...)
+	invalidRun.Trace[0].EndTime = invalidRun.Trace[0].StartTime.Add(-time.Second)
+	if err := invalidRun.Validate(); err == nil {
+		t.Errorf("expected error for end_time before start_time, got nil")
 	}
 }
 

@@ -1,4 +1,4 @@
-# Framework Hardening Plans (Phases 10–16)
+# Framework Hardening Plans (Phases 10–18)
 
 Post-MVP work that turns gust from a Go-native MVP into production-ready **test infrastructure for autonomous software** across languages and frameworks.
 
@@ -12,6 +12,7 @@ Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel
 2. **Adopt** via Python/TypeScript SDKs and popular agent frameworks.
 3. **Harden** statistical and policy machinery for production CI.
 4. **Scale** continuous evaluation, failure mining, and multi-agent coverage.
+5. **Consolidate** evaluator semantics and adoption UX before more breadth (Phase 17); defer real-agent E2E to Phase 18.
 
 ## Phase index
 
@@ -24,6 +25,8 @@ Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel
 | **14** | [phase-14-continuous-eval.md](phase-14-continuous-eval.md) | Production continuous eval |
 | **15** | [phase-15-failure-clustering.md](phase-15-failure-clustering.md) | Failure mining |
 | **16** | [phase-16-multi-agent-leaderboard.md](phase-16-multi-agent-leaderboard.md) | Multi-agent & self-AEE (incl. AEE proof hardening backlog) |
+| **17** | [phase-17-semantic-hardening.md](phase-17-semantic-hardening.md) | Evaluator semantics, `gust init`, mutation UX |
+| **18** | [phase-18-real-agent-e2e.md](phase-18-real-agent-e2e.md) | Real LLM agent E2E example (deferred) |
 
 ## Suggested sequencing
 
@@ -33,6 +36,10 @@ Phase 10 (ingestion) ──► Phase 11 (SDKs/adapters) ──► Phase 14 (cont
          │                        └──► Phase 15 (clustering)
          └──► Phase 13 (stats v2) ──► Phase 12 (judge, gated)
                                       Phase 16 (multi-agent + self-AEE)
+
+Phase 17 (semantic hardening + adoption) ──► Phase 18 (real-agent E2E)
+         │
+         └── prefer before further breadth (13–16 feature work)
 ```
 
-**Principle:** ship deterministic, offline-capable core first; add network/LLM-dependent features only behind explicit gates and calibration thresholds.
+**Principle:** ship deterministic, offline-capable core first; add network/LLM-dependent features only behind explicit gates and calibration thresholds. Harden semantics and front-door UX (17) before expanding demos (18) or production-scale mining (14–15).

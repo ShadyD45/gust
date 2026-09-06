@@ -42,7 +42,7 @@ go test ./internal/core/aee/ -count=1
 
 Composite `aee_score` is a weighted blend documented in `internal/core/aee/report.go` (`compositeScore`). The boolean `passed` field is what CI should gate on.
 
-Latest CI numbers: [Latest results]({% link benchmarks/results.md %}) (also [`benchmarks/RESULTS.md`](../../benchmarks/RESULTS.md) in the repo).
+Latest numbers: [Latest results]({% link benchmarks/results.md %}) (also [`benchmarks/RESULTS.md`](../../benchmarks/RESULTS.md) in the repo) · [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml).
 
 ## What is excluded
 

@@ -4,7 +4,7 @@
 
 gust is **test infrastructure for autonomous software** — the equivalent of JUnit, Mockito, and CI regression gating for LLM-driven agents. Because LLMs are non-deterministic, gust treats correctness as a **statistical pass rate** measured across repeated samples with confidence intervals, rather than a brittle single-run boolean.
 
-This master roadmap outlines the progression of the project from inception (Phase 0) through the production-ready MVP (Phases 1–9) and forward into advanced ecosystem capabilities (Phases 10–16).
+This master roadmap outlines the progression of the project from inception (Phase 0) through the production-ready MVP (Phases 1–9) and forward into advanced ecosystem capabilities (Phases 10–18).
 
 ---
 
@@ -12,7 +12,7 @@ This master roadmap outlines the progression of the project from inception (Phas
 
 ```text
 +---------------------------------------------------------------------------------------+
-| PHASE 0: Research, Spec & Governance (ADRs, Apache-2.0, Spec v0.5)                   |
+| PHASE 0: Research, Governance (ADRs, Apache-2.0)                                     |
 +-------------------------------------------+-------------------------------------------+
                                             |
                                             v
@@ -36,7 +36,7 @@ This master roadmap outlines the progression of the project from inception (Phas
                                             |
                                             v
 +---------------------------------------------------------------------------------------+
-| POST-MVP & ECOSYSTEM SCALE (Phases 10 - 16)                                           |
+| POST-MVP & ECOSYSTEM SCALE (Phases 10 - 18)                                           |
 | - Phase 10: OpenTelemetry / OpenInference Ingestion & Semantic Conventions            |
 | - Phase 11: Framework Adapters (LangChain, AutoGen, CrewAI, Python/TypeScript SDKs)   |
 | - Phase 12: Optional Calibrated LLM Judge (Deferred until Spearman rho >= 0.7)        |
@@ -44,6 +44,8 @@ This master roadmap outlines the progression of the project from inception (Phas
 | - Phase 14: Production Continuous Evaluation & Automated PII-Redacted Mining          |
 | - Phase 15: Failure Clustering & Deduplication Engine                                 |
 | - Phase 16: Multi-Agent Coordination Evaluators & AEE Self-Benchmark                  |
+| - Phase 17: Semantic Hardening & Adoption Front Door (evaluators, init, mutation UX)  |
+| - Phase 18: Real-Agent End-to-End Example (deferred; builds on LangChain demo)        |
 +---------------------------------------------------------------------------------------+
 ```
 
@@ -51,9 +53,9 @@ This master roadmap outlines the progression of the project from inception (Phas
 
 ## 3. Detailed Phase Breakdown
 
-### Phase 0: Research, Spec & Governance (Completed)
-- **Scope**: Finalize specification (`gust_Specification_v0.5.md`), establish architectural decision records (ADRs), create open source licensing (Apache-2.0).
-- **Deliverables**: Spec v0.5, governance docs, license.
+### Phase 0: Research & Governance (Completed)
+- **Scope**: Finalize the domain model and ADRs, create open source licensing (Apache-2.0).
+- **Deliverables**: Governance docs, license, initial domain contracts in `spec/schemas/`.
 
 ### Phase 1: Core Domain Entities & Canonical Serialization
 - **Scope**: Define JSON Schemas (Draft 2020-12) for `AgentRun`, `Span`, `Fixture`, `TestScenario`, `Assertion`, `Policy`, `EvaluationResult`, and `ReliabilityResult`. Implement RFC 8785 JSON Canonicalization Scheme (JCS) with SHA-256 for deterministic content addressing.
@@ -93,7 +95,7 @@ This master roadmap outlines the progression of the project from inception (Phas
 
 ---
 
-## 4. Post-MVP Roadmap (Phases 10 - 16)
+## 4. Post-MVP Roadmap (Phases 10 - 18)
 
 Detailed engineering plans: **[`docs/plans/framework/`](framework/README.md)**.
 
@@ -106,3 +108,5 @@ Detailed engineering plans: **[`docs/plans/framework/`](framework/README.md)**.
 | **14** | Production Continuous Eval | Sample live production traces with default PII redaction and automated `TestScenario` proposal generation. | Streaming sampler, differential privacy |
 | **15** | Failure Mining & Clustering | Group similar production failures using semantic clustering to eliminate duplicate test scenario proposals. | Vector/DBSCAN clustering, deduplication |
 | **16** | Multi-Agent & Self-AEE | Multi-agent handoff/coordination evaluators; AEE remains a gust self-benchmark (no peer-framework leaderboard). | Multi-agent suite, CI self-score |
+| **17** | Semantic Hardening & Adoption | Correct evaluator/validation semantics; `gust init`; mutation score prominence; README front door. | Match/occurrence/recovery/latency/Validate; init CLI |
+| **18** | Real-Agent E2E Example | Realistic demo with real LLM + tools + intentional failure Gust detects (extends LangChain demo). | Deferred until after Phase 17 |

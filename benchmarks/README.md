@@ -6,10 +6,8 @@ self-score. It is not a comparison suite against other agent-eval tools.
 ## Latest results
 
 - **Docs site:** [Benchmarks](https://shadyd45.github.io/gust/benchmarks/) — metrics explained + [latest results](https://shadyd45.github.io/gust/benchmarks/results/)
-- **Repo:** **[RESULTS.md](RESULTS.md)** — refreshed via an automated PR from the
-  [`benchmark`](../.github/workflows/benchmark.yml) workflow after runs on `main`
-  (so a protected default branch still works). The same PR updates
-  `docs/benchmarks/results.md` for GitHub Pages.
+- **Repo:** **[RESULTS.md](RESULTS.md)** — checked in manually when numbers change
+- **CI runs:** [benchmark workflow](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml) — gates AEE + mock judge calibrate; writes the run’s report to the Actions job summary and uploads artifacts (does not push or open PRs)
 
 Machine-readable JSON: [`fixtures/gust_self_aee.json`](fixtures/gust_self_aee.json).
 
@@ -27,12 +25,14 @@ go build -o gust ./cmd/gust
   --site-doc docs/benchmarks/results.md
 ```
 
+Commit updated `RESULTS.md` / fixture JSON / docs site results when you intentionally refresh the published numbers.
+
 ## Layout
 
 ```text
 benchmarks/
   README.md
-  RESULTS.md              # latest self-report (CI-maintained)
+  RESULTS.md              # latest self-report (maintainer-updated)
   fixtures/
-    gust_self_aee.json    # latest JSON report (CI-maintained)
+    gust_self_aee.json    # latest JSON report (maintainer-updated)
 ```

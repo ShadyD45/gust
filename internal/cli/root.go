@@ -34,6 +34,7 @@ func NewRoot() *cobra.Command {
 		SilenceUsage:  true,
 	}
 	root.AddCommand(
+		newInitCmd(),
 		newAnalyzeCmd(),
 		newReplayCmd(),
 		newTestCmd(),

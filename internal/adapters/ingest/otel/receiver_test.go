@@ -174,14 +174,22 @@ func TestReceiver_IngestRunHTTP(t *testing.T) {
 	}
 	defer recv.Close()
 
+	now := time.Now().UTC()
 	run := api.AgentRun{
 		SchemaVersion: api.SchemaVersion,
 		RunID:         "run-export-1",
 		Agent:         api.AgentInfo{Name: "agent", Version: "1"},
 		Task:          api.TaskInfo{ID: "t", Input: "do it"},
-		Trace:         []api.Span{{SpanID: "s1", Name: "step"}},
-		Outcome:       api.RunOutcome{Status: "completed", Output: "ok"},
-		Metadata:      map[string]any{"sample_id": "sid-export"},
+		Trace: []api.Span{{
+			SpanID:    "s1",
+			Name:      "step",
+			Type:      api.SpanTypeAgent,
+			StartTime: now,
+			EndTime:   now.Add(time.Millisecond),
+			Status:    api.SpanStatus{Code: "ok"},
+		}},
+		Outcome:  api.RunOutcome{Status: "completed", Output: "ok"},
+		Metadata: map[string]any{"sample_id": "sid-export"},
 	}
 	body, _ := json.Marshal(run)
 	resp, err := http.Post(recv.Endpoint()+"/v1/runs", "application/json", bytes.NewReader(body))

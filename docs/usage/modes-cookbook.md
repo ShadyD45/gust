@@ -44,14 +44,14 @@ All nine assertion types, the evaluator each one resolves to, and the fields tha
 |---|---|---|---|
 | `task_success` | `task_success` | `parameters.expected_output` (optional substring) | `outcome.status == "completed"` and, if given, the output contains the substring |
 | `tool_call` (no `arguments`) | `tool_selection` | `tool` | A span with `type: tool` and that name exists |
-| `tool_call` (with `arguments`) | `tool_arguments` | `tool`, `arguments` | Some invocation of that tool has `attributes.input` matching every expected key |
-| `tool_sequence` | `tool_sequence` | `parameters.sequence: [names]` | Those tool names appear in that relative order (gaps allowed) |
+| `tool_call` (with `arguments`) | `tool_arguments` | `tool`, `arguments`, optional `parameters.occurrence` (`any` default, or `first` / `last` / 1-based index) | The selected occurrence(s) of that tool have `attributes.input` matching every expected key |
+| `tool_sequence` | `tool_sequence` | `parameters.sequence: [names]`, optional `parameters.match` (`subsequence` default, or `exact`) | Subsequence: names appear in relative order (gaps allowed). Exact: tool names equal the sequence with no extras |
 | `forbidden_tool_call` | `forbidden_tool` | `tool`, optional `arguments` | The tool was never called (or never with those arguments) |
 | `required_tool` | `required_tool` | `tool` | The tool was called at least once |
 | `max_steps` | `max_steps` | `limit` (default 10) | `len(trace) <= limit` |
-| `max_latency_ms` | `max_latency` | `limit` ms (default 5000) | Last span end minus first span start is within the limit |
-| `error_recovery` | `error_recovery` | — | No error spans, or an error occurred and the run still completed with later steps |
-| `schema_valid` | `schema_validation` | — | The run passes `AgentRun.Validate()` |
+| `max_latency_ms` | `max_latency` | `limit` ms (default 5000), optional `parameters.latency_source: wall_clock` | `max(end) - min(start)` across the trace is within the limit (order-independent) |
+| `error_recovery` | `error_recovery` | optional `parameters.after_error_tool`, `parameters.recovery_tools` | No matching error spans, or a later successful span retries the same op (or a listed recovery tool) |
+| `schema_valid` | `schema_validation` | — | The run passes `AgentRun.Validate()` (including span type/status/times) |
 
 Two of these are **hard constraints**: a failing `forbidden_tool` or `schema_validation` fails the build immediately in Mode 3, regardless of pass rate or `on_flaky`. Set `"criticality": "hard"` to document that intent in the assertion.
 

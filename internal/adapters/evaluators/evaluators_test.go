@@ -2,6 +2,7 @@ package evaluators
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -113,6 +114,73 @@ func TestToolArgumentsEvaluator(t *testing.T) {
 	}
 }
 
+func TestToolArgumentsOccurrence(t *testing.T) {
+	eval := &ToolArgumentsEvaluator{}
+	ctx := context.Background()
+	now := time.Now().UTC()
+	run := api.AgentRun{
+		SchemaVersion: api.SchemaVersion,
+		RunID:         "run_occ",
+		Agent:         api.AgentInfo{Name: "agent", Version: "1.0"},
+		Task:          api.TaskInfo{ID: "t1", Input: "cancel"},
+		Trace: []api.Span{
+			{
+				SpanID: "s1", Name: "cancel_order", Type: api.SpanTypeTool,
+				StartTime: now, EndTime: now.Add(time.Millisecond),
+				Attributes: map[string]any{"input": map[string]any{"order_id": 999}},
+				Status:     api.SpanStatus{Code: "ok"},
+			},
+			{
+				SpanID: "s2", Name: "cancel_order", Type: api.SpanTypeTool,
+				StartTime: now.Add(2 * time.Millisecond), EndTime: now.Add(3 * time.Millisecond),
+				Attributes: map[string]any{"input": map[string]any{"order_id": 123}},
+				Status:     api.SpanStatus{Code: "ok"},
+			},
+		},
+		Outcome: api.RunOutcome{Status: "completed"},
+	}
+
+	anyAssert := &api.Assertion{
+		Type: api.AssertToolCall, Tool: "cancel_order",
+		Arguments:  map[string]any{"order_id": 123},
+		Parameters: map[string]any{"occurrence": "any"},
+	}
+	res, err := eval.Evaluate(ctx, run, anyAssert, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("expected any to pass: %+v", res)
+	}
+
+	firstAssert := &api.Assertion{
+		Type: api.AssertToolCall, Tool: "cancel_order",
+		Arguments:  map[string]any{"order_id": 123},
+		Parameters: map[string]any{"occurrence": "first"},
+	}
+	res, err = eval.Evaluate(ctx, run, firstAssert, ports.EvaluationContext{})
+	if err != nil || res.Passed {
+		t.Fatalf("expected first to fail: %+v", res)
+	}
+
+	lastAssert := &api.Assertion{
+		Type: api.AssertToolCall, Tool: "cancel_order",
+		Arguments:  map[string]any{"order_id": 123},
+		Parameters: map[string]any{"occurrence": "last"},
+	}
+	res, err = eval.Evaluate(ctx, run, lastAssert, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("expected last to pass: %+v", res)
+	}
+
+	nthAssert := &api.Assertion{
+		Type: api.AssertToolCall, Tool: "cancel_order",
+		Arguments:  map[string]any{"order_id": 123},
+		Parameters: map[string]any{"occurrence": 2},
+	}
+	res, err = eval.Evaluate(ctx, run, nthAssert, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("expected occurrence 2 to pass: %+v", res)
+	}
+}
+
 func TestToolSequenceEvaluator(t *testing.T) {
 	eval := &ToolSequenceEvaluator{}
 	ctx := context.Background()
@@ -140,6 +208,60 @@ func TestToolSequenceEvaluator(t *testing.T) {
 	res, err = eval.Evaluate(ctx, run, assertFail, ports.EvaluationContext{})
 	if err != nil || res.Passed {
 		t.Fatalf("expected broken sequence to fail: %+v", res)
+	}
+}
+
+func TestToolSequenceMatchModes(t *testing.T) {
+	eval := &ToolSequenceEvaluator{}
+	ctx := context.Background()
+	now := time.Now().UTC()
+	run := api.AgentRun{
+		SchemaVersion: api.SchemaVersion,
+		RunID:         "run_seq",
+		Agent:         api.AgentInfo{Name: "agent", Version: "1.0"},
+		Task:          api.TaskInfo{ID: "t1", Input: "task"},
+		Trace: []api.Span{
+			{SpanID: "1", Name: "get_orders", Type: api.SpanTypeTool, StartTime: now, EndTime: now.Add(time.Millisecond), Status: api.SpanStatus{Code: "ok"}},
+			{SpanID: "2", Name: "lookup", Type: api.SpanTypeTool, StartTime: now.Add(2 * time.Millisecond), EndTime: now.Add(3 * time.Millisecond), Status: api.SpanStatus{Code: "ok"}},
+			{SpanID: "3", Name: "cancel_order", Type: api.SpanTypeTool, StartTime: now.Add(4 * time.Millisecond), EndTime: now.Add(5 * time.Millisecond), Status: api.SpanStatus{Code: "ok"}},
+		},
+		Outcome: api.RunOutcome{Status: "completed"},
+	}
+
+	sub := &api.Assertion{
+		Type: api.AssertToolSequence,
+		Parameters: map[string]any{
+			"sequence": []any{"get_orders", "cancel_order"},
+			"match":    "subsequence",
+		},
+	}
+	res, err := eval.Evaluate(ctx, run, sub, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("subsequence should pass with extras: %+v", res)
+	}
+
+	exact := &api.Assertion{
+		Type: api.AssertToolSequence,
+		Parameters: map[string]any{
+			"sequence": []any{"get_orders", "cancel_order"},
+			"match":    "exact",
+		},
+	}
+	res, err = eval.Evaluate(ctx, run, exact, ports.EvaluationContext{})
+	if err != nil || res.Passed {
+		t.Fatalf("exact should fail with extras: %+v", res)
+	}
+
+	exactOK := &api.Assertion{
+		Type: api.AssertToolSequence,
+		Parameters: map[string]any{
+			"sequence": []any{"get_orders", "lookup", "cancel_order"},
+			"match":    "exact",
+		},
+	}
+	res, err = eval.Evaluate(ctx, run, exactOK, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("exact should pass when identical: %+v", res)
 	}
 }
 
@@ -211,6 +333,54 @@ func TestMaxLatencyEvaluator(t *testing.T) {
 	}
 }
 
+func TestMaxLatencyUnorderedSpans(t *testing.T) {
+	eval := &MaxLatencyEvaluator{}
+	ctx := context.Background()
+	now := time.Now().UTC()
+	// Slice order is reverse of wall-clock order; old logic would get negative/wrong duration.
+	run := api.AgentRun{
+		SchemaVersion: api.SchemaVersion,
+		RunID:         "run_lat",
+		Agent:         api.AgentInfo{Name: "agent", Version: "1.0"},
+		Task:          api.TaskInfo{ID: "t1", Input: "task"},
+		Trace: []api.Span{
+			{
+				SpanID: "late", Name: "b", Type: api.SpanTypeTool,
+				StartTime: now.Add(50 * time.Millisecond), EndTime: now.Add(100 * time.Millisecond),
+				Status: api.SpanStatus{Code: "ok"},
+			},
+			{
+				SpanID: "early", Name: "a", Type: api.SpanTypeTool,
+				StartTime: now, EndTime: now.Add(10 * time.Millisecond),
+				Status: api.SpanStatus{Code: "ok"},
+			},
+		},
+		Outcome: api.RunOutcome{Status: "completed"},
+	}
+
+	res, err := eval.Evaluate(ctx, run, &api.Assertion{Type: api.AssertMaxLatency, Limit: 200}, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("expected pass within 200ms wall clock: %+v", res)
+	}
+	actualMs, ok := res.Evidence["actual_latency_ms"].(int64)
+	if !ok {
+		if v, ok2 := res.Evidence["actual_latency_ms"].(int); ok2 {
+			actualMs = int64(v)
+			ok = true
+		}
+	}
+	if !ok || actualMs != 100 {
+		if !strings.Contains(res.Message, "100") {
+			t.Fatalf("expected ~100ms wall latency, got evidence=%v message=%q", res.Evidence, res.Message)
+		}
+	}
+
+	res, err = eval.Evaluate(ctx, run, &api.Assertion{Type: api.AssertMaxLatency, Limit: 50}, ports.EvaluationContext{})
+	if err != nil || res.Passed {
+		t.Fatalf("expected fail for 50ms limit on 100ms span: %+v", res)
+	}
+}
+
 func TestErrorRecoveryEvaluator(t *testing.T) {
 	eval := &ErrorRecoveryEvaluator{}
 	ctx := context.Background()
@@ -245,6 +415,55 @@ func TestErrorRecoveryEvaluator(t *testing.T) {
 	res, err := eval.Evaluate(ctx, recoveredRun, nil, ports.EvaluationContext{})
 	if err != nil || !res.Passed {
 		t.Fatalf("expected pass for recovered run: %+v", res)
+	}
+}
+
+func TestErrorRecoveryRejectsUnrelatedSuccess(t *testing.T) {
+	eval := &ErrorRecoveryEvaluator{}
+	ctx := context.Background()
+	now := time.Now().UTC()
+	// Review false-positive: get_customer errors, then unrelated weather succeeds.
+	run := api.AgentRun{
+		SchemaVersion: api.SchemaVersion,
+		RunID:         "run_false_rec",
+		Agent:         api.AgentInfo{Name: "agent", Version: "1.0"},
+		Task:          api.TaskInfo{ID: "t1", Input: "task"},
+		Trace: []api.Span{
+			{
+				SpanID: "e1", Name: "get_customer", Type: api.SpanTypeTool,
+				StartTime: now, EndTime: now.Add(time.Millisecond),
+				Status: api.SpanStatus{Code: "error"},
+			},
+			{
+				SpanID: "w1", Name: "retrieve_weather", Type: api.SpanTypeTool,
+				StartTime: now.Add(2 * time.Millisecond), EndTime: now.Add(3 * time.Millisecond),
+				Status: api.SpanStatus{Code: "ok"},
+			},
+			{
+				SpanID: "a1", Name: "final_answer", Type: api.SpanTypeAgent,
+				StartTime: now.Add(4 * time.Millisecond), EndTime: now.Add(5 * time.Millisecond),
+				Status: api.SpanStatus{Code: "ok"},
+			},
+		},
+		Outcome: api.RunOutcome{Status: "completed"},
+	}
+
+	res, err := eval.Evaluate(ctx, run, nil, ports.EvaluationContext{})
+	if err != nil || res.Passed {
+		t.Fatalf("expected fail when recovery is unrelated tool: %+v", res)
+	}
+
+	// Explicit recovery_tools can allow a different successful tool.
+	okAssert := &api.Assertion{
+		Type: api.AssertErrorRecovery,
+		Parameters: map[string]any{
+			"after_error_tool": "get_customer",
+			"recovery_tools":   []any{"retrieve_weather"},
+		},
+	}
+	res, err = eval.Evaluate(ctx, run, okAssert, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("expected pass with explicit recovery_tools: %+v", res)
 	}
 }
 

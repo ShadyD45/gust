@@ -1,5 +1,6 @@
 # Self-AEE + judge calibration.
-# On main, opens a PR to refresh benchmarks/RESULTS.md (safe with branch protection).
+# Writes results to the job summary and uploads artifacts.
+# Does not push or open PRs — refresh benchmarks/RESULTS.md locally when needed.
 name: benchmark
 run-name: "benchmark : ${{ github.head_ref || github.ref_name }}"
 
@@ -65,6 +66,29 @@ jobs:
             --dataset testdata/judge/calibration/v1.json \
             --out "${{ runner.temp }}/judge-cal.json"
 
+      - name: Job summary
+        run: |
+          {
+            echo "## AEE self-report"
+            echo ""
+            echo "Latest workflow runs: [benchmark](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)"
+            echo ""
+            echo "Checked-in numbers live in \`benchmarks/RESULTS.md\` (updated manually from local when needed)."
+            echo ""
+            echo "### This run"
+            echo ""
+            cat benchmarks/RESULTS.md
+            echo ""
+            echo "### Judge calibrate (mock)"
+            echo ""
+            if command -v jq >/dev/null 2>&1; then
+              jq -r '"Spearman ρ = \(.spearman_rho // .spearman // "n/a")"' "${{ runner.temp }}/judge-cal.json" 2>/dev/null \
+                || echo "_See artifact / calibrate JSON for details._"
+            else
+              echo "_Mock calibrate completed — see uploaded artifacts for AEE JSON._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -74,66 +98,3 @@ jobs:
             benchmarks/fixtures/gust_self_aee.json
             docs/benchmarks/results.md
           if-no-files-found: error
-
-  publish-results:
-    name: Open RESULTS.md PR
-    needs: aee
-    # Only from main (or manual). Never push to main — open a PR so branch protection works.
-    if: |
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: aee-report
-          path: .
-
-      - name: Open or update PR
-        id: cpr
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(benchmarks): refresh AEE self-report"
-          title: "chore(benchmarks): refresh AEE self-report"
-          body: |
-            ## Summary
-            Automated refresh of gust's AEE self-benchmark after a successful `benchmark` run on `main`.
-
-            - Updates `benchmarks/RESULTS.md`
-            - Updates `benchmarks/fixtures/gust_self_aee.json`
-            - Updates `docs/benchmarks/results.md` (docs site)
-
-            ## Test plan
-            - [ ] Confirm AEE tables look sane (DR / FPR / throughput / H7)
-            - [ ] Merge when green
-
-            _Opened by the `benchmark` workflow — safe with a protected `main` branch._
-          branch: chore/aee-self-report
-          delete-branch: true
-          add-paths: |
-            benchmarks/RESULTS.md
-            benchmarks/fixtures/gust_self_aee.json
-            docs/benchmarks/results.md
-
-      - name: Summary
-        run: |
-          {
-            echo "## AEE results PR"
-            echo ""
-            if [ "${{ steps.cpr.outputs.pull-request-number }}" != "" ]; then
-              echo "**PR:** #${{ steps.cpr.outputs.pull-request-number }} — ${{ steps.cpr.outputs.pull-request-url }}"
-              echo ""
-              echo "Operation: \`${{ steps.cpr.outputs.pull-request-operation }}\`"
-            else
-              echo "_No changes — \`benchmarks/RESULTS.md\` already up to date._"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
