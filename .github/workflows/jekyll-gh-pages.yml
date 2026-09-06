@@ -2,6 +2,7 @@
 # actions/jekyll-build-pages cannot install just-the-docs (not in github-pages).
 # We keep this workflow file and build from docs/ with Bundler instead.
 name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+run-name: "${{ github.workflow }} : ${{ github.head_ref || github.ref_name }}"
 
 on:
   push:

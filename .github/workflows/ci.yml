@@ -1,6 +1,7 @@
 # Lean CI for GitHub free tier (minimize billed minutes).
 # Tips: keep this Linux-only (Windows=2x, macOS=10x minutes).
 name: ci
+run-name: "${{ github.workflow }} : ${{ github.head_ref || github.ref_name }}"
 
 on:
   push:

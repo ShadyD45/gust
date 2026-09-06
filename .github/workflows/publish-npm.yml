@@ -1,6 +1,10 @@
+# DISABLED until NPM_TOKEN is configured in repo secrets.
+# TODO: Re-enable this workflow (remove the job-level `if: false`) after adding
+# NPM_TOKEN, then publish sdk/typescript on v* tags.
+#
 # Publishes sdk/typescript to npm when a v* tag is pushed.
-# No-op without NPM_TOKEN. Does not run on ordinary commits.
 name: publish-npm
+run-name: "${{ github.workflow }} : ${{ github.head_ref || github.ref_name }}"
 
 on:
   push:
@@ -13,8 +17,8 @@ permissions:
 
 jobs:
   npm:
+    if: false
     runs-on: ubuntu-latest
-    if: ${{ secrets.NPM_TOKEN != '' }}
     defaults:
       run:
         working-directory: sdk/typescript

@@ -2,7 +2,9 @@
 
 ## Status
 
-**Shipped.** Python SDK (`RunRecorder`, `FixtureClient`, `EvaluatorPlugin`, `run_sample` / `serve_sample`), TypeScript SDK (`sdk/typescript`), LangChain adapter (`gust-sdk[langchain]`), compatibility matrix (`docs/usage/compatibility.md`), and tag-triggered PyPI/npm publish workflows (secrets required to actually publish).
+**Shipped.** Python SDK (`RunRecorder`, `FixtureClient`, `EvaluatorPlugin`, `run_sample` / `serve_sample`), TypeScript SDK (`sdk/typescript`), LangChain adapter (`gust-sdk[langchain]`), and compatibility matrix (`docs/usage/compatibility.md`).
+
+**Follow-up — enable artifact publish:** Re-enable [`.github/workflows/publish-npm.yml`](../../../.github/workflows/publish-npm.yml) and [`.github/workflows/publish-pypi.yml`](../../../.github/workflows/publish-pypi.yml) after adding `NPM_TOKEN` and `PYPI_API_TOKEN` as repository secrets. Both workflows are currently `if: false` so they never run on tags or `workflow_dispatch`. Remove that guard, then publish `sdk/typescript` (npm) and `sdk/python` (PyPI) on `v*` tags.
 
 ## Objectives
 
