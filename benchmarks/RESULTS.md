@@ -6,7 +6,7 @@ hand - re-run `gust aee report` instead.
 
 ## gust AEE self-report
 
-**Gate:** **PASS** | **Score:** `1.000` | **Generated:** `2026-09-06T19:16:05Z`
+**Gate:** **PASS** | **Score:** `1.000` | **Generated:** `2026-09-06T19:22:43Z`
 
 ### Metrics
 
@@ -14,7 +14,7 @@ hand - re-run `gust aee report` instead.
 | --- | --- | --- |
 | Detection rate | **100.0%** (16/16 mutants) | >= 90% |
 | False positive rate | **0.0%** | <= 5% |
-| Eval throughput | **19.2M** cases/sec | >= 1000 |
+| Eval throughput | **10.5M** cases/sec | >= 1000 |
 | Reproducibility | **100%** identical (20 trials) | 100% |
 
 ### Reliability engine (H7)
