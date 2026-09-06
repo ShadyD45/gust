@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="gust-logo.png" alt="Gust — Test what happens when your agent meets a world that doesn’t behave." width="420" />
+  <img src="gust-logo.png" alt="Gust - Test what happens when your agent meets a world that doesn’t behave." width="420" />
 </p>
 
-**Test infrastructure for autonomous software** — the role that JUnit, a mocking framework, and a CI regression gate play for ordinary backends, adapted for LLM-driven agents that do not give the same answer twice.
+**Test infrastructure for autonomous software** - the role that JUnit, a mocking framework, and a CI regression gate play for ordinary backends, adapted for LLM-driven agents that do not give the same answer twice.
 
 gust is **not** a final-answer LLM evaluation library. It measures agent behavior (tool choice, arguments, sequences, safety constraints, latency) and treats correctness as a **statistical pass rate** with confidence intervals.
 
