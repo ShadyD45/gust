@@ -54,3 +54,19 @@ jobs:
         run: |
           chmod +x demo/run.sh
           ./demo/run.sh --bin "${{ github.workspace }}/gust"
+
+      # Python SDK: stdlib-only package, so this is a pytest install and run.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: SDK test
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest sdk/python -q
+
+      - name: SDK smoke
+        run: |
+          python sdk/python/examples/record_and_analyze.py \
+            --out "${{ runner.temp }}/sdk_run.json" \
+            --gust "${{ github.workspace }}/gust"

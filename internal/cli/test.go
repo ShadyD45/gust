@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	coretest "gust/internal/core/test"
 	"gust/internal/core/policy"
+	coretest "gust/internal/core/test"
 	"gust/pkg/api"
 )
 
@@ -54,7 +54,7 @@ func newTestCmd() *cobra.Command {
 				return err
 			}
 
-			sampler := coretest.NewSampler(builtinEvaluators())
+			sampler := coretest.NewSampler(activeEvaluators())
 			result, err := sampler.RunScenario(context.Background(), coretest.SamplingConfig{
 				Scenario:    sc,
 				Runner:      runner,

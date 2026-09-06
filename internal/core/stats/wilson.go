@@ -42,7 +42,7 @@ func CalculateWilsonScore(passes, total int, confidence float64) (WilsonInterval
 	z2 := z * z
 
 	center := (k + z2/2.0) / (n + z2)
-	margin := (z / (n + z2)) * math.Sqrt((k*(n-k)/n) + (z2/4.0))
+	margin := (z / (n + z2)) * math.Sqrt((k*(n-k)/n)+(z2/4.0))
 
 	lower := math.Max(0.0, center-margin)
 	upper := math.Min(1.0, center+margin)

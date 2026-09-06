@@ -12,13 +12,13 @@ import (
 // RenderYAML emits a human-reviewed scenario template with H8 warnings.
 func RenderYAML(sc *api.TestScenario) ([]byte, error) {
 	type yamlScenario struct {
-		ID          string                    `yaml:"id"`
-		Version     string                    `yaml:"version"`
-		Description string                    `yaml:"description"`
-		Task        api.TaskInfo              `yaml:"task"`
-		Environment api.EnvironmentSpec       `yaml:"environment"`
-		Assertions  []api.Assertion           `yaml:"assertions"`
-		Reliability api.ReliabilityConfig     `yaml:"reliability"`
+		ID          string                     `yaml:"id"`
+		Version     string                     `yaml:"version"`
+		Description string                     `yaml:"description"`
+		Task        api.TaskInfo               `yaml:"task"`
+		Environment api.EnvironmentSpec        `yaml:"environment"`
+		Assertions  []api.Assertion            `yaml:"assertions"`
+		Reliability api.ReliabilityConfig      `yaml:"reliability"`
 		Provenance  api.TestScenarioProvenance `yaml:"provenance"`
 	}
 

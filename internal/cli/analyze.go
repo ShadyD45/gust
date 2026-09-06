@@ -36,7 +36,7 @@ func newAnalyzeCmd() *cobra.Command {
 				return err
 			}
 
-			engine := analyze.NewEngine(builtinEvaluators())
+			engine := analyze.NewEngine(activeEvaluators())
 			report, err := engine.AnalyzeRun(context.Background(), run, assertions, ports.EvaluationContext{
 				ScenarioID: run.RunID,
 			})

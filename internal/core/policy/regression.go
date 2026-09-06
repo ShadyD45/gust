@@ -17,12 +17,12 @@ type ExperimentStats struct {
 
 // RegressionResult describes baseline vs candidate comparison.
 type RegressionResult struct {
-	Regressed          bool    `json:"regressed"`
-	PassRateDrop       float64 `json:"pass_rate_drop"`
+	Regressed            bool    `json:"regressed"`
+	PassRateDrop         float64 `json:"pass_rate_drop"`
 	LatencyIncreaseRatio float64 `json:"latency_increase_ratio"`
-	Significant        bool    `json:"significant"`
-	PValue             float64 `json:"p_value"`
-	Message            string  `json:"message"`
+	Significant          bool    `json:"significant"`
+	PValue               float64 `json:"p_value"`
+	Message              string  `json:"message"`
 }
 
 // CompareRegression detects statistically meaningful regressions.

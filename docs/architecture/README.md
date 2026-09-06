@@ -10,3 +10,5 @@ This directory describes how gust is structured and why. Read in this order:
 6. **[extension-points.md](extension-points.md)** — Registry, plugins, adding components
 
 Canonical product requirements live in [`gust_Specification_v0.5.md`](../../gust_Specification_v0.5.md). Implementation phase plans live in [`docs/plans/mvp/`](../plans/mvp/).
+
+Looking for task-oriented guides rather than design rationale? See [`docs/usage/`](../usage/) to run gust against your own agent, and [`docs/extending/`](../extending/) to add evaluators, runners, or cross-language plugins.

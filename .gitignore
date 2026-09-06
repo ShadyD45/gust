@@ -3,9 +3,10 @@
 /gust.exe
 *.exe
 
-# Demo outputs
+# Demo and example outputs
 /demo/out/*
 !/demo/out/.gitkeep
+/out/
 
 # IDE / OS
 .idea/
@@ -16,3 +17,11 @@
 # Go
 coverage.out
 *.test
+
+# Python SDK
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/

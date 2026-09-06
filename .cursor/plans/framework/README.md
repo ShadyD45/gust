@@ -4,6 +4,8 @@ Post-MVP work that turns gust from a Go-native MVP into production-ready **test 
 
 Read after the MVP index: [`../mvp/README.md`](../mvp/README.md) and the master [`../roadmap.md`](../roadmap.md).
 
+Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel`, docs in [`../../usage/otel-ingest.md`](../../usage/otel-ingest.md)) and the Phase 11 Python capture SDK ([`sdk/python/`](../../../sdk/python/)). User-facing guides live in [`docs/usage/`](../../usage/) and [`docs/extending/`](../../extending/).
+
 ## Goals
 
 1. **Ingest** real agent traces without custom capture glue (OTel / OpenInference).

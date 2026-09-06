@@ -30,7 +30,7 @@ func newMutateCmd() *cobra.Command {
 			}
 
 			_ = n // reserved for future multi-apply; MVP applies each mutator once per case
-			runner := mutate.NewRunner(builtinMutators(), builtinEvaluators())
+			runner := mutate.NewRunner(activeMutators(), activeEvaluators())
 			report, err := runner.RunBenchmark(context.Background(), []mutate.GoldenCase{
 				{Run: run, Assertions: assertions},
 			})

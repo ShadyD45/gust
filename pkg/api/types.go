@@ -14,7 +14,7 @@ const SchemaVersion = "0.5"
 var (
 	ErrInvalidSchemaVersion = errors.New("invalid or unsupported schema version")
 	ErrMissingRequiredField = errors.New("missing required field")
-	ErrInvalidFieldValue   = errors.New("invalid field value")
+	ErrInvalidFieldValue    = errors.New("invalid field value")
 )
 
 // AgentRun represents a captured or recorded execution trace.

@@ -8,13 +8,15 @@
 - Mutators
 - Test runners
 
-Built-ins register at init; CLI resolves components by name (`--runner synthetic`, mutator class lists, etc.).
+Built-ins register at init; CLI resolves components by name (`--runner synthetic`, mutator class lists, etc.). The CLI merges registry-registered evaluators and mutators with the built-in suites, so registering is sufficient to make a custom component available to `analyze`, `test`, and `mutate`.
+
+Task-oriented walkthroughs live in [`docs/extending/`](../extending/); this page is the map.
 
 ## Adding an evaluator
 
 1. Implement `ports.Evaluator` (`Name`, `Version`, `Evaluate`).
 2. Register with the registry.
-3. Map assertion types to evaluator names in Analyze (or extend the resolver).
+3. Assertion types resolve to the evaluator of the same name; extend `resolveEvaluatorName` only when remapping an existing type.
 4. Prefer structured `evidence` maps for CI/debug output.
 
 ## Adding a mutator
@@ -32,7 +34,13 @@ Built-ins register at init; CLI resolves components by name (`--runner synthetic
 
 ## Tier-2 wire plugins
 
-`internal/adapters/wire` hosts JSON-RPC 2.0 over stdio for cross-language plugins (Python/TypeScript evaluators). The supervisor manages process lifecycle, timeouts, and a scrubbed environment. Extend by implementing the wire methods expected by the client and wrapping them in a Go adapter that satisfies a port interface.
+`internal/adapters/wire` hosts JSON-RPC 2.0 over stdio for cross-language plugins (Python/TypeScript evaluators). The supervisor manages process lifecycle, timeouts, and a scrubbed environment limited to the OS baseline needed to start an interpreter; plugin stderr is forwarded so failures are debuggable. Extend by implementing the wire methods expected by the client and wrapping them in a Go adapter that satisfies a port interface.
+
+`sdk/python` provides `EvaluatorPlugin` + `serve()`, which implement the transport so a plugin author only writes `evaluate`.
+
+## Ingestion adapters
+
+`internal/adapters/ingest/otel` maps OTLP JSON exports using OpenInference semantic conventions onto `api.AgentRun` (`gust ingest otel`). Mapping is pure and deterministic; unmappable traces produce typed errors rather than partial runs. Add a format by implementing an equivalent mapper package and a subcommand under `gust ingest`.
 
 ## Fixture / store adapters
 

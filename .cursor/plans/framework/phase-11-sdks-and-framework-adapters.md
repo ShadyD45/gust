@@ -1,5 +1,11 @@
 # Phase 11: SDKs and Framework Adapters
 
+## Status
+
+The Python capture SDK is **shipped** in [`sdk/python`](../../../sdk/python/): `RunRecorder` (AgentRun capture), `FixtureClient` (mock proxy client honoring `AGENTEVAL_FIXTURE_ENDPOINT`), and `EvaluatorPlugin` + `serve()` (Tier-2 wire plugins). Stdlib-only, tested in CI, with a Go-side integration test that drives the example plugin through the wire supervisor.
+
+Remaining in this phase: TypeScript SDK, packaged framework adapters (LangChain first), PyPI/npm publication, and the compatibility matrix.
+
 ## Objectives
 
 1. Publish lightweight **Python** and **TypeScript** client SDKs that emit `AgentRun` / call the wire protocol or HTTP fixture proxy.

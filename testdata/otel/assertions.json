@@ -1,0 +1,7 @@
+[
+  { "id": "a1", "type": "task_success", "parameters": { "expected_output": "cancelled" } },
+  { "id": "a2", "type": "tool_call", "tool": "get_orders", "arguments": { "customer_id": 42 } },
+  { "id": "a3", "type": "tool_call", "tool": "cancel_order", "arguments": { "order_id": 123 } },
+  { "id": "a4", "type": "forbidden_tool_call", "tool": "forbidden_admin_access", "criticality": "hard" },
+  { "id": "a5", "type": "tool_sequence", "parameters": { "sequence": ["get_orders", "cancel_order"] } }
+]

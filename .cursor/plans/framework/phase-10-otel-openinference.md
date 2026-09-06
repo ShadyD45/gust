@@ -1,5 +1,11 @@
 # Phase 10: OpenTelemetry / OpenInference Ingestion
 
+## Status
+
+File-based ingestion is **shipped**: `internal/adapters/ingest/otel` maps OTLP JSON exports to `AgentRun`, exposed as `gust ingest otel --file … [--trace-id …] [--list-traces]`. Golden fixture in `testdata/otel/`, user documentation in [`docs/usage/otel-ingest.md`](../../usage/otel-ingest.md).
+
+Remaining in this phase: the live OTLP HTTP/gRPC receiver.
+
 ## Objectives
 
 1. Ingest agent traces from **OpenTelemetry** and **OpenInference** semantic conventions into `AgentRun`.

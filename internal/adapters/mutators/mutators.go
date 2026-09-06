@@ -30,8 +30,10 @@ func cloneRun(run api.AgentRun) api.AgentRun {
 // 1. RemoveRequiredToolMutator
 type RemoveRequiredToolMutator struct{}
 
-func (m *RemoveRequiredToolMutator) Name() string              { return "remove_required_tool" }
-func (m *RemoveRequiredToolMutator) Class() ports.MutationClass { return ports.MutClassRemoveRequiredTool }
+func (m *RemoveRequiredToolMutator) Name() string { return "remove_required_tool" }
+func (m *RemoveRequiredToolMutator) Class() ports.MutationClass {
+	return ports.MutClassRemoveRequiredTool
+}
 func (m *RemoveRequiredToolMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
 	toolIdx := -1
@@ -65,7 +67,7 @@ func (m *RemoveRequiredToolMutator) Mutate(ctx context.Context, run api.AgentRun
 // 2. WrongToolMutator
 type WrongToolMutator struct{}
 
-func (m *WrongToolMutator) Name() string              { return "wrong_tool" }
+func (m *WrongToolMutator) Name() string               { return "wrong_tool" }
 func (m *WrongToolMutator) Class() ports.MutationClass { return ports.MutClassWrongTool }
 func (m *WrongToolMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
@@ -100,7 +102,7 @@ func (m *WrongToolMutator) Mutate(ctx context.Context, run api.AgentRun) (api.Mu
 // 3. CorruptArgumentMutator
 type CorruptArgumentMutator struct{}
 
-func (m *CorruptArgumentMutator) Name() string              { return "corrupt_argument" }
+func (m *CorruptArgumentMutator) Name() string               { return "corrupt_argument" }
 func (m *CorruptArgumentMutator) Class() ports.MutationClass { return ports.MutClassCorruptArgument }
 func (m *CorruptArgumentMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
@@ -133,7 +135,7 @@ func (m *CorruptArgumentMutator) Mutate(ctx context.Context, run api.AgentRun) (
 // 4. DuplicateCallMutator
 type DuplicateCallMutator struct{}
 
-func (m *DuplicateCallMutator) Name() string              { return "duplicate_call" }
+func (m *DuplicateCallMutator) Name() string               { return "duplicate_call" }
 func (m *DuplicateCallMutator) Class() ports.MutationClass { return ports.MutClassDuplicateCall }
 func (m *DuplicateCallMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
@@ -162,7 +164,7 @@ func (m *DuplicateCallMutator) Mutate(ctx context.Context, run api.AgentRun) (ap
 // 5. InfiniteLoopMutator
 type InfiniteLoopMutator struct{}
 
-func (m *InfiniteLoopMutator) Name() string              { return "infinite_loop" }
+func (m *InfiniteLoopMutator) Name() string               { return "infinite_loop" }
 func (m *InfiniteLoopMutator) Class() ports.MutationClass { return ports.MutClassInfiniteLoop }
 func (m *InfiniteLoopMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
@@ -194,7 +196,7 @@ func (m *InfiniteLoopMutator) Mutate(ctx context.Context, run api.AgentRun) (api
 // 6. SkipRecoveryMutator
 type SkipRecoveryMutator struct{}
 
-func (m *SkipRecoveryMutator) Name() string              { return "skip_recovery" }
+func (m *SkipRecoveryMutator) Name() string               { return "skip_recovery" }
 func (m *SkipRecoveryMutator) Class() ports.MutationClass { return ports.MutClassSkipRecovery }
 func (m *SkipRecoveryMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
@@ -232,8 +234,10 @@ func (m *SkipRecoveryMutator) Mutate(ctx context.Context, run api.AgentRun) (api
 // 7. ExcessiveToolCallsMutator
 type ExcessiveToolCallsMutator struct{}
 
-func (m *ExcessiveToolCallsMutator) Name() string              { return "excessive_tool_calls" }
-func (m *ExcessiveToolCallsMutator) Class() ports.MutationClass { return ports.MutClassExcessiveToolCalls }
+func (m *ExcessiveToolCallsMutator) Name() string { return "excessive_tool_calls" }
+func (m *ExcessiveToolCallsMutator) Class() ports.MutationClass {
+	return ports.MutClassExcessiveToolCalls
+}
 func (m *ExcessiveToolCallsMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
 	for i := 0; i < 25; i++ {
@@ -258,8 +262,10 @@ func (m *ExcessiveToolCallsMutator) Mutate(ctx context.Context, run api.AgentRun
 // 8. IntroduceForbiddenToolMutator
 type IntroduceForbiddenToolMutator struct{}
 
-func (m *IntroduceForbiddenToolMutator) Name() string              { return "introduce_forbidden_tool" }
-func (m *IntroduceForbiddenToolMutator) Class() ports.MutationClass { return ports.MutClassIntroduceForbidden }
+func (m *IntroduceForbiddenToolMutator) Name() string { return "introduce_forbidden_tool" }
+func (m *IntroduceForbiddenToolMutator) Class() ports.MutationClass {
+	return ports.MutClassIntroduceForbidden
+}
 func (m *IntroduceForbiddenToolMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
 	cloned.Trace = append(cloned.Trace, api.Span{
@@ -285,8 +291,10 @@ func (m *IntroduceForbiddenToolMutator) Mutate(ctx context.Context, run api.Agen
 // 9. ChangeFinalOutputMutator
 type ChangeFinalOutputMutator struct{}
 
-func (m *ChangeFinalOutputMutator) Name() string              { return "change_final_output" }
-func (m *ChangeFinalOutputMutator) Class() ports.MutationClass { return ports.MutClassChangeFinalOutput }
+func (m *ChangeFinalOutputMutator) Name() string { return "change_final_output" }
+func (m *ChangeFinalOutputMutator) Class() ports.MutationClass {
+	return ports.MutClassChangeFinalOutput
+}
 func (m *ChangeFinalOutputMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
 	cloned := cloneRun(run)
 	cloned.Outcome.Output = "The operation completely failed."

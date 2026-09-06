@@ -41,6 +41,7 @@ func NewRoot() *cobra.Command {
 		newMutateCmd(),
 		newCompareCmd(),
 		newScenarioCmd(),
+		newIngestCmd(),
 	)
 	return root
 }
@@ -100,12 +101,37 @@ func loadScenario(path string) (api.TestScenario, error) {
 	return sc, nil
 }
 
-func builtinEvaluators() []ports.Evaluator {
-	return evaluators.AllBuiltinEvaluators()
+// activeEvaluators returns the built-in suite plus any evaluators registered
+// with the default registry (custom Go evaluators, wire plugins).
+func activeEvaluators() []ports.Evaluator {
+	list := evaluators.AllBuiltinEvaluators()
+	seen := make(map[string]struct{}, len(list))
+	for _, e := range list {
+		seen[e.Name()] = struct{}{}
+	}
+	for _, e := range registry.DefaultRegistry.ListEvaluators() {
+		if _, dup := seen[e.Name()]; dup {
+			continue
+		}
+		list = append(list, e)
+	}
+	return list
 }
 
-func builtinMutators() []ports.Mutator {
-	return mutators.AllBuiltinMutators()
+// activeMutators returns the built-in mutation classes plus any registered externally.
+func activeMutators() []ports.Mutator {
+	list := mutators.AllBuiltinMutators()
+	seen := make(map[string]struct{}, len(list))
+	for _, m := range list {
+		seen[m.Name()] = struct{}{}
+	}
+	for _, m := range registry.DefaultRegistry.ListMutators() {
+		if _, dup := seen[m.Name()]; dup {
+			continue
+		}
+		list = append(list, m)
+	}
+	return list
 }
 
 func resolveRunner(name, endpoint, model string, passProb float64) (ports.TestRunner, error) {

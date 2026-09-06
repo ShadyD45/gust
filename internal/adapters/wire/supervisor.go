@@ -12,6 +12,35 @@ import (
 	"gust/pkg/api"
 )
 
+// baselineEnvVars are the only variables forwarded to plugin processes.
+// They cover interpreter startup (PATH, temp dirs, user profile) on both
+// POSIX and Windows without exposing application credentials.
+var baselineEnvVars = []string{
+	"PATH",
+	"HOME",
+	"LANG",
+	"TMPDIR",
+	"SYSTEMROOT",
+	"SYSTEMDRIVE",
+	"USERPROFILE",
+	"LOCALAPPDATA",
+	"APPDATA",
+	"PATHEXT",
+	"COMSPEC",
+	"TEMP",
+	"TMP",
+}
+
+func scrubbedEnv() []string {
+	env := make([]string, 0, len(baselineEnvVars))
+	for _, key := range baselineEnvVars {
+		if value, ok := os.LookupEnv(key); ok {
+			env = append(env, key+"="+value)
+		}
+	}
+	return env
+}
+
 // PluginProcess manages the lifecycle of an external child process speaking JSON-RPC.
 type PluginProcess struct {
 	cmd      *exec.Cmd
@@ -25,13 +54,11 @@ type PluginProcess struct {
 func StartPlugin(ctx context.Context, command string, args ...string) (*PluginProcess, error) {
 	cmd := exec.CommandContext(ctx, command, args...)
 
-	// Scrub environment: inherit only safe baseline PATH and OS vars
-	cmd.Env = []string{
-		"PATH=" + os.Getenv("PATH"),
-		"SYSTEMROOT=" + os.Getenv("SYSTEMROOT"),
-		"HOME=" + os.Getenv("HOME"),
-		"USERPROFILE=" + os.Getenv("USERPROFILE"),
-	}
+	// Scrub environment: inherit only the OS baseline an interpreter needs to
+	// start. Credentials and application configuration are deliberately not
+	// passed through — an evaluator that needs production secrets is not
+	// deterministic and does not belong in a CI gate.
+	cmd.Env = scrubbedEnv()
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -43,6 +70,11 @@ func StartPlugin(ctx context.Context, command string, args ...string) (*PluginPr
 		stdin.Close()
 		return nil, fmt.Errorf("failed to open stdout pipe: %w", err)
 	}
+
+	// stdout carries the protocol, so plugin diagnostics belong on stderr.
+	// Forward it rather than discarding it: a plugin that fails its handshake
+	// is otherwise impossible to debug.
+	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
 		stdin.Close()

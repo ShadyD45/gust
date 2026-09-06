@@ -118,4 +118,3 @@ func TestWireClientTimeout(t *testing.T) {
 		t.Errorf("expected context.DeadlineExceeded, got %v", err)
 	}
 }
-

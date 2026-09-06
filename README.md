@@ -64,6 +64,27 @@ Or invoke commands directly:
 | `2` | Configuration / runtime error |
 | `3` | Flaky failure when `on_flaky: fail` |
 
+## Use it with your agent
+
+gust reads a JSON document describing what your agent did, so integration is a recorder in your tool-dispatch path — not a rewrite. **[docs/usage/](docs/usage/)** walks through it:
+
+| Guide | What it covers |
+|-------|----------------|
+| [Integrate your app](docs/usage/integrate-your-app.md) | Emit an `AgentRun` from Python, TypeScript, or Go and run your first gate |
+| [Modes cookbook](docs/usage/modes-cookbook.md) | Every command, all nine assertion types, fixtures, failure injection, policies |
+| [OTel ingestion](docs/usage/otel-ingest.md) | Convert OpenTelemetry / OpenInference traces instead of writing a recorder |
+| [CI integration](docs/usage/ci-github-actions.md) | Exit codes, step summaries, regression baselines |
+
+## Extend it
+
+Every pluggable capability is a small Go interface, and the built-ins use the same ones you would. See **[docs/extending/](docs/extending/)**:
+
+- [Custom evaluator (Go)](docs/extending/custom-evaluator-go.md) — assert domain rules the built-ins cannot express
+- [Cross-language plugins](docs/extending/wire-plugin-python.md) — reuse Python/TypeScript validation logic over JSON-RPC
+- [Custom test runners](docs/extending/custom-test-runner.md) — drive your own agent in Mode 3
+
+Python capture SDK: [`sdk/python/`](sdk/python/).
+
 ## Architecture
 
 See **[docs/architecture/](docs/architecture/)** for system design, data model, statistics, and extension points.
@@ -82,9 +103,12 @@ pkg/api/                  Public domain types
 pkg/jcs/                  RFC 8785 canonical JSON hashing
 internal/ports/           Tier-1 Go interfaces
 internal/core/            Analyze, Replay, Test, stats, mutate, policy, scenario
-internal/adapters/        Evaluators, mutators, fixtures, testrunner, wire, storage
+internal/adapters/        Evaluators, mutators, fixtures, ingest, testrunner, wire, storage
+sdk/python/               Python capture SDK + wire plugin example
 spec/schemas/             JSON Schema contracts (Draft 2020-12)
 demo/                     End-to-end MVP demo scripts
+docs/usage/               End-user guides (integrate, cookbook, CI)
+docs/extending/           Extension guides (evaluators, runners, plugins)
 docs/architecture/        Architecture documentation
 docs/plans/               MVP + framework roadmap plans
 ```
@@ -93,13 +117,17 @@ docs/plans/               MVP + framework roadmap plans
 
 MVP Phases 1–9 complete (library, Mode 3, policy, scenario extraction, CLI, demo, CI).
 
-Post-MVP (Phases 10–16): see [`docs/plans/framework/`](docs/plans/framework/) — OTel ingestion, SDKs/adapters, stats v2, continuous eval, clustering, multi-agent/AEE.
+Phase 10 (OTel/OpenInference file ingestion) and the Phase 11 Python capture SDK have landed. Remaining post-MVP work — TypeScript SDK, framework adapters, stats v2, continuous eval, clustering, multi-agent/AEE — is planned in [`docs/plans/framework/`](docs/plans/framework/).
 
 ## Requirements
 
 - Go 1.23+
 - Optional: local [Ollama](https://ollama.com) for live Test-mode runs
 - Dependencies kept minimal: Cobra (CLI), yaml.v3 (scenarios/policies). Core engines are stdlib-only.
+
+## Contributing
+
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow, testing expectations, and the invariants that constrain changes.
 
 ## License
 

@@ -16,9 +16,9 @@ type PolicyViolation struct {
 
 // Verdict is the aggregated CI decision for a set of scenario results.
 type Verdict struct {
-	OverallVerdict  api.VerdictType               `json:"overall_verdict"`
-	ExitCode        int                           `json:"exit_code"`
-	Violations      []PolicyViolation             `json:"violations"`
+	OverallVerdict  api.VerdictType                   `json:"overall_verdict"`
+	ExitCode        int                               `json:"exit_code"`
+	Violations      []PolicyViolation                 `json:"violations"`
 	ScenarioResults map[string]*api.ReliabilityResult `json:"scenario_results"`
 }
 

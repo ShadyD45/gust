@@ -80,4 +80,3 @@ func resolveEvaluatorName(assert api.Assertion) string {
 		return string(assert.Type)
 	}
 }
-
