@@ -31,7 +31,7 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,3 +70,18 @@ jobs:
           python sdk/python/examples/record_and_analyze.py \
             --out "${{ runner.temp }}/sdk_run.json" \
             --gust "${{ github.workspace }}/gust"
+
+      - name: Mode 3 exec e2e
+        run: |
+          ./gust test testdata/scenarios/http_agent.yaml \
+            --runner exec --samples 2 --concurrency 2 \
+            --policy testdata/policy-smoke.yaml \
+            -- python sdk/python/examples/mode3_sample.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: TypeScript SDK test
+        working-directory: sdk/typescript
+        run: npm test

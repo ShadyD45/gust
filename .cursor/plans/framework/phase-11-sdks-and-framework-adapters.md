@@ -2,9 +2,7 @@
 
 ## Status
 
-The Python capture SDK is **shipped** in [`sdk/python`](../../../sdk/python/): `RunRecorder` (AgentRun capture), `FixtureClient` (mock proxy client honoring `AGENTEVAL_FIXTURE_ENDPOINT`), and `EvaluatorPlugin` + `serve()` (Tier-2 wire plugins). Stdlib-only, tested in CI, with a Go-side integration test that drives the example plugin through the wire supervisor.
-
-Remaining in this phase: TypeScript SDK, packaged framework adapters (LangChain first), PyPI/npm publication, and the compatibility matrix.
+**Shipped.** Python SDK (`RunRecorder`, `FixtureClient`, `EvaluatorPlugin`, `run_sample` / `serve_sample`), TypeScript SDK (`sdk/typescript`), LangChain adapter (`gust-sdk[langchain]`), compatibility matrix (`docs/usage/compatibility.md`), and tag-triggered PyPI/npm publish workflows (secrets required to actually publish).
 
 ## Objectives
 

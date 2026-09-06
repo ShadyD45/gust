@@ -1,0 +1,31 @@
+# Publishes sdk/python to PyPI when a v* tag is pushed.
+# No-op without PYPI_API_TOKEN. Does not run on ordinary commits.
+name: publish-pypi
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    if: ${{ secrets.PYPI_API_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        working-directory: sdk/python
+        run: |
+          python -m pip install --quiet build
+          python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: sdk/python/dist

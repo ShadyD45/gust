@@ -3,6 +3,7 @@ title: Usage
 nav_order: 2
 has_children: true
 has_toc: false
+has_mermaid: true
 ---
 # Using gust
 
@@ -23,14 +24,36 @@ Not "is the final answer good?" but "did it call the right tools, with the right
 | Production broke in a way no test covered | `gust scenario from-run` turns a real trace into a test scenario skeleton |
 | "Do our assertions actually catch bugs?" | `gust mutate` injects known-bad behavior and measures detection rate |
 
+## Where gust runs
+
+gust is **CI and local test infra**. It is not a production sidecar and not an observability store.
+
+```mermaid
+flowchart LR
+  prod[Production agent] -.->|never| gust
+  ci[CI job gust binary]
+  qa[Dev or QA agent]
+  ci -->|invoke N samples| qa
+  qa -->|OTLP or AgentRun| ci
+  ci --> verdict[PASS FAIL FLAKY]
+```
+
+- **gust** starts on the CI runner (or your laptop), listens for traces, evaluates, exits.
+- **The agent under test** is the build in that job, or a **dev/QA** service the runner can reach. Tools go through fixtures, not production APIs.
+- **Production** keeps its own exporter (Phoenix, Langfuse, a collector). Nothing in prod points at gust.
+
+How to wire the job: [CI integration]({% link usage/ci-github-actions.md %}). How the agent pushes a trace: [Test your agent]({% link usage/test-your-agent.md %}) and [OTel ingestion]({% link usage/otel-ingest.md %}).
+
 ## Guides
 
 | Page | What it covers |
 |------|----------------|
 | [Integrate your app]({% link usage/integrate-your-app.md %}) | Emit an `AgentRun` from your existing Python, TypeScript, or Go service and run your first gate. Start here. |
+| [Test your agent]({% link usage/test-your-agent.md %}) | Mode 3 against *your* agent via `--runner http` or `--runner exec` — no Go |
 | [Modes cookbook]({% link usage/modes-cookbook.md %}) | Recipes per mode, all assertion types, fixtures, and policies |
-| [OTel ingestion]({% link usage/otel-ingest.md %}) | Convert OpenTelemetry / OpenInference spans instead of writing a recorder |
-| [CI integration]({% link usage/ci-github-actions.md %}) | Wire the gate into CI with the right exit codes |
+| [OTel ingestion]({% link usage/otel-ingest.md %}) | Point an existing OTLP exporter at gust, or pull a Langfuse trace |
+| [CI integration]({% link usage/ci-github-actions.md %}) | gust on the CI runner; agent in the job or QA; exit codes |
+| [Compatibility]({% link usage/compatibility.md %}) | SDK × schema × CLI and framework adapter versions |
 
 Custom evaluators, runners, and cross-language plugins: [Extending]({% link extending/index.md %}).
 
@@ -45,7 +68,7 @@ git clone https://github.com/your-org/gust && cd gust
 go build -o gust ./cmd/gust
 ```
 
-The result is a single static binary with no runtime dependencies. Drop it on a CI runner or in a container; it needs no network unless you use Test mode against a live agent.
+The result is a single static binary with no runtime dependencies. Drop it on a CI runner. Analyze and Replay need no network. Test mode talks only to a **dev/QA** (or in-job) agent — never to production.
 
 ## The 60-second version
 

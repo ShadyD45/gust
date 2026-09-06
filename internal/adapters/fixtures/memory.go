@@ -142,10 +142,50 @@ func (p *MemoryFixtureProvider) Record(ctx context.Context, call ports.ToolCall,
 	return nil
 }
 
+// Replace drops all fixtures and loads the given set. Used between suite scenarios
+// so one mock proxy can serve isolated fixture worlds.
+func (p *MemoryFixtureProvider) Replace(fixtures []api.Fixture) error {
+	p.mu.Lock()
+	p.exactFixtures = make(map[string]api.Fixture)
+	p.seqFixtures = make(map[string][]api.Fixture)
+	p.seqCounters = make(map[string]int)
+	p.mu.Unlock()
+	if len(fixtures) == 0 {
+		return nil
+	}
+	return p.LoadFixtures(fixtures)
+}
+
 // Reset clears sequence counters for stateful mocks.
 func (p *MemoryFixtureProvider) Reset() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.seqCounters = make(map[string]int)
 	return nil
+}
+
+// Clone copies fixtures into a new provider with reset sequence counters.
+// Concurrent Mode 3 samples should each get their own clone so ordered
+// fixtures do not share counters.
+func (p *MemoryFixtureProvider) Clone() *MemoryFixtureProvider {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	out := NewMemoryFixtureProvider()
+	for k, v := range p.exactFixtures {
+		out.exactFixtures[k] = v
+	}
+	for k, v := range p.seqFixtures {
+		out.seqFixtures[k] = append([]api.Fixture(nil), v...)
+	}
+	return out
+}
+
+// HasOrderedFixtures reports whether any fixture uses ordered-sequence matching.
+func HasOrderedFixtures(fixtures []api.Fixture) bool {
+	for _, fx := range fixtures {
+		if fx.MatchStrategy == api.MatchStrategyOrderedSequence {
+			return true
+		}
+	}
+	return false
 }

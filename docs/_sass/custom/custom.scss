@@ -135,6 +135,34 @@ html {
   background: var(--gust-panel);
 }
 
+.main-content .language-mermaid.highlighter-rouge,
+.main-content .highlighter-rouge:has(> .highlight > pre > code.language-mermaid) {
+  background: var(--gust-panel);
+  padding: 1rem 1.25rem;
+}
+
+.main-content .language-mermaid.highlighter-rouge .highlight,
+.main-content .language-mermaid.highlighter-rouge pre,
+.main-content .highlighter-rouge:has(code.language-mermaid) .highlight,
+.main-content .highlighter-rouge:has(code.language-mermaid) pre {
+  background: transparent;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.main-content .mermaid,
+.main-content code.language-mermaid {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.main-content .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
 .btn {
   border-radius: 999px;
 }

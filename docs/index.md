@@ -25,7 +25,7 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 | Wire gust into an agent you already run | [Integrate your app]({% link usage/integrate-your-app.md %}) |
 | Learn Analyze / Replay / Test / Compare | [Modes cookbook]({% link usage/modes-cookbook.md %}) |
 | Convert OpenTelemetry traces | [OTel ingestion]({% link usage/otel-ingest.md %}) |
-| Put a gate in GitHub Actions | [CI integration]({% link usage/ci-github-actions.md %}) |
+| Put a gate in GitHub Actions (gust on CI; agent in the job or QA) | [CI integration]({% link usage/ci-github-actions.md %}) |
 | Add a custom evaluator or runner | [Extending gust]({% link extending/index.md %}) |
 | Understand the design | [Architecture]({% link architecture/index.md %}) |
 
@@ -35,7 +35,7 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 |------|----------------|---------------|
 | **Analyze** | Evaluate assertions against a captured `AgentRun` | Offline |
 | **Replay** | Re-drive recorded tool I/O via fixtures | Offline |
-| **Test** | Run the real agent against mocked tools, *N* times | Live agent/LLM |
+| **Test** | Run the real agent against mocked tools, *N* times | Dev/QA or in-CI agent — not production |
 
 ```bash
 go build -o gust ./cmd/gust

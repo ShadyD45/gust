@@ -1,0 +1,60 @@
+id: cancel_latest_order_http
+version: "1.0"
+description: "Mode 3 against a user agent via --runner http or exec"
+task:
+  id: refund-001
+  input: "Cancel my latest order"
+environment:
+  fixture_strategy: prefer_exact_then_sequence
+  fixtures:
+    - fixture_id: fx_get_orders_001
+      tool: get_orders
+      match_strategy: exact_hash
+      recorded_input:
+        customer_id: 42
+      recorded_response:
+        status: success
+        body:
+          - id: 122
+            status: DELIVERED
+          - id: 123
+            status: PROCESSING
+      provenance: recorded
+    - fixture_id: fx_cancel_order_001
+      tool: cancel_order
+      match_strategy: exact_hash
+      recorded_input:
+        order_id: 123
+      recorded_response:
+        status: success
+        body:
+          ok: true
+      provenance: recorded
+assertions:
+  - id: completes
+    type: task_success
+    parameters:
+      expected_output: cancelled
+  - id: cancels_right
+    type: tool_call
+    tool: cancel_order
+    arguments:
+      order_id: 123
+  - id: no_refunds
+    type: forbidden_tool_call
+    tool: issue_refund
+    criticality: hard
+reliability:
+  samples: 2
+  minimum_pass_rate: 0.95
+  confidence: 0.95
+provenance:
+  source: authored
+  extracted_at: 2026-09-06T00:00:00Z
+  reviewed_by: mvp@gust.dev
+runner:
+  type: exec
+  command: ["python", "sdk/python/examples/mode3_sample.py"]
+  traces:
+    source: response
+    wait_timeout_seconds: 30

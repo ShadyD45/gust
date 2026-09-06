@@ -75,8 +75,8 @@ gust reads a JSON document describing what your agent did, so integration is a r
 | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
 | [Integrate your app](docs/usage/integrate-your-app.md) | Emit an `AgentRun` from Python, TypeScript, or Go and run your first gate      |
 | [Modes cookbook](docs/usage/modes-cookbook.md)         | Every command, all nine assertion types, fixtures, failure injection, policies |
-| [OTel ingestion](docs/usage/otel-ingest.md)            | Convert OpenTelemetry / OpenInference traces instead of writing a recorder     |
-| [CI integration](docs/usage/ci-github-actions.md)      | Exit codes, step summaries, regression baselines                               |
+| [OTel ingestion](docs/usage/otel-ingest.md)            | Point an existing OTLP exporter at gust (HTTP/gRPC), or pull a Langfuse trace  |
+| [CI integration](docs/usage/ci-github-actions.md)      | Exit codes; gust on the runner, agent in the job or QA — not production        |
 
 
 ## Extend it
@@ -106,7 +106,8 @@ pkg/jcs/                  RFC 8785 canonical JSON hashing
 internal/ports/           Tier-1 Go interfaces
 internal/core/            Analyze, Replay, Test, stats, mutate, policy, scenario
 internal/adapters/        Evaluators, mutators, fixtures, ingest, testrunner, wire, storage
-sdk/python/               Python capture SDK + wire plugin example
+sdk/python/               Python capture SDK, Mode 3 harness, LangChain adapter
+sdk/typescript/           TypeScript capture SDK (stdlib / Node 18+)
 spec/schemas/             JSON Schema contracts (Draft 2020-12)
 demo/                     End-to-end MVP demo scripts
 docs/                     GitHub Pages site (usage, extending, architecture)
@@ -116,13 +117,13 @@ docs/                     GitHub Pages site (usage, extending, architecture)
 
 MVP Phases 1–9 complete (library, Mode 3, policy, scenario extraction, CLI, demo, CI).
 
-Phase 10 (OTel/OpenInference file ingestion) and the Phase 11 Python capture SDK have landed. Remaining post-MVP work — TypeScript SDK, framework adapters, stats v2, continuous eval, clustering, multi-agent/AEE — is tracked in internal engineering plans (maintainers only).
+Phase 10–11 have landed. Live ingest is network-first: OTLP/HTTP + gRPC, `POST /v1/runs`, Langfuse pull, and Mode 3 env injection. Remaining post-MVP work — stats v2, continuous eval, clustering, multi-agent/AEE — is tracked in internal engineering plans (maintainers only).
 
 ## Requirements
 
 - Go 1.23+
 - Optional: local [Ollama](https://ollama.com) for live Test-mode runs
-- Dependencies kept minimal: Cobra (CLI), yaml.v3 (scenarios/policies). Core engines are stdlib-only.
+- Dependencies: Cobra (CLI), yaml.v3 (scenarios/policies). Live OTLP protobuf/gRPC ingest adds the official OTLP proto + gRPC libraries. Core engines remain stdlib-only.
 
 ## Documentation site
 
@@ -135,7 +136,7 @@ bundle exec jekyll serve
 # http://127.0.0.1:4000/gust/
 ```
 
-After the first `pages` workflow run, set **Settings → Pages → Source** to **GitHub Actions** if prompted.
+Publish: **Settings → Pages → Source → GitHub Actions**. The workflow is [`.github/workflows/jekyll-gh-pages.yml`](.github/workflows/jekyll-gh-pages.yml) — GitHub’s Jekyll starter, but it builds `docs/` with Bundler so Just the Docs can install. Do not use **Deploy from a branch**; that builder cannot install the theme.
 
 ## Contributing
 

@@ -1,0 +1,18 @@
+id: suite_task_only
+version: "1.0"
+description: "Second suite member — no fixtures, shared pack via $ref"
+task:
+  id: refund-001
+  input: "Cancel my latest order"
+environment:
+  fixtures: []
+assertions:
+  - $ref: ../_shared/assertions/cancel.yaml
+reliability:
+  samples: 2
+  minimum_pass_rate: 0.5
+  confidence: 0.95
+provenance:
+  source: authored
+  extracted_at: 2026-09-06T00:00:00Z
+  reviewed_by: mvp@gust.dev

@@ -2,9 +2,7 @@
 
 ## Status
 
-File-based ingestion is **shipped**: `internal/adapters/ingest/otel` maps OTLP JSON exports to `AgentRun`, exposed as `gust ingest otel --file … [--trace-id …] [--list-traces]`. Golden fixture in `testdata/otel/`, user documentation in [`docs/usage/otel-ingest.md`](../../usage/otel-ingest.md).
-
-Remaining in this phase: the live OTLP HTTP/gRPC receiver.
+**Shipped.** File-based ingestion (`gust ingest otel --file`) and a live OTLP receiver (`gust ingest otel serve`, plus in-process use from `gust test --trace-source otel`). HTTP JSON, protobuf HTTP, and optional gRPC all convert to `ExportPayload` and call `Mapper.Map`.
 
 ## Objectives
 

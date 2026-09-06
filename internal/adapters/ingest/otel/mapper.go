@@ -38,6 +38,7 @@ const (
 	attrServiceName   = "service.name"
 	attrServiceVer    = "service.version"
 	attrServiceCommit = "service.git.commit"
+	AttrSampleID      = "gust.sample_id"
 )
 
 // Options controls how a trace is projected onto an AgentRun.
@@ -124,6 +125,24 @@ func (m *Mapper) MapBytes(data []byte, opts Options) (api.AgentRun, error) {
 		return api.AgentRun{}, fmt.Errorf("%w: %v", ErrInvalidPayload, err)
 	}
 	return m.Map(payload, opts)
+}
+
+// SampleIDFromPayload returns the first gust.sample_id attribute found on a
+// resource or span. Empty if the export was not tagged by a Mode 3 runner.
+func SampleIDFromPayload(payload ExportPayload) string {
+	for _, rs := range payload.ResourceSpans {
+		if id := stringAttr(attributeMap(rs.Resource.Attributes), AttrSampleID); id != "" {
+			return id
+		}
+		for _, ss := range rs.ScopeSpans {
+			for _, sp := range ss.Spans {
+				if id := stringAttr(attributeMap(sp.Attributes), AttrSampleID); id != "" {
+					return id
+				}
+			}
+		}
+	}
+	return ""
 }
 
 // TraceIDs lists every trace present in an export, sorted for stable output.
@@ -321,6 +340,10 @@ func isErrorStatus(code any) bool {
 	case string:
 		return strings.EqualFold(v, "STATUS_CODE_ERROR") || v == "2"
 	case float64:
+		return v == 2
+	case int:
+		return v == 2
+	case int32:
 		return v == 2
 	case json.Number:
 		n, err := v.Int64()

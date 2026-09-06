@@ -5,10 +5,14 @@ from __future__ import annotations
 import json
 import os
 import uuid
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 SCHEMA_VERSION = "0.5"
+INGEST_URL_ENV = "AGENTEVAL_INGEST_URL"
+OTEL_ENDPOINT_ENV = "OTEL_EXPORTER_OTLP_ENDPOINT"
 
 _SPAN_TYPES = {"agent", "llm", "tool", "retrieval", "memory", "plan", "error"}
 _OUTCOME_STATUSES = {"completed", "failed", "timeout", "cancelled"}
@@ -82,7 +86,8 @@ class RunRecorder:
         if not task_input:
             raise AgentRunError("task_input is required")
 
-        self.run_id = run_id or str(uuid.uuid4())
+        env_sample = os.environ.get("AGENTEVAL_SAMPLE_ID", "")
+        self.run_id = run_id or env_sample or str(uuid.uuid4())
         self._agent = {"name": agent_name, "version": agent_version}
         if git_commit:
             self._agent["git_commit"] = git_commit
@@ -94,6 +99,8 @@ class RunRecorder:
         self._spans: List[Dict[str, Any]] = []
         self._outcome: Optional[Dict[str, Any]] = None
         self._metadata: Dict[str, Any] = {}
+        if env_sample:
+            self._metadata["sample_id"] = env_sample
 
     # -- span recording -------------------------------------------------
 
@@ -237,3 +244,48 @@ class RunRecorder:
             handle.write(self.to_json())
             handle.write("\n")
         return path
+
+    def export(self, url: Optional[str] = None, timeout: float = 10.0) -> Dict[str, Any]:
+        """POST the AgentRun to gust (``POST /v1/runs``).
+
+        ``url`` defaults to ``AGENTEVAL_INGEST_URL``, then
+        ``OTEL_EXPORTER_OTLP_ENDPOINT`` + ``/v1/runs``.
+        """
+        return post_run(self.to_dict(), url=url, timeout=timeout)
+
+
+def resolve_ingest_url(url: Optional[str] = None) -> str:
+    dest = (url or os.environ.get(INGEST_URL_ENV) or "").strip()
+    if not dest:
+        otel = (os.environ.get(OTEL_ENDPOINT_ENV) or "").strip()
+        if otel:
+            dest = otel.rstrip("/") + "/v1/runs"
+    if not dest:
+        raise AgentRunError(
+            "no ingest URL; pass url= or set AGENTEVAL_INGEST_URL / OTEL_EXPORTER_OTLP_ENDPOINT"
+        )
+    dest = dest.rstrip("/")
+    if not dest.endswith("/v1/runs"):
+        dest = dest + "/v1/runs"
+    return dest
+
+
+def post_run(run: Dict[str, Any], url: Optional[str] = None, timeout: float = 10.0) -> Dict[str, Any]:
+    """POST an AgentRun dict to gust ``/v1/runs``."""
+    dest = resolve_ingest_url(url)
+    body = json.dumps(run).encode("utf-8")
+    req = urllib.request.Request(
+        dest,
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            resp.read()
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise AgentRunError(f"export {dest}: HTTP {exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise AgentRunError(f"export {dest}: {exc.reason}") from exc
+    return run

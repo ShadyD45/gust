@@ -30,7 +30,12 @@ type FixtureStore interface {
 	DeleteFixture(ctx context.Context, id string) error
 }
 
-// RunStore defines persistence operations for captured AgentRun execution traces.
+// RunStore persists evaluation artifacts — mapped AgentRun traces and, later,
+// verdicts — not raw OTLP spans. A SQLite/Postgres adapter can sit behind this
+// port for historical eval data. This is not an observability backend; keep
+// Phoenix or Langfuse for span search and live tail. Unused by the CLI until
+// a --store flag is added; Receiver.OnRun is the ingest hook that will call
+// SaveRun.
 type RunStore interface {
 	SaveRun(ctx context.Context, run api.AgentRun) error
 	GetRun(ctx context.Context, id string) (api.AgentRun, error)

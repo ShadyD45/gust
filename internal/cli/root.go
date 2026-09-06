@@ -10,7 +10,6 @@ import (
 
 	"gust/internal/adapters/evaluators"
 	"gust/internal/adapters/mutators"
-	"gust/internal/adapters/testrunner"
 	"gust/internal/ports"
 	"gust/internal/registry"
 	"gust/pkg/api"
@@ -87,20 +86,6 @@ func loadPolicy(path string) (api.Policy, error) {
 	return p, nil
 }
 
-func loadScenario(path string) (api.TestScenario, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return api.TestScenario{}, err
-	}
-	var sc api.TestScenario
-	if err := yaml.Unmarshal(data, &sc); err != nil {
-		if err2 := json.Unmarshal(data, &sc); err2 != nil {
-			return api.TestScenario{}, fmt.Errorf("parse scenario: %v / %v", err, err2)
-		}
-	}
-	return sc, nil
-}
-
 // activeEvaluators returns the built-in suite plus any evaluators registered
 // with the default registry (custom Go evaluators, wire plugins).
 func activeEvaluators() []ports.Evaluator {
@@ -132,18 +117,4 @@ func activeMutators() []ports.Mutator {
 		list = append(list, m)
 	}
 	return list
-}
-
-func resolveRunner(name, endpoint, model string, passProb float64) (ports.TestRunner, error) {
-	switch name {
-	case "synthetic", "":
-		return testrunner.NewSyntheticRunner(passProb, 42), nil
-	case "ollama":
-		return testrunner.NewOllamaRunner(endpoint, model), nil
-	default:
-		if tr, ok := registry.DefaultRegistry.GetTestRunner(name); ok {
-			return tr, nil
-		}
-		return nil, fmt.Errorf("unknown runner %q", name)
-	}
 }

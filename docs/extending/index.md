@@ -15,7 +15,8 @@ gust is a hexagonal core: every pluggable capability is a small Go interface in 
 |---|---|---|---|
 | Assert something the built-in evaluators cannot express | Implement `ports.Evaluator` | Go | [Custom evaluator]({% link extending/custom-evaluator-go.md %}) |
 | Reuse existing Python/TS validation logic as an evaluator | Tier-2 JSON-RPC plugin | Python, TypeScript, anything | [Wire plugins]({% link extending/wire-plugin-python.md %}) |
-| Drive your own agent in Mode 3 | Implement `ports.TestRunner` | Go | [Custom test runner]({% link extending/custom-test-runner.md %}) |
+| Drive your own agent in Mode 3 | `gust test --runner http\|exec` | any | [Test your agent]({% link usage/test-your-agent.md %}) |
+| Embed a Go-native runner | Implement `ports.TestRunner` | Go | [Custom test runner]({% link extending/custom-test-runner.md %}) |
 | Inject new failure classes into mutation testing | Implement `ports.Mutator` | Go | [Adding a mutator]({% link extending/custom-evaluator-go.md %}#adding-a-mutator) |
 | Serve fixtures from your own store | Implement `ports.FixtureProvider` | Go | [Custom fixture providers]({% link extending/custom-test-runner.md %}#custom-fixture-providers) |
 | Persist scenarios/runs somewhere other than the filesystem | Implement the store ports | Go | [`internal/ports/store.go`](https://github.com/ShadyD45/gust/blob/main/internal/ports/store.go) |

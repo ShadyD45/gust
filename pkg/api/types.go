@@ -124,22 +124,43 @@ type RecordedResponse struct {
 
 // TestScenario is the standalone test specification artifact.
 type TestScenario struct {
-	ID          string                 `json:"id" yaml:"id"`
-	Version     string                 `json:"version" yaml:"version"`
-	Description string                 `json:"description" yaml:"description"`
-	Task        TaskInfo               `json:"task" yaml:"task"`
-	Environment EnvironmentSpec        `json:"environment" yaml:"environment"`
-	Assertions  []Assertion            `json:"assertions" yaml:"assertions"`
-	Reliability ReliabilityConfig      `json:"reliability" yaml:"reliability"`
-	Provenance  TestScenarioProvenance `json:"provenance" yaml:"provenance"`
+	ID             string                 `json:"id" yaml:"id"`
+	Version        string                 `json:"version" yaml:"version"`
+	Description    string                 `json:"description" yaml:"description"`
+	Task           TaskInfo               `json:"task" yaml:"task"`
+	Environment    EnvironmentSpec        `json:"environment" yaml:"environment"`
+	Assertions     []Assertion            `json:"assertions" yaml:"assertions"`
+	Reliability    ReliabilityConfig      `json:"reliability" yaml:"reliability"`
+	Provenance     TestScenarioProvenance `json:"provenance" yaml:"provenance"`
+	Runner         *ScenarioRunnerSpec    `json:"runner,omitempty" yaml:"runner,omitempty"`
+	AssertionFiles []string               `json:"assertion_files,omitempty" yaml:"assertion_files,omitempty"`
+}
+
+// ScenarioRunnerSpec is the optional end-user hook for Mode 3.
+// CLI flags override these fields. Empty Type means "use the CLI --runner".
+type ScenarioRunnerSpec struct {
+	Type           string            `json:"type,omitempty" yaml:"type,omitempty"` // http | exec
+	URL            string            `json:"url,omitempty" yaml:"url,omitempty"`
+	Command        []string          `json:"command,omitempty" yaml:"command,omitempty"`
+	TimeoutSeconds int               `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
+	Traces         ScenarioTraceSpec `json:"traces,omitempty" yaml:"traces,omitempty"`
+}
+
+// ScenarioTraceSpec says how gust collects the AgentRun after invoking the agent.
+type ScenarioTraceSpec struct {
+	Source             string `json:"source,omitempty" yaml:"source,omitempty"` // auto | response | file | otel | otel-file
+	Path               string `json:"path,omitempty" yaml:"path,omitempty"`
+	WaitTimeoutSeconds int    `json:"wait_timeout_seconds,omitempty" yaml:"wait_timeout_seconds,omitempty"`
 }
 
 type EnvironmentSpec struct {
 	FixtureStrategy MatchStrategy `json:"fixture_strategy,omitempty" yaml:"fixture_strategy,omitempty"`
 	Fixtures        []Fixture     `json:"fixtures" yaml:"fixtures"`
+	FixturesDir     string        `json:"fixtures_dir,omitempty" yaml:"fixtures_dir,omitempty"`
 }
 
 type Assertion struct {
+	Ref         string           `json:"$ref,omitempty" yaml:"$ref,omitempty"`
 	ID          string           `json:"id" yaml:"id"`
 	Type        AssertionType    `json:"type" yaml:"type"`
 	Criticality CriticalityLevel `json:"criticality,omitempty" yaml:"criticality,omitempty"`

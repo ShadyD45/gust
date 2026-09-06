@@ -1,0 +1,16 @@
+{
+  "fixture_id": "fx_get_orders_001",
+  "tool": "get_orders",
+  "match_strategy": "exact_hash",
+  "recorded_input": {
+    "customer_id": 42
+  },
+  "recorded_response": {
+    "status": "success",
+    "body": [
+      { "id": 122, "status": "DELIVERED" },
+      { "id": 123, "status": "PROCESSING" }
+    ]
+  },
+  "provenance": "recorded"
+}

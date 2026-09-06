@@ -32,10 +32,14 @@ Task-oriented walkthroughs live in [Extending]({% link extending/index.md %}); t
 
 ## Adding a test runner
 
+End users invoke their agent with `gust test --runner http|exec` — see [Test your agent]({% link usage/test-your-agent.md %}). Built-ins: `synthetic`, `ollama`, `http`, `exec`.
+
+Go embedders:
+
 1. Implement `ports.TestRunner` (`Name`, `Run(ctx, scenario, fixtureEndpoint)`).
 2. Return a complete `AgentRun` trace.
 3. Honor `fixtureEndpoint` / `AGENTEVAL_FIXTURE_ENDPOINT` so tools hit the mock proxy.
-4. Register (e.g. `synthetic`, `ollama`).
+4. Register (e.g. a domain-specific runner).
 
 ## Tier-2 wire plugins
 
@@ -45,12 +49,14 @@ Task-oriented walkthroughs live in [Extending]({% link extending/index.md %}); t
 
 ## Ingestion adapters
 
-`internal/adapters/ingest/otel` maps OTLP JSON exports using OpenInference semantic conventions onto `api.AgentRun` (`gust ingest otel`). Mapping is pure and deterministic; unmappable traces produce typed errors rather than partial runs. Add a format by implementing an equivalent mapper package and a subcommand under `gust ingest`.
+`internal/adapters/ingest/otel` maps OTLP JSON (and protobuf/gRPC) using OpenInference conventions onto `api.AgentRun`. Live ingest is a **session** — `gust ingest otel serve` or the in-process listener inside `gust test` (HTTP :4318 + gRPC :4317, plus `POST /v1/runs`). It is CI/laptop infra, not a production sidecar. Offline ingest is `--file`, stdin, or `--url`. `internal/adapters/ingest/langfuse` pulls one Langfuse trace or session. Mapping is pure and deterministic; unmappable traces produce typed errors rather than partial runs. Add a format by implementing an equivalent mapper package and a subcommand under `gust ingest`.
 
 ## Fixture / store adapters
 
 - In-memory fixture provider + HTTP mock proxy: `internal/adapters/fixtures`
 - Filesystem JSON store: `internal/adapters/storage/filesystem` implementing `ScenarioStore`, `FixtureStore`, `RunStore`
+
+`ports.RunStore` is the hook for a later eval-history database (user-owned SQLite/Postgres). It stores `AgentRun` documents and will store verdicts — not a span explorer. `gust ingest otel serve --output-dir` is the file-shaped stand-in today. Do not add a dashboard here; live ingest already calls `OnRun`, which a store adapter can implement as `SaveRun`.
 
 Swap storage by implementing the store ports; core engines depend only on interfaces.
 

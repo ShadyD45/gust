@@ -18,4 +18,4 @@ Open http://127.0.0.1:4000/gust/
 
 ## Publish
 
-Push to `main`. The [pages](../.github/workflows/pages.yml) workflow builds and deploys. If Settings → Pages still asks for a source, choose **GitHub Actions**.
+Push to `main`. The [jekyll-gh-pages](../.github/workflows/jekyll-gh-pages.yml) workflow builds and deploys. If Settings → Pages still asks for a source, choose **GitHub Actions**.

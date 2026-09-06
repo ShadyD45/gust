@@ -24,21 +24,31 @@ Then gate it::
 from gust_sdk.fixtures import FixtureClient, FixtureError
 from gust_sdk.recorder import (
     SCHEMA_VERSION,
+    INGEST_URL_ENV,
     AgentRunError,
     RunRecorder,
     SpanHandle,
+    post_run,
+    resolve_ingest_url,
 )
+from gust_sdk.sample import apply_sample_id, run_sample, serve_sample
 from gust_sdk.wire import EvaluatorPlugin, serve
 
 __all__ = [
     "SCHEMA_VERSION",
+    "INGEST_URL_ENV",
     "AgentRunError",
     "EvaluatorPlugin",
     "FixtureClient",
     "FixtureError",
     "RunRecorder",
     "SpanHandle",
+    "apply_sample_id",
+    "run_sample",
     "serve",
+    "serve_sample",
+    "post_run",
+    "resolve_ingest_url",
 ]
 
 __version__ = "0.5.0"

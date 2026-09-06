@@ -1,6 +1,7 @@
 package evidence
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"sort"
@@ -44,8 +45,9 @@ func CompareMaps(expected, actual map[string]any, prefix string) []DiffItem {
 			continue
 		}
 
-		// Otherwise compare values
-		if !reflect.DeepEqual(expVal, actVal) {
+		// Otherwise compare values. JSON unmarshalling uses float64; YAML
+		// often uses int — treat numeric types as equal when the number matches.
+		if !valuesEqual(expVal, actVal) {
 			diffs = append(diffs, DiffItem{
 				Path:     path,
 				Expected: expVal,
@@ -61,4 +63,37 @@ func CompareMaps(expected, actual map[string]any, prefix string) []DiffItem {
 	})
 
 	return diffs
+}
+
+func valuesEqual(expected, actual any) bool {
+	if reflect.DeepEqual(expected, actual) {
+		return true
+	}
+	ef, eok := asFloat(expected)
+	af, aok := asFloat(actual)
+	return eok && aok && ef == af
+}
+
+func asFloat(v any) (float64, bool) {
+	switch n := v.(type) {
+	case float64:
+		return n, true
+	case float32:
+		return float64(n), true
+	case int:
+		return float64(n), true
+	case int32:
+		return float64(n), true
+	case int64:
+		return float64(n), true
+	case uint:
+		return float64(n), true
+	case uint64:
+		return float64(n), true
+	case json.Number:
+		f, err := n.Float64()
+		return f, err == nil
+	default:
+		return 0, false
+	}
 }

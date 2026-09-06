@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 
-	"gust/internal/adapters/fixtures"
 	"gust/internal/core/replay"
 	"gust/pkg/api"
 )
@@ -27,26 +25,9 @@ func newReplayCmd() *cobra.Command {
 				return err
 			}
 
-			provider := fixtures.NewMemoryFixtureProvider()
-			if fixturesDir != "" {
-				entries, err := os.ReadDir(fixturesDir)
-				if err != nil {
-					return err
-				}
-				var loaded []api.Fixture
-				for _, e := range entries {
-					if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
-						continue
-					}
-					fx, err := loadJSON[api.Fixture](filepath.Join(fixturesDir, e.Name()))
-					if err != nil {
-						return err
-					}
-					loaded = append(loaded, fx)
-				}
-				if err := provider.LoadFixtures(loaded); err != nil {
-					return err
-				}
+			provider, err := newFixtureProvider(nil, fixturesDir)
+			if err != nil {
+				return err
 			}
 
 			engine := replay.NewReplayEngine(provider)

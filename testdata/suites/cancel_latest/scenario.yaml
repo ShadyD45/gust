@@ -1,0 +1,21 @@
+id: suite_cancel_latest
+version: "1.0"
+description: "Thin scenario — fixtures and assertions live next to this file"
+task:
+  id: refund-001
+  input: "Cancel my latest order"
+environment:
+  fixture_strategy: prefer_exact_then_sequence
+  fixtures: []
+  fixtures_dir: fixtures
+assertion_files:
+  - ../_shared/assertions/cancel.yaml
+assertions: []
+reliability:
+  samples: 2
+  minimum_pass_rate: 0.5
+  confidence: 0.95
+provenance:
+  source: authored
+  extracted_at: 2026-09-06T00:00:00Z
+  reviewed_by: mvp@gust.dev

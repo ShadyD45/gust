@@ -3,9 +3,11 @@ title: Custom test runner
 nav_order: 3
 parent: Extending
 ---
-# Writing a custom test runner
+# Writing a custom test runner (embedders)
 
-A `TestRunner` is what Mode 3 calls *N* times. It drives your actual agent and hands back a trace. The built-ins — `synthetic` (seeded, no dependencies) and `ollama` (local LLM) — are useful for development, but testing *your* agent means teaching gust how to invoke it.
+**End users should not implement this interface.** To test a Python or TypeScript agent, use [`gust test --runner http|exec`]({% link usage/test-your-agent.md %}). This page is for people who embed gust as a Go library or add a built-in runner to the binary.
+
+A `TestRunner` is what Mode 3 calls *N* times. The shipped runners are `synthetic`, `ollama`, `http`, and `exec`. Registering another Go implementation is only needed when those four cannot invoke your process.
 
 ## The interface
 

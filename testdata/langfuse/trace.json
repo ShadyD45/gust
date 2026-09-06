@@ -1,0 +1,61 @@
+{
+  "id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "name": "AgentExecutor",
+  "sessionId": "refund-001",
+  "timestamp": "2026-01-01T00:00:00Z",
+  "input": "Cancel my latest order",
+  "output": "Order 123 cancelled successfully.",
+  "metadata": {
+    "service.name": "support-agent",
+    "service.version": "1.4"
+  },
+  "observations": [
+    {
+      "id": "00f067aa0ba902b7",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "type": "SPAN",
+      "name": "AgentExecutor",
+      "startTime": "2026-01-01T00:00:00Z",
+      "endTime": "2026-01-01T00:00:00.030Z",
+      "input": "Cancel my latest order",
+      "output": "Order 123 cancelled successfully.",
+      "metadata": {
+        "openinference.span.kind": "AGENT",
+        "session.id": "refund-001"
+      }
+    },
+    {
+      "id": "1a2b3c4d5e6f7081",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "parentObservationId": "00f067aa0ba902b7",
+      "type": "SPAN",
+      "name": "get_orders",
+      "startTime": "2026-01-01T00:00:00Z",
+      "endTime": "2026-01-01T00:00:00.010Z",
+      "input": { "customer_id": 42 },
+      "output": [
+        { "id": 122, "status": "DELIVERED" },
+        { "id": 123, "status": "PROCESSING" }
+      ],
+      "metadata": {
+        "openinference.span.kind": "TOOL",
+        "tool.name": "get_orders"
+      }
+    },
+    {
+      "id": "2c3d4e5f60718293",
+      "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+      "parentObservationId": "00f067aa0ba902b7",
+      "type": "SPAN",
+      "name": "cancel_order",
+      "startTime": "2026-01-01T00:00:00.015Z",
+      "endTime": "2026-01-01T00:00:00.025Z",
+      "input": { "order_id": 123 },
+      "output": { "ok": true },
+      "metadata": {
+        "openinference.span.kind": "TOOL",
+        "tool.name": "cancel_order"
+      }
+    }
+  ]
+}

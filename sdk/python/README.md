@@ -53,6 +53,7 @@ The `with` block times the span and records exceptions as error spans before re-
 | `set_metadata(key, value)` | Attach build id, prompt version, model name |
 | `set_assertions([...])` | Embed assertions in `metadata.assertions` (demos; prefer a separate file) |
 | `to_dict()` / `to_json()` / `write(path)` | Serialize |
+| `export(url=)` | POST the run to gust `POST /v1/runs` (`AGENTEVAL_INGEST_URL`) |
 
 Invalid input raises `AgentRunError` at capture time — inside your process, where the stack trace is useful — rather than producing an artifact that fails to parse later in CI.
 
@@ -72,6 +73,10 @@ def get_orders(customer_id: int):
 ```
 
 `enabled` is `False` when no endpoint is configured, which is what lets the same code run in production and under test. Missing fixtures and injected failures raise `FixtureError`.
+
+### `run_sample` / `serve_sample`
+
+One-sample hooks for `gust test --runner exec` and `--runner http`. Stamp `AGENTEVAL_SAMPLE_ID` on the run. These run in **CI or QA**, not production — gust listens in the job, the agent pushes a trace, the job exits. Guide: [`docs/usage/test-your-agent.md`](../../docs/usage/test-your-agent.md).
 
 ### `EvaluatorPlugin`
 
@@ -101,6 +106,7 @@ Load it from Go and assert on `{"type": "requires_citation"}`. Full walkthrough:
 | Example | What it shows |
 |---|---|
 | [`examples/record_and_analyze.py`](examples/record_and_analyze.py) | Record a two-tool trajectory and gate it with `gust analyze` |
+| [`examples/mode3_sample.py`](examples/mode3_sample.py) | One-sample hook for `gust test --runner exec` / `--serve` for HTTP |
 | [`examples/wire_evaluator/plugin.py`](examples/wire_evaluator/plugin.py) | A PII-leak evaluator as a wire plugin |
 
 ```bash
@@ -114,12 +120,12 @@ Wherever tool results come back:
 
 | Framework | Hook |
 |---|---|
-| LangChain | `BaseCallbackHandler.on_tool_start` / `on_tool_end` / `on_tool_error` |
+| LangChain | `gust_sdk.adapters.langchain.GustCallbackHandler` (`pip install 'gust-sdk[langchain]'`) |
 | OpenAI / Anthropic function calling | Your `for tool_call in response.tool_calls:` dispatch loop |
 | LlamaIndex | Callback manager events |
 | CrewAI / AutoGen | Tool wrappers or observer hooks |
 
-Packaged adapters for these frameworks are planned; the recorder above works with all of them today.
+Mode 3: implement `run_sample(handler)` or `serve_sample(handler)` and run `gust test --runner exec|http`. Guide: [`docs/usage/test-your-agent.md`](../../docs/usage/test-your-agent.md). Compatibility: [`docs/usage/compatibility.md`](../../docs/usage/compatibility.md).
 
 ## Development
 

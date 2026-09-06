@@ -126,7 +126,7 @@ Where to hook in depends on your stack, but it is always the same place — wher
 - **OpenAI/Anthropic function calling loops**: your `for tool_call in response.tool_calls:` dispatch loop.
 - **LlamaIndex / CrewAI / AutoGen**: their respective tool callback or observer hooks.
 
-If you would rather not write a recorder at all and you already emit OpenTelemetry spans, skip to [OTel ingestion]({% link usage/otel-ingest.md %}).
+If you would rather not write a recorder at all and you already emit OpenTelemetry spans, point `OTEL_EXPORTER_OTLP_ENDPOINT` at gust **in CI or on a laptop** — see [OTel ingestion]({% link usage/otel-ingest.md %}). You can also `RunRecorder.export()` an AgentRun to `POST /v1/runs`. Do not point production at gust.
 
 ### TypeScript / Node
 
@@ -268,7 +268,7 @@ One run is a coin flip. When you want a number you can gate on, promote the trac
 Open the file, write the assertions, then:
 
 ```bash
-./gust test tests/cancel_order.yaml --runner synthetic --samples 100 --policy policy.yaml
+./gust test tests/ --runner synthetic --samples 100 --policy policy.yaml
 ```
 
 ```text
@@ -309,8 +309,9 @@ The SDK captures and invokes; the Go binary remains the evaluation authority. Fu
 
 ## Where to go next
 
+- Sample *your* live agent N times in CI / QA (not prod): [Test your agent]({% link usage/test-your-agent.md %})
 - Recipes for every mode, fixture matching, and failure injection: [Modes cookbook]({% link usage/modes-cookbook.md %})
 - Already emitting OTel spans: [OTel ingestion]({% link usage/otel-ingest.md %})
-- Wire it into GitHub Actions: [CI integration]({% link usage/ci-github-actions.md %})
+- Wire the gate into GitHub Actions: [CI integration]({% link usage/ci-github-actions.md %})
 - Write your own evaluator: [Custom evaluator]({% link extending/custom-evaluator-go.md %})
 

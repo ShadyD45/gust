@@ -11,11 +11,11 @@ Recipes for every gust command, with the flags and semantics that actually ship 
 |---|---|---|---|
 | 1 — Analyze | `gust analyze <run.json>` | No | None |
 | 2 — Replay | `gust replay <run.json>` | No (re-drives recorded I/O) | None |
-| 3 — Test | `gust test <scenario.yaml>` | Yes, *N* times | Only if the runner needs it |
+| 3 — Test | `gust test <scenario.yaml\|dir>` | Yes, *N* times | Only if the runner needs it |
 | — | `gust compare <baseline> <candidate>` | No | None |
 | — | `gust mutate <run.json>` | No | None |
 | — | `gust scenario from-run <run.json>` | No | None |
-| — | `gust ingest otel --file <export.json>` | No | None |
+| — | `gust ingest otel serve` or `--file` / `--url` | No | None |
 
 Every command accepts `--json` for machine-readable output. Use it in CI whenever you want to archive evidence rather than just read a terminal line.
 
@@ -144,7 +144,7 @@ POST /v1/tools/call
 { "status": "success", "status_code": 200, "body": [ ... ] }
 ```
 
-Point your agent's tool layer at that base URL in test builds and every tool call resolves from fixtures instead of production. See [Custom test runner]({% link extending/custom-test-runner.md %}) for wiring it from your own runner.
+Point your agent's tool layer at that base URL in test builds and every tool call resolves from fixtures instead of production. End users: [Test your agent]({% link usage/test-your-agent.md %}). Go embedders: [Custom test runner]({% link extending/custom-test-runner.md %}).
 
 ## Mode 3: Test
 
@@ -159,15 +159,20 @@ Run the agent *N* times and gate on the confidence interval, not a single outcom
 |---|---|---|
 | `--samples` | scenario value | Override `reliability.samples` |
 | `--concurrency` | `4` | Parallel workers |
-| `--runner` | `synthetic` | `synthetic`, `ollama`, or a registered custom runner |
-| `--endpoint` | `http://localhost:11434` | Runner endpoint |
+| `--runner` | `synthetic` | `synthetic`, `ollama`, `http`, `exec` |
+| `--endpoint` | (empty) | Agent URL for `http`; Ollama URL for `ollama` |
+| `--command` | | Exec argv (or pass args after `--`) |
+| `--trace-source` | `auto` | `auto` / `response` / `file` / `otel` / `otel-file` |
+| `--trace-path` | | Per-sample file; may contain `{sample_id}` |
+| `--otel-listen` | ephemeral | In-process OTLP/HTTP bind; gRPC is derived (`:4318` → `:4317`) |
+| `--fixtures` | | Extra fixture JSON directory |
 | `--model` | `llama3.1:8b` | Ollama model |
 | `--pass-probability` | `1.0` | Synthetic runner pass rate — useful for testing your own gates |
 | `--policy` | built-in defaults | Policy file |
 
 The `synthetic` runner is seeded and needs no GPU or API key, which makes it the right choice for verifying that your policy and assertions behave before you spend tokens. `--pass-probability 0.85` lets you prove your CI actually goes red on a flaky agent.
 
-A scenario file:
+A scenario file (or a folder — see [Authoring scenarios]({% link usage/test-your-agent.md %})):
 
 ```yaml
 id: cancel_latest_order
@@ -179,9 +184,9 @@ task:
 environment:
   fixture_strategy: prefer_exact_then_sequence
   fixtures: []
-assertions:
-  - id: assert_success
-    type: task_success
+  fixtures_dir: fixtures
+assertion_files:
+  - ../_shared/assertions/cancel.yaml
 reliability:
   samples: 100
   minimum_pass_rate: 0.95
@@ -190,6 +195,10 @@ provenance:
   source: authored
   extracted_at: 2026-09-06T00:00:00Z
   reviewed_by: "you@example.com"
+```
+
+```bash
+./gust test testdata/suites --runner synthetic --samples 2 --policy testdata/policy-smoke.yaml
 ```
 
 ### Reading the verdict
@@ -287,6 +296,7 @@ The command exits `1` if detection rate < 90% or false positive rate > 5%. Run i
 
 ```bash
 ./gust scenario from-run production-trace.json --output tests/new_scenario.yaml
+./gust scenario from-run production-trace.json --layout dir --output tests/new_case/
 ```
 
 You get task input, recorded fixtures for every tool span (content-addressed by argument hash), sane reliability defaults — and this:
@@ -303,13 +313,15 @@ Empty assertions and empty `reviewed_by` are intentional and structural. Derivin
 
 ## Trace ingestion
 
-Already emitting OpenTelemetry spans? Convert an OTLP JSON export instead of writing a recorder:
+Already emitting OpenTelemetry spans? During a **CI job or laptop session**, point the *dev/QA* exporter at gust. Do not retarget production.
 
 ```bash
-./gust ingest otel --file traces/otlp-export.json --output run.json
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+gust ingest otel serve --analyze --assertions tests/assertions.json
 ```
 
-An ingested run is indistinguishable from a hand-authored one downstream. Attribute mapping table and instrumentation guidance: [OTel ingestion]({% link usage/otel-ingest.md %}).
+In CI, prefer `gust test --runner exec --trace-source otel` so the listener dies with the job. Offline: `--file`, `--file -`, or `--url`. Details: [OTel ingestion]({% link usage/otel-ingest.md %}) and [CI integration]({% link usage/ci-github-actions.md %}).
 
 ## Embedding gust as a Go library
 

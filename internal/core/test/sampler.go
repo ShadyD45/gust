@@ -13,12 +13,14 @@ import (
 
 // SamplingConfig configures a Mode 3 probabilistic test run.
 type SamplingConfig struct {
-	Scenario    api.TestScenario
-	Runner      ports.TestRunner
-	Evaluators  []ports.Evaluator
-	Concurrency int
-	Endpoint    string
-	MinSamples  int // override for INSUFFICIENT_SAMPLES; 0 → use policy default 5
+	Scenario        api.TestScenario
+	Runner          ports.TestRunner
+	Evaluators      []ports.Evaluator
+	Concurrency     int
+	Endpoint        string                // runner-specific (ollama / http agent URL)
+	FixtureEndpoint string                // mock tool proxy; passed to Runner.Run
+	FixtureProvider ports.FixtureProvider // optional; Reset after each sample when concurrency is 1
+	MinSamples      int                   // override for INSUFFICIENT_SAMPLES; 0 → use policy default 5
 }
 
 // Sampler orchestrates parallel sampling and Wilson classification.
@@ -75,10 +77,17 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 			}
 			defer func() { <-sem }()
 
-			run, err := cfg.Runner.Run(ctx, cfg.Scenario, cfg.Endpoint)
+			fixtureEndpoint := cfg.FixtureEndpoint
+			if fixtureEndpoint == "" {
+				fixtureEndpoint = cfg.Endpoint
+			}
+			run, err := cfg.Runner.Run(ctx, cfg.Scenario, fixtureEndpoint)
 			if err != nil {
 				results[idx].err = err
 				return
+			}
+			if cfg.FixtureProvider != nil && concurrency == 1 {
+				_ = cfg.FixtureProvider.Reset()
 			}
 			report, err := s.analyzeEngine.AnalyzeRun(ctx, run, cfg.Scenario.Assertions, ports.EvaluationContext{
 				ScenarioID: cfg.Scenario.ID,

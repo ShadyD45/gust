@@ -2,23 +2,36 @@
 title: Execution modes
 nav_order: 2
 parent: Architecture
+has_mermaid: true
 ---
 # Execution Modes
 
 gust never blurs Analyze, Replay, and Test. Each answers a different question.
 
-```text
-                    +------------------+
-   AgentRun.json -->| Analyze (Mode 1) |--> Evaluation evidence
-                    +------------------+
-                              ^
-                              | assertions from TestScenario
-                              |
-   AgentRun + Fixtures ------>| Replay (Mode 2) |--> Deterministic rewritten run
-                              +------------------+
-                              |
-   Live agent + Fixtures ---->| Test (Mode 3)   |--> N samples --> Wilson verdict
-                              +------------------+
+```mermaid
+flowchart LR
+  accTitle: gust execution modes
+  accDescr: Analyze evaluates a captured run, Replay rewrites a run from fixtures, and Test samples a live agent into a Wilson verdict
+
+  subgraph m1 [Mode 1 — Analyze]
+    direction TB
+    aIn[AgentRun.json] --> analyze[Analyze]
+    asserts[TestScenario assertions] --> analyze
+    analyze --> evidence[Evaluation evidence]
+  end
+
+  subgraph m2 [Mode 2 — Replay]
+    direction TB
+    rIn[AgentRun + Fixtures] --> replay[Replay]
+    replay --> rewritten[Deterministic rewritten run]
+  end
+
+  subgraph m3 [Mode 3 — Test]
+    direction TB
+    tIn[Live agent + Fixtures] --> test[Test]
+    test --> samples[N samples]
+    samples --> verdict[Wilson verdict]
+  end
 ```
 
 ## Mode 1 — Analyze

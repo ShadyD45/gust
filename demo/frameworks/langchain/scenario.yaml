@@ -1,0 +1,33 @@
+id: langchain_cancel_latest_order
+version: "1.0"
+description: "LangChain-shaped agent driven by gust test --runner exec"
+task:
+  id: refund-001
+  input: "Cancel my latest order"
+environment:
+  fixture_strategy: prefer_exact_then_sequence
+  fixtures: []
+  fixtures_dir: fixtures
+assertions:
+  - id: completes
+    type: task_success
+    parameters:
+      expected_output: cancelled
+  - id: cancels_right
+    type: tool_call
+    tool: cancel_order
+    arguments:
+      order_id: 123
+reliability:
+  samples: 2
+  minimum_pass_rate: 0.95
+  confidence: 0.95
+provenance:
+  source: authored
+  extracted_at: 2026-09-06T00:00:00Z
+  reviewed_by: mvp@gust.dev
+runner:
+  type: exec
+  command: ["python", "demo/frameworks/langchain/agent.py"]
+  traces:
+    source: response

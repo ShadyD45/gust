@@ -1,8 +1,11 @@
 package cli
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -21,6 +24,7 @@ func newScenarioCmd() *cobra.Command {
 
 func newScenarioFromRunCmd() *cobra.Command {
 	var output string
+	var layout string
 
 	cmd := &cobra.Command{
 		Use:   "from-run <run.json>",
@@ -31,7 +35,18 @@ func newScenarioFromRunCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			sc, yamlBytes, err := scenario.NewExtractor().ExtractYAML(run)
+			ext := scenario.NewExtractor()
+			if strings.EqualFold(layout, "dir") {
+				if output == "" {
+					return fmt.Errorf("--output is required with --layout dir")
+				}
+				sc, err := ext.ExtractFromRun(run)
+				if err != nil {
+					return err
+				}
+				return writeScenarioDir(output, sc)
+			}
+			sc, yamlBytes, err := ext.ExtractYAML(run)
 			if err != nil {
 				return err
 			}
@@ -46,6 +61,30 @@ func newScenarioFromRunCmd() *cobra.Command {
 			return os.WriteFile(output, yamlBytes, 0644)
 		},
 	}
-	cmd.Flags().StringVar(&output, "output", "", "write YAML to file")
+	cmd.Flags().StringVar(&output, "output", "", "write YAML to file, or a directory when --layout dir")
+	cmd.Flags().StringVar(&layout, "layout", "file", "file (single YAML) or dir (scenario.yaml + fixtures/)")
 	return cmd
+}
+
+func writeScenarioDir(dir string, sc *api.TestScenario) error {
+	if err := os.MkdirAll(filepath.Join(dir, "fixtures"), 0755); err != nil {
+		return err
+	}
+	for _, fx := range sc.Environment.Fixtures {
+		encoded, err := json.MarshalIndent(fx, "", "  ")
+		if err != nil {
+			return err
+		}
+		name := fx.FixtureID + ".json"
+		if err := os.WriteFile(filepath.Join(dir, "fixtures", name), append(encoded, '\n'), 0644); err != nil {
+			return err
+		}
+	}
+	sc.Environment.Fixtures = []api.Fixture{}
+	sc.Environment.FixturesDir = "fixtures"
+	yamlBytes, err := scenario.RenderYAML(sc)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(dir, "scenario.yaml"), yamlBytes, 0644)
 }

@@ -38,16 +38,25 @@
         "fixtures": {
           "type": "array",
           "items": { "$ref": "fixture.json" }
+        },
+        "fixtures_dir": {
+          "type": "string",
+          "description": "Directory of fixture JSON files, relative to the scenario file"
         }
       },
       "additionalProperties": false
+    },
+    "assertion_files": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "YAML/JSON files that contain an array of assertions, relative to the scenario file"
     },
     "assertions": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "type"],
         "properties": {
+          "$ref": { "type": "string" },
           "id": { "type": "string", "minLength": 1 },
           "type": {
             "type": "string",
@@ -93,6 +102,32 @@
         "source_run_id": { "type": "string" },
         "extracted_at": { "type": "string", "format": "date-time" },
         "reviewed_by": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "runner": {
+      "type": "object",
+      "description": "Optional end-user Mode 3 hook. CLI flags override these fields.",
+      "properties": {
+        "type": { "type": "string", "enum": ["http", "exec"] },
+        "url": { "type": "string" },
+        "command": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "timeout_seconds": { "type": "integer", "minimum": 1 },
+        "traces": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "enum": ["auto", "response", "file", "otel", "otel-file"]
+            },
+            "path": { "type": "string" },
+            "wait_timeout_seconds": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     }

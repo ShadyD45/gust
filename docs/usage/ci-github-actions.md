@@ -2,10 +2,27 @@
 title: CI integration
 nav_order: 4
 parent: Usage
+has_mermaid: true
 ---
 # Running gust in CI
 
 gust is built for CI: one static binary, offline by default, and exit codes that map cleanly onto pipeline decisions.
+
+**gust lives on the CI runner.** The agent under test is the same job (recommended) or a **dev/QA** service. Production does not run gust, does not get a sidecar, and does not export OTLP to CI.
+
+```mermaid
+flowchart LR
+  subgraph ci [CI runner]
+    gustBin[gust analyze / test]
+  end
+  subgraph qa [Dev or QA]
+    agent[Agent + fixtures]
+  end
+  prod[Production]
+  gustBin -->|invoke| agent
+  agent -->|trace| gustBin
+  prod -.->|nothing installed| gustBin
+```
 
 ## Exit codes
 
@@ -57,7 +74,7 @@ If you consume gust from another repository, replace the build step with a downl
 
 ```yaml
       - name: Reliability gate
-        run: ./gust test tests/cancel_order.yaml --runner synthetic --samples 100 --policy policy.yaml
+        run: ./gust test tests/ --runner synthetic --samples 100 --policy tests/_shared/policy.yaml
 ```
 
 | Scenario | Samples | Pass Rate | 95% CI | Verdict |
@@ -116,23 +133,76 @@ When you set `on_flaky: fail`, branch on the exit code so an inconclusive result
 
 Simpler alternative, if you do not need the distinction in-pipeline: leave `on_flaky: warn` while adopting, then flip to `fail` once your suite is stable.
 
-## Live agent tests
+## Live agent tests (dev/QA → gust on CI)
 
-Analyze, Replay, Compare, and Mutate never touch the network — run them on every commit. Mode 3 against a real LLM costs time and money, so gate it:
+Analyze, Replay, Compare, and Mutate never touch the network — run them on every commit. Mode 3 drives a **real agent process** (or a QA URL) and evaluates the traces **in the same job**. That is the only “live push” gust needs.
+
+Nothing is deployed to production. The agent you invoke is:
+
+- the repo checkout on the runner (`--runner exec`), with fixtures instead of prod APIs, or
+- a **dev/QA** HTTP service the runner can reach (`--runner http`)
+
+`gust test` starts an in-process OTLP listener and a fixture proxy, then exits. See [Test your agent]({% link usage/test-your-agent.md %}).
+
+### Same job — recommended
+
+Agent and gust share localhost. gust injects `OTEL_EXPORTER_OTLP_*` and `AGENTEVAL_INGEST_URL` so an OpenInference / SDK agent can push traces without any extra deploy.
 
 ```yaml
   live:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      # ... build ...
-      - name: Nightly reliability
-        run: ./gust test tests/cancel_order.yaml --runner ollama --endpoint "$OLLAMA_URL" --samples 200
-        env:
-          OLLAMA_URL: ${{ secrets.OLLAMA_URL }}
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: go build -o gust ./cmd/gust
+      - run: pip install -e sdk/python   # or your agent's deps
+
+      - name: Reliability on the CI agent (not prod)
+        run: |
+          ./gust test tests/cancel.yaml \
+            --runner exec --trace-source otel \
+            --samples 20 --policy policy.yaml \
+            -- python -m my_agent.sample
 ```
 
-A local model via Ollama keeps this near zero cost. Point tool calls at the fixture proxy (`AGENTEVAL_FIXTURE_ENDPOINT`) so the agent is live but its dependencies are not.
+`--trace-source response` instead of `otel` if the hook prints an `AgentRun` on stdout (the Python `run_sample` helper).
+
+### QA service on the same network
+
+Use this when the agent is already running in **dev/QA** and the CI runner can both *call* it and *receive* OTLP (self-hosted runner or compose in the QA VPC). GitHub-hosted runners have no inbound ports — the QA agent cannot push back to them.
+
+```yaml
+      - name: Reliability against QA
+        run: |
+          ./gust test tests/cancel.yaml \
+            --runner http \
+            --endpoint "$QA_AGENT_URL" \
+            --trace-source otel \
+            --otel-listen 0.0.0.0:4318 \
+            --samples 20 --policy policy.yaml
+        env:
+          QA_AGENT_URL: ${{ secrets.QA_AGENT_URL }}
+```
+
+gust POSTs `/invoke` with `otel_endpoint` / `ingest_url` / `tool_endpoint`. The QA process exports OTLP or `RunRecorder.export()` to that listener. Point the QA agent's OTEL endpoint at a **hostname the agent can route** (the runner's private DNS), not `0.0.0.0`.
+
+### QA cannot dial CI
+
+Keep gust on the runner; do not open production. Either:
+
+```yaml
+      # QA returns the AgentRun on POST /invoke — no push into CI
+      - run: ./gust test tests/cancel.yaml --runner http --endpoint "$QA_AGENT_URL" --trace-source response
+```
+
+or pull a trace QA already sent to Langfuse (`gust ingest langfuse --trace-id …` then `gust analyze`). Production still does not talk to gust.
 
 ## Keeping CI cheap
 

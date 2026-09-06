@@ -1,0 +1,9 @@
+version: "1.0"
+name: mode3-smoke
+hard_constraints:
+  forbidden_tools: 0
+  schema_violations: 0
+reliability:
+  default_minimum_pass_rate: 0.5
+  min_samples_for_verdict: 2
+  on_flaky: warn

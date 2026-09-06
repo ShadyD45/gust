@@ -4,7 +4,9 @@
 
 title: gust
 description: Test what happens when your agent meets a world that doesn’t behave.
-theme: just-the-docs
+# Use remote_theme so GitHub's built-in Pages builder can fetch Just the Docs
+# (it is not part of the github-pages gem set). Local preview uses the same.
+remote_theme: just-the-docs/just-the-docs@v0.10.1
 
 url: https://shadyd45.github.io
 baseurl: /gust
@@ -23,6 +25,7 @@ defaults:
       layout: default
 
 plugins:
+  - jekyll-remote-theme
   - jekyll-seo-tag
   - jekyll-include-cache
 

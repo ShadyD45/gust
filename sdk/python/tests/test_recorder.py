@@ -133,3 +133,43 @@ def test_timestamps_are_utc_zulu():
     span = rec.to_dict()["trace"][0]
     assert span["start_time"].endswith("Z")
     assert span["end_time"].endswith("Z")
+
+
+def test_export_posts_agent_run(monkeypatch):
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    import threading
+
+    received = {}
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            return
+
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length", "0"))
+            received["path"] = self.path
+            received["body"] = json.loads(self.rfile.read(length))
+            self.send_response(202)
+            self.end_headers()
+            self.wfile.write(b'{"ok":true}')
+
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        rec = make_recorder(run_id="export-1")
+        rec.complete(output="done")
+        host, port = server.server_address[:2]
+        rec.export(url=f"http://{host}:{port}")
+        assert received["path"] == "/v1/runs"
+        assert received["body"]["run_id"] == "export-1"
+    finally:
+        server.shutdown()
+
+
+def test_resolve_ingest_url_from_otel(monkeypatch):
+    from gust_sdk.recorder import resolve_ingest_url
+
+    monkeypatch.delenv("AGENTEVAL_INGEST_URL", raising=False)
+    monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://127.0.0.1:4318")
+    assert resolve_ingest_url() == "http://127.0.0.1:4318/v1/runs"

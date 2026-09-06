@@ -11,6 +11,29 @@ import (
 	"gust/pkg/api"
 )
 
+func TestMemoryFixtureProviderClone(t *testing.T) {
+	provider := NewMemoryFixtureProvider()
+	if err := provider.LoadFixtures([]api.Fixture{{
+		FixtureID:     "fx_seq",
+		Tool:          "poll",
+		MatchStrategy: api.MatchStrategyOrderedSequence,
+		RecordedResponse: api.RecordedResponse{Status: "success", Body: "A"},
+		Provenance:       api.ProvenanceRecorded,
+	}}); err != nil {
+		t.Fatal(err)
+	}
+	clone := provider.Clone()
+	ctx := context.Background()
+	_, _, _ = provider.Lookup(ctx, ports.ToolCall{Name: "poll"})
+	resp, found, err := clone.Lookup(ctx, ports.ToolCall{Name: "poll"})
+	if err != nil || !found {
+		t.Fatalf("clone lookup: found=%v err=%v", found, err)
+	}
+	if resp.Body != "A" {
+		t.Fatalf("clone should have its own sequence, got %v", resp.Body)
+	}
+}
+
 func TestMemoryFixtureProvider(t *testing.T) {
 	provider := NewMemoryFixtureProvider()
 

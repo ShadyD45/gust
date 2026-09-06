@@ -29,8 +29,8 @@ Match strategies: exact hash, ordered sequence (FIFO), hybrid (prefer exact then
 The real test artifact:
 
 - `task` — what to ask the agent
-- `environment.fixtures` — controlled world
-- `assertions` — independent expectations (never auto-copied from a buggy trace)
+- `environment.fixtures` / `fixtures_dir` — controlled world (bodies usually live as JSON files)
+- `assertions` / `assertion_files` / `$ref` — independent expectations (never auto-copied from a buggy trace)
 - `reliability` — samples, minimum pass rate, confidence
 - `provenance` — extraction metadata and human review fields
 

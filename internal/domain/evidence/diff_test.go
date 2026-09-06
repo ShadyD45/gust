@@ -4,6 +4,17 @@ import (
 	"testing"
 )
 
+func TestCompareMapsNumericTypes(t *testing.T) {
+	diffs := CompareMaps(
+		map[string]any{"order_id": 123},
+		map[string]any{"order_id": float64(123)},
+		"",
+	)
+	if len(diffs) != 0 {
+		t.Fatalf("int vs float64 should match, got %+v", diffs)
+	}
+}
+
 func TestCompareMaps(t *testing.T) {
 	exp := map[string]any{
 		"a": 1,
