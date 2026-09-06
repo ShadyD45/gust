@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenteval.dev/schemas/reliability_result.json",
+  "title": "ReliabilityResult",
+  "description": "Statistical pass rate and confidence interval for a scenario tested across repeated samples",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "samples",
+    "passes",
+    "observed_pass_rate",
+    "confidence_interval",
+    "verdict"
+  ],
+  "properties": {
+    "scenario_id": { "type": "string" },
+    "samples": { "type": "integer", "minimum": 1 },
+    "passes": { "type": "integer", "minimum": 0 },
+    "observed_pass_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "confidence_interval": {
+      "type": "array",
+      "items": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "FLAKY", "INSUFFICIENT_SAMPLES"]
+    },
+    "per_run_evidence": {
+      "type": "array",
+      "items": { "type": "object" }
+    }
+  },
+  "additionalProperties": false
+}

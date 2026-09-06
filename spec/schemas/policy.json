@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenteval.dev/schemas/policy.json",
+  "title": "Policy",
+  "description": "Evaluation acceptance gate policy",
+  "type": "object",
+  "required": ["version", "name", "reliability"],
+  "properties": {
+    "version": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "hard_constraints": {
+      "type": "object",
+      "properties": {
+        "forbidden_tools": { "type": "integer", "minimum": 0 },
+        "schema_violations": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "reliability": {
+      "type": "object",
+      "required": ["default_minimum_pass_rate", "min_samples_for_verdict", "on_flaky"],
+      "properties": {
+        "default_minimum_pass_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "min_samples_for_verdict": { "type": "integer", "minimum": 1 },
+        "on_flaky": { "type": "string", "enum": ["warn", "fail", "ignore"] }
+      },
+      "additionalProperties": false
+    },
+    "regression": {
+      "type": "object",
+      "properties": {
+        "max_pass_rate_drop": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "max_latency_increase_ratio": { "type": "number", "minimum": 0.0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

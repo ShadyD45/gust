@@ -1,0 +1,42 @@
+# Phase 11: SDKs and Framework Adapters
+
+## Objectives
+
+1. Publish lightweight **Python** and **TypeScript** client SDKs that emit `AgentRun` / call the wire protocol or HTTP fixture proxy.
+2. Provide adapters for popular agent stacks: **LangChain**, **LlamaIndex**, **AutoGen**, **CrewAI** (priority order by adoption).
+3. Keep the Go binary as the evaluation authority; SDKs are capture + invoke clients.
+
+## Scope
+
+| In | Out |
+|----|-----|
+| `sdk/python`, `sdk/typescript` packages | Rewriting core engines in Python/TS |
+| Decorators / callbacks that record spans | Hosted SaaS control plane |
+| Docs: install, record, `gust test`/`analyze` | Full MCP host rewrite |
+
+## Architecture
+
+```text
+Framework agent ──► SDK tracer ──► AgentRun JSON / OTel
+                                      │
+                                      ▼
+                              gust CLI / library (Go)
+```
+
+Tier-2 JSON-RPC wire remains available for custom evaluators written in Python/TS.
+
+## Deliverables
+
+1. PyPI / npm packages with minimal deps.
+2. One reference adapter (LangChain) with demo under `demo/frameworks/`.
+3. Compatibility matrix in docs (framework version × gust schema version).
+
+## Verification
+
+- SDK round-trip: record → write run.json → `gust analyze` passes golden assertions.
+- Fixture proxy env (`AGENTEVAL_FIXTURE_ENDPOINT`) works from Python and Node agents.
+- CI builds SDK packages on every main push (lint + unit).
+
+## Exit criteria
+
+A non-Go developer can instrument a LangChain agent and run Mode 1 + Mode 3 against gust without reading Go source.

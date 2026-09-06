@@ -1,0 +1,7 @@
+{
+  "name": "candidate",
+  "passes": 75,
+  "samples": 100,
+  "pass_rate": 0.75,
+  "latency_ns": 1000000
+}

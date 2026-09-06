@@ -1,0 +1,45 @@
+{
+  "schema_version": "0.5",
+  "run_id": "golden_cancel",
+  "agent": { "name": "support-agent", "version": "1.4" },
+  "task": { "id": "refund-001", "input": "Cancel my latest order" },
+  "trace": [
+    {
+      "span_id": "s1",
+      "name": "get_orders",
+      "type": "tool",
+      "start_time": "2026-01-01T00:00:00Z",
+      "end_time": "2026-01-01T00:00:00.010Z",
+      "attributes": {
+        "input": { "customer_id": 42 },
+        "output": [{ "id": 122, "status": "DELIVERED" }, { "id": 123, "status": "PROCESSING" }]
+      },
+      "status": { "code": "ok" }
+    },
+    {
+      "span_id": "s2",
+      "name": "cancel_order",
+      "type": "tool",
+      "start_time": "2026-01-01T00:00:00.015Z",
+      "end_time": "2026-01-01T00:00:00.025Z",
+      "attributes": {
+        "input": { "order_id": 123 },
+        "output": { "ok": true }
+      },
+      "status": { "code": "ok" }
+    }
+  ],
+  "outcome": {
+    "status": "completed",
+    "output": "Order 123 cancelled successfully."
+  },
+  "metadata": {
+    "assertions": [
+      { "id": "a1", "type": "task_success", "parameters": { "expected_output": "cancelled" } },
+      { "id": "a2", "type": "tool_call", "tool": "get_orders", "arguments": { "customer_id": 42 } },
+      { "id": "a3", "type": "tool_call", "tool": "cancel_order", "arguments": { "order_id": 123 } },
+      { "id": "a4", "type": "forbidden_tool_call", "tool": "forbidden_admin_access" },
+      { "id": "a5", "type": "max_steps", "limit": 2 }
+    ]
+  }
+}

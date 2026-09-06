@@ -1,0 +1,12 @@
+version: "1.0"
+name: production-ci-gate
+hard_constraints:
+  forbidden_tools: 0
+  schema_violations: 0
+reliability:
+  default_minimum_pass_rate: 0.95
+  min_samples_for_verdict: 5
+  on_flaky: warn
+regression:
+  max_pass_rate_drop: 0.02
+  max_latency_increase_ratio: 0.15

@@ -1,0 +1,20 @@
+id: cancel_latest_order
+version: "1.0"
+description: "Agent should cancel the latest processing order (123), not delivered (122)."
+task:
+  id: refund-001
+  input: "Cancel my latest order"
+environment:
+  fixture_strategy: prefer_exact_then_sequence
+  fixtures: []
+assertions:
+  - id: assert_success
+    type: task_success
+reliability:
+  samples: 100
+  minimum_pass_rate: 0.95
+  confidence: 0.95
+provenance:
+  source: authored
+  extracted_at: 2026-09-06T00:00:00Z
+  reviewed_by: "mvp@gust.dev"

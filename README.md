@@ -1,2 +1,106 @@
-# gust
-Behavioral testing for AI agents.
+<p align="center">
+  <img src="gust-logo.png" alt="Gust — Test what happens when your agent meets a world that doesn’t behave." width="420" />
+</p>
+
+**Test infrastructure for autonomous software** — the role that JUnit, a mocking framework, and a CI regression gate play for ordinary backends, adapted for LLM-driven agents that do not give the same answer twice.
+
+gust is **not** a final-answer LLM evaluation library. It measures agent behavior (tool choice, arguments, sequences, safety constraints, latency) and treats correctness as a **statistical pass rate** with confidence intervals.
+
+## Why gust exists
+
+1. **A trace is not the test.** A captured `AgentRun` is evidence of what happened once. A `TestScenario` (task + controlled fixtures + independent assertions) is the test artifact.
+2. **Three modes must never be blurred:** Analyze, Replay, and Test. Only Test invokes a live agent/LLM.
+3. **Stochastic systems need repeated sampling.** A single PASS/FAIL from one run is a coin flip. gust reports `PASS`, `FAIL`, `FLAKY`, or `INSUFFICIENT_SAMPLES` using Wilson score intervals.
+
+## Execution modes
+
+| Mode | What it does | Network / LLM |
+|------|----------------|---------------|
+| **Analyze** | Evaluate assertions against a captured `AgentRun` | Offline |
+| **Replay** | Re-drive recorded tool I/O via fixtures (deterministic) | Offline |
+| **Test** | Run the real agent against mocked tools, *N* times | Live agent/LLM |
+
+Mutation testing validates the **deterministic** evaluator suite (Replay-mode). Probabilistic sampling is reserved for Test-mode nondeterminism.
+
+## Quick start
+
+```bash
+# Build the CLI
+go build -o gust ./cmd/gust
+
+# Run the full MVP killer demo (recommended)
+./demo/run.sh          # Linux/macOS
+./demo/run.ps1         # Windows PowerShell
+```
+
+Or invoke commands directly:
+
+```bash
+# Mode 1 — analyze a captured run
+./gust analyze testdata/runs/golden_cancel.json --policy testdata/policy.yaml
+
+# Mode 2 — deterministic replay
+./gust replay testdata/runs/golden_cancel.json --fixtures testdata/fixtures
+
+# Mode 3 — probabilistic test (synthetic runner; no GPU required)
+./gust test testdata/scenarios/cancel_latest_order.yaml --runner synthetic --samples 100
+
+# Mutation trust metric for evaluators
+./gust mutate testdata/runs/golden_cancel.json --classes all --n 100
+
+# Baseline vs candidate regression
+./gust compare testdata/baseline.json testdata/candidate.json --policy testdata/policy.yaml
+
+# Extract a scenario from a production trace (assertions left empty by design)
+./gust scenario from-run testdata/runs/buggy_cancel.json --output out/scenario.yaml
+```
+
+### CI exit codes
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success (or `FLAKY` when `on_flaky: warn` / `ignore`) |
+| `1` | Failure, hard constraint violation, or regression |
+| `2` | Configuration / runtime error |
+| `3` | Flaky failure when `on_flaky: fail` |
+
+## Architecture
+
+See **[docs/architecture/](docs/architecture/)** for system design, data model, statistics, and extension points.
+
+Canonical requirements: [`gust_Specification_v0.5.md`](gust_Specification_v0.5.md).  
+Phased roadmap: [`docs/plans/roadmap.md`](docs/plans/roadmap.md).  
+MVP phase plans: [`docs/plans/mvp/`](docs/plans/mvp/).  
+Framework hardening (Phases 10–16): [`docs/plans/framework/`](docs/plans/framework/).  
+Killer demo: [`demo/`](demo/).
+
+## Project layout
+
+```text
+cmd/gust/                 CLI entrypoint
+pkg/api/                  Public domain types
+pkg/jcs/                  RFC 8785 canonical JSON hashing
+internal/ports/           Tier-1 Go interfaces
+internal/core/            Analyze, Replay, Test, stats, mutate, policy, scenario
+internal/adapters/        Evaluators, mutators, fixtures, testrunner, wire, storage
+spec/schemas/             JSON Schema contracts (Draft 2020-12)
+demo/                     End-to-end MVP demo scripts
+docs/architecture/        Architecture documentation
+docs/plans/               MVP + framework roadmap plans
+```
+
+## Status
+
+MVP Phases 1–9 complete (library, Mode 3, policy, scenario extraction, CLI, demo, CI).
+
+Post-MVP (Phases 10–16): see [`docs/plans/framework/`](docs/plans/framework/) — OTel ingestion, SDKs/adapters, stats v2, continuous eval, clustering, multi-agent/AEE.
+
+## Requirements
+
+- Go 1.23+
+- Optional: local [Ollama](https://ollama.com) for live Test-mode runs
+- Dependencies kept minimal: Cobra (CLI), yaml.v3 (scenarios/policies). Core engines are stdlib-only.
+
+## License
+
+Apache-2.0 — see [LICENSE](LICENSE).

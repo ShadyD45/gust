@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenteval.dev/schemas/evaluation_result.json",
+  "title": "EvaluationResult",
+  "description": "Structured outcome of an evaluator running against a trace",
+  "type": "object",
+  "required": [
+    "evaluator_name",
+    "evaluator_version",
+    "passed",
+    "score"
+  ],
+  "properties": {
+    "evaluator_name": { "type": "string" },
+    "evaluator_version": { "type": "string" },
+    "passed": { "type": "boolean" },
+    "score": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+    "message": { "type": "string" },
+    "evidence": { "type": "object" },
+    "execution_time_ns": { "type": "integer" }
+  },
+  "additionalProperties": false
+}

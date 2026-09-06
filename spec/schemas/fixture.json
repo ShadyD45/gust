@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenteval.dev/schemas/fixture.json",
+  "title": "Fixture",
+  "description": "Recorded or authored tool dependency mock fixture",
+  "type": "object",
+  "required": [
+    "fixture_id",
+    "tool",
+    "recorded_response",
+    "provenance"
+  ],
+  "properties": {
+    "fixture_id": { "type": "string", "minLength": 1 },
+    "tool": { "type": "string", "minLength": 1 },
+    "input_hash": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "match_strategy": {
+      "type": "string",
+      "enum": ["exact_hash", "ordered_sequence", "prefer_exact_then_sequence"]
+    },
+    "sequence_order": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "recorded_input": {
+      "type": "object"
+    },
+    "recorded_response": {
+      "type": "object",
+      "required": ["status", "body"],
+      "properties": {
+        "status": { "type": "string" },
+        "status_code": { "type": "integer" },
+        "body": {},
+        "error": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["success", "timeout", "malformed", "slow", "partial_failure"]
+    },
+    "delay_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "provenance": {
+      "type": "string",
+      "enum": ["recorded", "authored"]
+    }
+  },
+  "additionalProperties": false
+}

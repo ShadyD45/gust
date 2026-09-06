@@ -1,0 +1,11 @@
+{
+  "fixture_id": "fx_cancel_order_001",
+  "tool": "cancel_order",
+  "match_strategy": "exact_hash",
+  "recorded_input": { "order_id": 123 },
+  "recorded_response": {
+    "status": "success",
+    "body": { "ok": true }
+  },
+  "provenance": "recorded"
+}

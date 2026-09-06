@@ -1,0 +1,105 @@
+package cli
+
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"gust/internal/core/analyze"
+	"gust/internal/core/mutate"
+	"gust/internal/core/policy"
+	"gust/pkg/api"
+)
+
+// PrintAnalyzeTerminal renders Mode 1 results.
+func PrintAnalyzeTerminal(report *analyze.AnalysisReport) {
+	badge := "PASS"
+	if !report.Passed {
+		badge = "FAIL"
+	}
+	fmt.Printf("Analyze %s → %s (%d assertions, %d ns)\n", report.RunID, badge, len(report.Results), report.TotalDurationNs)
+	for _, r := range report.Results {
+		mark := "✓"
+		if !r.Passed {
+			mark = "✗"
+		}
+		fmt.Printf("  %s %s: %s\n", mark, r.EvaluatorName, r.Message)
+	}
+}
+
+// PrintReplayTerminal renders Mode 2 output summary.
+func PrintReplayTerminal(run *api.AgentRun) {
+	fmt.Printf("Replay → %s (%d spans, outcome=%s)\n", run.RunID, len(run.Trace), run.Outcome.Status)
+}
+
+// PrintReliabilityTerminal renders Mode 3 with distinct FLAKY badge.
+func PrintReliabilityTerminal(res *api.ReliabilityResult) {
+	fmt.Printf("\nScenario: %s\n", res.ScenarioID)
+	fmt.Printf("  %d/%d passed  (observed pass rate: %.1f%%)\n",
+		res.Passes, res.Samples, res.ObservedPassRate*100)
+	fmt.Printf("  95%% confidence interval: [%.1f%%, %.1f%%]\n",
+		res.ConfidenceInterval[0]*100, res.ConfidenceInterval[1]*100)
+
+	switch res.Verdict {
+	case api.VerdictPass:
+		fmt.Printf("\nVERDICT: [+] PASS\n")
+	case api.VerdictFail:
+		fmt.Printf("\nVERDICT: [-] FAIL\n")
+	case api.VerdictFlaky:
+		fmt.Printf("\nVERDICT: [?] FLAKY (Inconclusive)\n")
+	default:
+		fmt.Printf("\nVERDICT: %s\n", res.Verdict)
+	}
+}
+
+// PrintMutateTerminal renders mutation benchmark.
+func PrintMutateTerminal(report *mutate.MutationBenchmarkReport) {
+	fmt.Printf("Mutation testing\n")
+	fmt.Printf("  applied=%d detected=%d skipped=%d\n", report.MutantsApplied, report.MutantsDetected, report.MutantsSkipped)
+	fmt.Printf("  detection_rate=%.1f%%  false_positive_rate=%.1f%%\n",
+		report.DetectionRate*100, report.FalsePositiveRate*100)
+}
+
+// PrintRegressionTerminal renders compare output.
+func PrintRegressionTerminal(reg *policy.RegressionResult) {
+	status := "PASS"
+	if reg.Regressed {
+		status = "REGRESSION"
+	}
+	fmt.Printf("Compare → %s\n", status)
+	fmt.Printf("  pass_rate_drop=%.4f  latency_increase_ratio=%.4f  p=%.4f significant=%v\n",
+		reg.PassRateDrop, reg.LatencyIncreaseRatio, reg.PValue, reg.Significant)
+	fmt.Printf("  %s\n", reg.Message)
+}
+
+// WriteGitHubSummary appends a markdown table when GITHUB_STEP_SUMMARY is set.
+func WriteGitHubSummary(results []*api.ReliabilityResult) {
+	path := os.Getenv("GITHUB_STEP_SUMMARY")
+	if path == "" || len(results) == 0 {
+		return
+	}
+	var b strings.Builder
+	b.WriteString("## gust Test Results\n\n")
+	b.WriteString("| Scenario | Samples | Pass Rate | 95% CI | Verdict |\n")
+	b.WriteString("|---|---|---|---|---|\n")
+	for _, r := range results {
+		badge := string(r.Verdict)
+		switch r.Verdict {
+		case api.VerdictFlaky:
+			badge = "⚠️ **FLAKY**"
+		case api.VerdictPass:
+			badge = "✅ **PASS**"
+		case api.VerdictFail:
+			badge = "❌ **FAIL**"
+		}
+		fmt.Fprintf(&b, "| `%s` | %d | %.1f%% | `[%.1f%%, %.1f%%]` | %s |\n",
+			r.ScenarioID, r.Samples, r.ObservedPassRate*100,
+			r.ConfidenceInterval[0]*100, r.ConfidenceInterval[1]*100, badge)
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	_, _ = f.WriteString(b.String())
+}
