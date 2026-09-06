@@ -6,7 +6,7 @@ End-to-end verification of the MVP Definition of Done using the synthetic runner
 ## Prerequisites
 
 - Go 1.23+
-- Run from repo root (the scripts build `gust` for you)
+- Run from repo root
 
 ## What it runs
 
@@ -18,12 +18,22 @@ End-to-end verification of the MVP Definition of Done using the synthetic runner
 ## Run
 
 ```bash
-# Linux / macOS
+# Linux / macOS — build then run (default)
 ./demo/run.sh
+
+# Reuse an existing ./gust binary
+./demo/run.sh --skip-build
+
+# Point at a specific binary (CI does this)
+./demo/run.sh --bin /path/to/gust
 
 # Windows (PowerShell)
 ./demo/run.ps1
+./demo/run.ps1 -SkipBuild
+./demo/run.ps1 -Bin .\gust.exe
 ```
+
+CI builds once, then runs `./demo/run.sh --bin …` to avoid a second compile (saves Actions minutes).
 
 Artifacts under `demo/` are self-contained copies of golden inputs so the demo
 does not depend on editing `testdata/`.

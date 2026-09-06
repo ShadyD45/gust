@@ -1,13 +1,45 @@
+param(
+  [switch]$SkipBuild,
+  [string]$Bin = ""
+)
+
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 if (-not $Root) { $Root = (Resolve-Path "$PSScriptRoot\..").Path }
 Set-Location $Root
 
-Write-Host "==> Building gust"
-go build -o gust.exe ./cmd/gust
-
 $Demo = Join-Path $Root "demo"
-$Gust = Join-Path $Root "gust.exe"
+$DefaultBin = Join-Path $Root "gust.exe"
+
+# Env fallbacks when flags omitted
+if (-not $Bin -and $env:GUST_BIN) {
+  $Bin = $env:GUST_BIN
+  $SkipBuild = $true
+}
+if ($env:SKIP_BUILD -eq "1" -or $env:SKIP_BUILD -eq "true") {
+  $SkipBuild = $true
+}
+
+if ($Bin) {
+  if (-not (Test-Path $Bin)) {
+    Write-Error "binary not found: $Bin"
+    exit 2
+  }
+  $Gust = $Bin
+} elseif ($SkipBuild) {
+  if (-not (Test-Path $DefaultBin)) {
+    Write-Error "missing $DefaultBin; build first or omit -SkipBuild"
+    exit 2
+  }
+  $Gust = $DefaultBin
+} else {
+  Write-Host "==> Building gust"
+  go build -o gust.exe ./cmd/gust
+  if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  $Gust = $DefaultBin
+}
+
+Write-Host "==> Using binary: $Gust"
 
 Write-Host ""
 Write-Host "==> 1/5 Mutation testing"

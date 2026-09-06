@@ -1,24 +1,56 @@
+# Lean CI for GitHub free tier (minimize billed minutes).
+# Tips: keep this Linux-only (Windows=2x, macOS=10x minutes).
 name: ci
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/*.png"
+      - "LICENSE"
+      - ".gitignore"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "**/*.png"
+      - "LICENSE"
+      - ".gitignore"
+
+# Cancel superseded runs on the same branch/PR (biggest free-tier saver).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
+          cache: true
+
+      # Single compile pass: tests share the build cache with the binary.
       - name: Test
         run: go test ./...
+
       - name: Build
         run: go build -o gust ./cmd/gust
+
+      # Reuse the binary — avoid a second go build inside the demo.
       - name: Demo smoke
         run: |
           chmod +x demo/run.sh
-          ./demo/run.sh
+          ./demo/run.sh --bin "${{ github.workspace }}/gust"
