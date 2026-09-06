@@ -1,10 +1,10 @@
-# Phase 9: CLI, CI Integration, Golden Demo & Verification
+# Phase 9: CLI, CI Integration, Demo & Verification
 
 ## 1. Objectives & Scope
 1. Implement the unified **CLI binary (`gust`)** using Cobra, distributed as a single static Go binary.
 2. Implement rich terminal formatters (ANSI color tables, clear `FLAKY` indicators) and CI-optimized outputs (GitHub Actions Step Summaries, JSON output).
 3. Enforce deterministic exit codes for automated CI pipelines.
-4. Execute and verify the **MVP Killer Demo** end-to-end against a $0 local model / mock environment.
+4. Execute and verify the **MVP demo** end-to-end against a $0 local model / mock environment.
 5. Complete the entire **MVP Definition of Done**.
 
 ---
@@ -96,9 +96,9 @@ Emits `$GITHUB_STEP_SUMMARY` markdown:
 
 ---
 
-## 5. End-to-End Killer Demo Verification
+## 5. End-to-End Demo Verification
 
-To declare the MVP complete, run the three killer demo workflows:
+To declare the MVP complete, run the three demo workflows:
 
 ```bash
 # 1. Mutation Testing

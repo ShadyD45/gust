@@ -127,4 +127,4 @@ else
 fi
 
 echo ""
-echo "Demo complete - MVP killer workflows verified."
+echo "Demo complete - MVP workflows verified."

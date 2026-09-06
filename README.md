@@ -17,7 +17,7 @@ go build -o gust ./cmd/gust
 # Scaffold a project
 ./gust init
 
-# Run the full MVP killer demo (recommended)
+# Run the full MVP demo (recommended)
 ./demo/run.sh          # Linux/macOS
 ./demo/run.ps1         # Windows PowerShell
 ```

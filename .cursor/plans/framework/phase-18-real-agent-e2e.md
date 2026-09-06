@@ -37,4 +37,4 @@ Build on the existing LangChain demo scaffold:
 ## Non-goals
 
 - Hosted UI / observability dashboard
-- Replacing the synthetic killer demo
+- Replacing the synthetic demo

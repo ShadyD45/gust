@@ -86,4 +86,4 @@ if ($content -notmatch "Trace is not the test") {
 Write-Host "H8 ok: extraction warning present"
 
 Write-Host ""
-Write-Host "Demo complete - MVP killer workflows verified."
+Write-Host "Demo complete - MVP workflows verified."

@@ -31,7 +31,7 @@ This master roadmap outlines the progression of the project from inception (Phas
 | - Phase 6: Mode 3 (Test) + Statistical Reliability Engine (Wilson Score, Ollama/Local)|
 | - Phase 7: Policy Engine (Hard/Soft Constraints, FLAKY handling, Regression Compare)  |
 | - Phase 8: Assisted Scenario Extraction (gust scenario from-run, Invariants)     |
-| - Phase 9: Single Static Binary CLI, CI Pipeline Integration, & Killer Demo          |
+| - Phase 9: Single Static Binary CLI, CI Pipeline Integration, & Demo                 |
 +-------------------------------------------+-------------------------------------------+
                                             |
                                             v
@@ -89,8 +89,8 @@ This master roadmap outlines the progression of the project from inception (Phas
 - **Scope**: CLI workflow converting production `AgentRun` traces into reusable `TestScenario` files. Automatically extract input and candidate fixtures.
 - **Invariants**: Structurally prevent auto-populating assertions from observed agent behavior to prevent enshrining bugs (Hypothesis H8).
 
-### Phase 9: CLI, CI Integration & Golden Demo
-- **Scope**: Build single static binary using Cobra. Implement formatted outputs (human CLI table, CI summary, machine-readable JSON). Implement CI exit codes. Validate the complete end-to-end killer demo.
+### Phase 9: CLI, CI Integration & Demo
+- **Scope**: Build single static binary using Cobra. Implement formatted outputs (human CLI table, CI summary, machine-readable JSON). Implement CI exit codes. Validate the complete end-to-end demo.
 - **Exit Criteria**: Complete MVP Definition of Done satisfied; reproducible on fresh clone.
 
 ---

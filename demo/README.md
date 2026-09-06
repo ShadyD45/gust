@@ -1,4 +1,4 @@
-# gust killer demo
+# gust demo
 
 End-to-end verification of the MVP Definition of Done using the synthetic runner
 (no GPU / Ollama required).
