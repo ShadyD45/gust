@@ -1,3 +1,8 @@
+---
+title: Custom evaluator (Go)
+nav_order: 1
+parent: Extending
+---
 # Writing a custom evaluator (Go)
 
 The built-in suite covers tool selection, arguments, sequencing, safety, budgets, and recovery. Domain rules are yours to write — "never quotes a price below cost", "always cites a document ID", "redacts PII before calling the email tool". This guide builds one end to end.
@@ -123,7 +128,7 @@ Analyze run-8f21 → FAIL (3 assertions, 210433 ns)
   ✓ max_steps: step count 4 within budget of 6
 ```
 
-If instead you want to reuse an existing assertion type and route it somewhere new, extend `resolveEvaluatorName` in [`internal/core/analyze/engine.go`](../../internal/core/analyze/engine.go) — that function is the only mapping layer between assertion types and evaluator names.
+If instead you want to reuse an existing assertion type and route it somewhere new, extend `resolveEvaluatorName` in [`internal/core/analyze/engine.go`](https://github.com/ShadyD45/gust/blob/main/internal/core/analyze/engine.go) — that function is the only mapping layer between assertion types and evaluator names.
 
 ### As a library, without the CLI
 
@@ -136,7 +141,7 @@ This is the path to use inside an ordinary `go test` suite.
 
 ## Testing your evaluator
 
-Table-driven tests over hand-built runs are the norm here — see [`internal/adapters/evaluators/evaluators_test.go`](../../internal/adapters/evaluators/) for the existing style:
+Table-driven tests over hand-built runs are the norm here — see [`internal/adapters/evaluators/`](https://github.com/ShadyD45/gust/tree/main/internal/adapters/evaluators) for the existing style:
 
 ```go
 func TestPIILeakEvaluator(t *testing.T) {
@@ -216,3 +221,4 @@ A skipped mutation is excluded from the denominator. Returning "applied" for a n
 - [ ] `ExecutionTimeNs` set on every return path
 - [ ] Registered in the default registry
 - [ ] Unit tested for pass and fail, plus checked with `gust mutate`
+

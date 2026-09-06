@@ -1,0 +1,23 @@
+@import "./color_schemes/dark";
+
+$color-scheme: gust;
+
+$body-background-color: #07090d;
+$body-heading-color: #f4f7fb;
+$body-text-color: #c7d0dc;
+$link-color: #3ee6c8;
+$nav-child-link-color: #9aa8bb;
+$sidebar-color: #05070b;
+$base-button-color: #151a24;
+$btn-primary-color: #2f7dff;
+$code-background-color: #10151e;
+$code-linenumber-color: #9ec4ff;
+$feedback-color: #0c1118;
+$table-background-color: #10151e;
+$search-background-color: #10151e;
+$search-result-preview-color: #9aa8bb;
+$border-color: #1c2430;
+
+$body-font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+$mono-font-family: "IBM Plex Mono", "SFMono-Regular", menlo, consolas, monospace;
+$content-line-height: 1.65;

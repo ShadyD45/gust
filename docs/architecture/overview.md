@@ -1,3 +1,8 @@
+---
+title: Overview
+nav_order: 1
+parent: Architecture
+---
 # Overview
 
 ## Vision
@@ -43,3 +48,4 @@ An agent may pick the wrong tool, pass invalid arguments, loop, violate safety c
 - `context.Context` on all I/O and long-running work
 - Minimal dependencies: Cobra + yaml.v3 at the edges; core engines stdlib-only
 - Content addressing via RFC 8785 JCS + SHA-256
+

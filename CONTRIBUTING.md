@@ -28,7 +28,7 @@ These are not style preferences. A change that violates one will be asked to cha
 
 ## What to work on
 
-- **Roadmap and phase plans** live in [`docs/plans/`](docs/plans/). Phases 10–16 in [`docs/plans/framework/`](docs/plans/framework/) are the current direction — each has explicit scope, invariants, and exit criteria.
+- **Roadmap and phase plans** live in [`.cursor/plans/`](.cursor/plans/) (maintainers / internal). Public product docs are under [`docs/`](docs/) and publish to GitHub Pages.
 - **Good first contributions**: a new deterministic evaluator, a new mutation class, framework adapters or SDK improvements, docs that close a gap you hit while adopting gust.
 - **Discuss first**: anything touching the wire protocol, schema versions, verdict semantics, or the statistics engine. Open an issue before writing code — those changes ripple.
 

@@ -1,3 +1,8 @@
+---
+title: Execution modes
+nav_order: 2
+parent: Architecture
+---
 # Execution Modes
 
 gust never blurs Analyze, Replay, and Test. Each answers a different question.
@@ -48,3 +53,4 @@ Replay is also the substrate for **mutation testing**: mutators alter traces; An
 ## Policy layer
 
 Policy sits **above** raw evaluation. It combines hard constraints (zero-tolerance), soft reliability thresholds, `on_flaky` behavior, and optional baseline-vs-candidate regression into CI exit codes.
+

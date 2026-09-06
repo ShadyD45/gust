@@ -1,3 +1,8 @@
+---
+title: OTel ingestion
+nav_order: 3
+parent: Usage
+---
 # Ingesting OpenTelemetry / OpenInference traces
 
 If your agent is already instrumented with OpenTelemetry — via OpenInference, OpenLLMetry, Arize Phoenix, LangSmith's OTel exporter, or your own spans — you do not need to write a recorder. Export the trace as OTLP JSON and convert it:
@@ -74,7 +79,7 @@ That last fallback matters: assertions about tools only see spans of type `tool`
 
 ## Worked example
 
-A trace with an agent root and two tool spans ships in [`testdata/otel/openinference_cancel.json`](../../testdata/otel/openinference_cancel.json):
+A trace with an agent root and two tool spans ships in [`testdata/otel/openinference_cancel.json`](https://github.com/ShadyD45/gust/blob/main/testdata/otel/openinference_cancel.json):
 
 ```json
 {
@@ -163,6 +168,7 @@ The mapper never invents assertions, never fabricates a task input, and never ma
 
 ## Limits
 
-- **File-based only.** A live OTLP receiver is planned in [Phase 10](../plans/framework/phase-10-otel-openinference.md); the file path covers CI and batch analysis today.
+- **File-based only.** A live OTLP receiver may land in a later release; the file path covers CI and batch analysis today.
 - **One trace per run.** Multi-trace exports require explicit selection.
 - **Tool I/O only.** Fixtures are not derived from ingested traces automatically — use `gust scenario from-run` on the ingested run to get those.
+

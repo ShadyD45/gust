@@ -1,0 +1,93 @@
+# GitHub Pages / Just the Docs site for gust.
+# Preview locally:  cd docs && bundle install && bundle exec jekyll serve
+# Live URL after enabling Pages: https://shadyd45.github.io/gust/
+
+title: gust
+description: Test what happens when your agent meets a world that doesn’t behave.
+theme: just-the-docs
+
+url: https://shadyd45.github.io
+baseurl: /gust
+
+permalink: pretty
+
+repository: ShadyD45/gust
+
+logo: "/assets/images/gust-logo.png"
+
+# Without this, Jekyll emits raw HTML and the theme CSS never loads.
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+plugins:
+  - jekyll-seo-tag
+  - jekyll-include-cache
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - .sass-cache/
+  - .jekyll-cache/
+  - .gitignore
+  - README.md
+  - plans
+
+search_enabled: true
+search:
+  heading_level: 3
+  previews: 3
+  preview_words_before: 5
+  preview_words_after: 10
+
+heading_anchors: true
+
+aux_links:
+  "GitHub":
+    - "https://github.com/ShadyD45/gust"
+  "Contribute":
+    - "https://github.com/ShadyD45/gust/blob/main/CONTRIBUTING.md"
+
+aux_links_new_tab: true
+
+gh_edit_link: true
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: "https://github.com/ShadyD45/gust"
+gh_edit_branch: "main"
+gh_edit_source: docs
+gh_edit_view_mode: "edit"
+
+color_scheme: gust
+
+callouts_level: loud
+callouts:
+  highlight:
+    color: blue
+  important:
+    color: yellow
+  new:
+    color: green
+  note:
+    color: purple
+  warning:
+    color: red
+
+back_to_top: true
+back_to_top_text: "Back to top"
+
+footer_content: 'gust is Apache-2.0. <a href="https://github.com/ShadyD45/gust">Source on GitHub</a>.'
+
+compress_html:
+  ignore:
+    envs: all
+
+kramdown:
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+mermaid:
+  version: "10.9.1"

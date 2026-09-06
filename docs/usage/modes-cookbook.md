@@ -1,6 +1,11 @@
+---
+title: Modes cookbook
+nav_order: 2
+parent: Usage
+---
 # Modes cookbook
 
-Recipes for every gust command, with the flags and semantics that actually ship today. If you have not recorded an `AgentRun` yet, start with [integrate-your-app.md](integrate-your-app.md).
+Recipes for every gust command, with the flags and semantics that actually ship today. If you have not recorded an `AgentRun` yet, start with [Integrate your app]({% link usage/integrate-your-app.md %}).
 
 | Mode | Command | Runs your agent? | Network |
 |---|---|---|---|
@@ -139,7 +144,7 @@ POST /v1/tools/call
 { "status": "success", "status_code": 200, "body": [ ... ] }
 ```
 
-Point your agent's tool layer at that base URL in test builds and every tool call resolves from fixtures instead of production. See [../extending/custom-test-runner.md](../extending/custom-test-runner.md) for wiring it from your own runner.
+Point your agent's tool layer at that base URL in test builds and every tool call resolves from fixtures instead of production. See [Custom test runner]({% link extending/custom-test-runner.md %}) for wiring it from your own runner.
 
 ## Mode 3: Test
 
@@ -304,7 +309,7 @@ Already emitting OpenTelemetry spans? Convert an OTLP JSON export instead of wri
 ./gust ingest otel --file traces/otlp-export.json --output run.json
 ```
 
-An ingested run is indistinguishable from a hand-authored one downstream. Attribute mapping table and instrumentation guidance: [otel-ingest.md](otel-ingest.md).
+An ingested run is indistinguishable from a hand-authored one downstream. Attribute mapping table and instrumentation guidance: [OTel ingestion]({% link usage/otel-ingest.md %}).
 
 ## Embedding gust as a Go library
 
@@ -330,4 +335,5 @@ if !report.Passed {
 }
 ```
 
-That makes gust usable as an assertion library inside an ordinary `go test` run, with the same evaluators the CLI uses. To register your own evaluator alongside the built-ins, see [../extending/custom-evaluator-go.md](../extending/custom-evaluator-go.md).
+That makes gust usable as an assertion library inside an ordinary `go test` run, with the same evaluators the CLI uses. To register your own evaluator alongside the built-ins, see [Custom evaluator]({% link extending/custom-evaluator-go.md %}).
+

@@ -1,3 +1,9 @@
+---
+title: Wire plugins (Python)
+nav_order: 2
+parent: Extending
+has_mermaid: true
+---
 # Cross-language evaluators (Tier-2 wire plugins)
 
 Not every rule belongs in Go. If your validation logic already exists in Python — a pydantic schema, a compliance rules engine, a domain classifier — the Tier-2 wire protocol lets gust call it as a first-class evaluator.
@@ -78,7 +84,7 @@ The scrubbed environment is intentional: an evaluator that needs production cred
 
 ## Using the SDK base class
 
-The [Python SDK](../../sdk/python/) handles the transport, the manifest handshake, and error mapping, leaving you one method to implement:
+The [Python SDK](https://github.com/ShadyD45/gust/tree/main/sdk/python) handles the transport, the manifest handshake, and error mapping, leaving you one method to implement:
 
 ```python
 from gust_sdk import EvaluatorPlugin, serve
@@ -190,7 +196,7 @@ if __name__ == "__main__":
     main()
 ```
 
-A runnable copy of this plugin ships in [`sdk/python/examples/wire_evaluator/`](../../sdk/python/examples/wire_evaluator/) along with a test that exercises the protocol without gust.
+A runnable copy of this plugin ships in [`sdk/python/examples/wire_evaluator/`](https://github.com/ShadyD45/gust/tree/main/sdk/python/examples/wire_evaluator) along with a test that exercises the protocol without gust.
 
 ## Loading the plugin
 
@@ -263,4 +269,5 @@ rl.on("line", (line) => {
 });
 ```
 
-A packaged TypeScript SDK is planned in [Phase 11](../plans/framework/phase-11-sdks-and-framework-adapters.md); the protocol above is stable and usable today.
+A packaged TypeScript SDK and framework adapters (LangChain first) are planned; the protocol above is stable and usable today.
+

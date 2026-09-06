@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="gust-logo.png" alt="Gust - Test what happens when your agent meets a world that doesn’t behave." width="420" />
-</p>
+![Gust - Test what happens when your agent meets a world that doesn’t behave.](gust-logo.png)
 
 **Test infrastructure for autonomous software** - the role that JUnit, a mocking framework, and a CI regression gate play for ordinary backends, adapted for LLM-driven agents that do not give the same answer twice.
 
@@ -14,11 +12,13 @@ gust is **not** a final-answer LLM evaluation library. It measures agent behavio
 
 ## Execution modes
 
-| Mode | What it does | Network / LLM |
-|------|----------------|---------------|
-| **Analyze** | Evaluate assertions against a captured `AgentRun` | Offline |
-| **Replay** | Re-drive recorded tool I/O via fixtures (deterministic) | Offline |
-| **Test** | Run the real agent against mocked tools, *N* times | Live agent/LLM |
+
+| Mode        | What it does                                            | Network / LLM  |
+| ----------- | ------------------------------------------------------- | -------------- |
+| **Analyze** | Evaluate assertions against a captured `AgentRun`       | Offline        |
+| **Replay**  | Re-drive recorded tool I/O via fixtures (deterministic) | Offline        |
+| **Test**    | Run the real agent against mocked tools, *N* times      | Live agent/LLM |
+
 
 Mutation testing validates the **deterministic** evaluator suite (Replay-mode). Probabilistic sampling is reserved for Test-mode nondeterminism.
 
@@ -57,23 +57,27 @@ Or invoke commands directly:
 
 ### CI exit codes
 
-| Code | Meaning |
-|------|---------|
-| `0` | Success (or `FLAKY` when `on_flaky: warn` / `ignore`) |
-| `1` | Failure, hard constraint violation, or regression |
-| `2` | Configuration / runtime error |
-| `3` | Flaky failure when `on_flaky: fail` |
+
+| Code | Meaning                                               |
+| ---- | ----------------------------------------------------- |
+| `0`  | Success (or `FLAKY` when `on_flaky: warn` / `ignore`) |
+| `1`  | Failure, hard constraint violation, or regression     |
+| `2`  | Configuration / runtime error                         |
+| `3`  | Flaky failure when `on_flaky: fail`                   |
+
 
 ## Use it with your agent
 
 gust reads a JSON document describing what your agent did, so integration is a recorder in your tool-dispatch path — not a rewrite. **[docs/usage/](docs/usage/)** walks through it:
 
-| Guide | What it covers |
-|-------|----------------|
-| [Integrate your app](docs/usage/integrate-your-app.md) | Emit an `AgentRun` from Python, TypeScript, or Go and run your first gate |
-| [Modes cookbook](docs/usage/modes-cookbook.md) | Every command, all nine assertion types, fixtures, failure injection, policies |
-| [OTel ingestion](docs/usage/otel-ingest.md) | Convert OpenTelemetry / OpenInference traces instead of writing a recorder |
-| [CI integration](docs/usage/ci-github-actions.md) | Exit codes, step summaries, regression baselines |
+
+| Guide                                                  | What it covers                                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| [Integrate your app](docs/usage/integrate-your-app.md) | Emit an `AgentRun` from Python, TypeScript, or Go and run your first gate      |
+| [Modes cookbook](docs/usage/modes-cookbook.md)         | Every command, all nine assertion types, fixtures, failure injection, policies |
+| [OTel ingestion](docs/usage/otel-ingest.md)            | Convert OpenTelemetry / OpenInference traces instead of writing a recorder     |
+| [CI integration](docs/usage/ci-github-actions.md)      | Exit codes, step summaries, regression baselines                               |
+
 
 ## Extend it
 
@@ -90,9 +94,7 @@ Python capture SDK: [`sdk/python/`](sdk/python/).
 See **[docs/architecture/](docs/architecture/)** for system design, data model, statistics, and extension points.
 
 Canonical requirements: [`gust_Specification_v0.5.md`](gust_Specification_v0.5.md).  
-Phased roadmap: [`docs/plans/roadmap.md`](docs/plans/roadmap.md).  
-MVP phase plans: [`docs/plans/mvp/`](docs/plans/mvp/).  
-Framework hardening (Phases 10–16): [`docs/plans/framework/`](docs/plans/framework/).  
+Documentation site (GitHub Pages): **https://shadyd45.github.io/gust/** — sources in [`docs/`](docs/).  
 Killer demo: [`demo/`](demo/).
 
 ## Project layout
@@ -107,23 +109,33 @@ internal/adapters/        Evaluators, mutators, fixtures, ingest, testrunner, wi
 sdk/python/               Python capture SDK + wire plugin example
 spec/schemas/             JSON Schema contracts (Draft 2020-12)
 demo/                     End-to-end MVP demo scripts
-docs/usage/               End-user guides (integrate, cookbook, CI)
-docs/extending/           Extension guides (evaluators, runners, plugins)
-docs/architecture/        Architecture documentation
-docs/plans/               MVP + framework roadmap plans
+docs/                     GitHub Pages site (usage, extending, architecture)
 ```
 
 ## Status
 
 MVP Phases 1–9 complete (library, Mode 3, policy, scenario extraction, CLI, demo, CI).
 
-Phase 10 (OTel/OpenInference file ingestion) and the Phase 11 Python capture SDK have landed. Remaining post-MVP work — TypeScript SDK, framework adapters, stats v2, continuous eval, clustering, multi-agent/AEE — is planned in [`docs/plans/framework/`](docs/plans/framework/).
+Phase 10 (OTel/OpenInference file ingestion) and the Phase 11 Python capture SDK have landed. Remaining post-MVP work — TypeScript SDK, framework adapters, stats v2, continuous eval, clustering, multi-agent/AEE — is tracked in internal engineering plans (maintainers only).
 
 ## Requirements
 
 - Go 1.23+
 - Optional: local [Ollama](https://ollama.com) for live Test-mode runs
 - Dependencies kept minimal: Cobra (CLI), yaml.v3 (scenarios/policies). Core engines are stdlib-only.
+
+## Documentation site
+
+The [`docs/`](docs/) tree is a [Just the Docs](https://just-the-docs.github.io/just-the-docs/) Jekyll site, published with GitHub Pages (free for public repositories).
+
+```bash
+cd docs
+bundle install
+bundle exec jekyll serve
+# http://127.0.0.1:4000/gust/
+```
+
+After the first `pages` workflow run, set **Settings → Pages → Source** to **GitHub Actions** if prompted.
 
 ## Contributing
 

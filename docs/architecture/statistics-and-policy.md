@@ -1,3 +1,8 @@
+---
+title: Statistics and policy
+nav_order: 5
+parent: Architecture
+---
 # Statistics and Policy
 
 ## Wilson score interval
@@ -59,3 +64,4 @@ Baseline vs candidate compares pass-rate drop and latency increase against polic
 | 1 | Failure / hard constraint / regression |
 | 2 | Config or runtime error |
 | 3 | Flaky under `on_flaky: fail` |
+

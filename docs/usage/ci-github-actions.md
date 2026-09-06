@@ -1,3 +1,8 @@
+---
+title: CI integration
+nav_order: 4
+parent: Usage
+---
 # Running gust in CI
 
 gust is built for CI: one static binary, offline by default, and exit codes that map cleanly onto pipeline decisions.
@@ -89,7 +94,7 @@ Store the main-branch numbers as a baseline artifact, then compare each PR again
         run: ./gust compare baseline/baseline.json candidate.json --policy policy.yaml
 ```
 
-`baseline.json` and `candidate.json` are the small summary shape described in [modes-cookbook.md](modes-cookbook.md#regression-comparison): `passes`, `samples`, `pass_rate`, `latency_ns`. Generate them from your `--json` reliability output.
+`baseline.json` and `candidate.json` are the small summary shape described in [Regression comparison]({% link usage/modes-cookbook.md %}#regression-comparison): `passes`, `samples`, `pass_rate`, `latency_ns`. Generate them from your `--json` reliability output.
 
 ## Handling flaky verdicts explicitly
 
@@ -131,7 +136,7 @@ A local model via Ollama keeps this near zero cost. Point tool calls at the fixt
 
 ## Keeping CI cheap
 
-This repository's own workflow, [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), is a working example of the cost discipline worth copying:
+This repository's own workflow, [`.github/workflows/ci.yml`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/ci.yml), is a working example of the cost discipline worth copying:
 
 - `paths-ignore` for docs and images so documentation changes do not burn runner minutes.
 - `concurrency` with `cancel-in-progress` to kill superseded runs.
@@ -156,3 +161,4 @@ agent-behavior:
 sh 'go build -o gust ./cmd/gust'
 sh './gust analyze runs/latest.json --policy policy.yaml'
 ```
+

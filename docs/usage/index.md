@@ -1,3 +1,9 @@
+---
+title: Usage
+nav_order: 2
+has_children: true
+has_toc: false
+---
 # Using gust
 
 gust answers one question about an LLM agent you already run in production:
@@ -17,14 +23,16 @@ Not "is the final answer good?" but "did it call the right tools, with the right
 | Production broke in a way no test covered | `gust scenario from-run` turns a real trace into a test scenario skeleton |
 | "Do our assertions actually catch bugs?" | `gust mutate` injects known-bad behavior and measures detection rate |
 
-## Read in this order
+## Guides
 
-1. **[integrate-your-app.md](integrate-your-app.md)** — emit an `AgentRun` from your existing Python / TypeScript / Go service and run your first gate. Start here.
-2. **[modes-cookbook.md](modes-cookbook.md)** — recipes per mode, all assertion types, fixtures, policies.
-3. **[otel-ingest.md](otel-ingest.md)** — already emitting OpenTelemetry / OpenInference spans? Convert them instead of writing a recorder.
-4. **[ci-github-actions.md](ci-github-actions.md)** — wire the gate into CI with the right exit codes.
+| Page | What it covers |
+|------|----------------|
+| [Integrate your app]({% link usage/integrate-your-app.md %}) | Emit an `AgentRun` from your existing Python, TypeScript, or Go service and run your first gate. Start here. |
+| [Modes cookbook]({% link usage/modes-cookbook.md %}) | Recipes per mode, all assertion types, fixtures, and policies |
+| [OTel ingestion]({% link usage/otel-ingest.md %}) | Convert OpenTelemetry / OpenInference spans instead of writing a recorder |
+| [CI integration]({% link usage/ci-github-actions.md %}) | Wire the gate into CI with the right exit codes |
 
-Extending gust (custom evaluators, runners, cross-language plugins): **[../extending/](../extending/)**.
+Custom evaluators, runners, and cross-language plugins: [Extending]({% link extending/index.md %}).
 
 ## The one rule that surprises people
 
@@ -50,3 +58,4 @@ echo $?
 ```
 
 Everything else in these docs is a variation on that: where the run comes from, how many times you sample it, and what policy decides "pass".
+

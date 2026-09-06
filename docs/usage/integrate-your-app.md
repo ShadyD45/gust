@@ -1,3 +1,9 @@
+---
+title: Integrate your app
+nav_order: 1
+parent: Usage
+has_mermaid: true
+---
 # Integrate gust with your existing agent
 
 This guide takes you from "I have an agent running somewhere" to "a broken tool call fails my CI build." No rewrite required — gust reads a JSON document describing what your agent did.
@@ -19,7 +25,7 @@ You only need step one — recording an `AgentRun` — to get value. Everything 
 
 ## Step 1: Record an AgentRun
 
-An `AgentRun` is a trace: who ran, what was asked, what steps happened, how it ended. The full type lives in [`pkg/api/types.go`](../../pkg/api/types.go) and the JSON Schema in [`spec/schemas/`](../../spec/schemas/).
+An `AgentRun` is a trace: who ran, what was asked, what steps happened, how it ended. The full type lives in [`pkg/api/types.go`](https://github.com/ShadyD45/gust/blob/main/pkg/api/types.go) and the JSON Schema in [`spec/schemas/`](https://github.com/ShadyD45/gust/tree/main/spec/schemas/).
 
 Minimum viable run:
 
@@ -73,7 +79,7 @@ Two conventions carry all the assertion weight:
 
 ### Python
 
-No dependencies needed — this is a dict and a `json.dump`. (A packaged helper lives in [`sdk/python`](../../sdk/python/); see [Using the Python SDK](#step-5-optional-use-the-python-sdk).)
+No dependencies needed — this is a dict and a `json.dump`. (A packaged helper lives in [`sdk/python`](https://github.com/ShadyD45/gust/tree/main/sdk/python); see [Using the Python SDK](#step-5-optional-use-the-python-sdk).)
 
 ```python
 import json, uuid
@@ -120,7 +126,7 @@ Where to hook in depends on your stack, but it is always the same place — wher
 - **OpenAI/Anthropic function calling loops**: your `for tool_call in response.tool_calls:` dispatch loop.
 - **LlamaIndex / CrewAI / AutoGen**: their respective tool callback or observer hooks.
 
-If you would rather not write a recorder at all and you already emit OpenTelemetry spans, skip to [otel-ingest.md](otel-ingest.md).
+If you would rather not write a recorder at all and you already emit OpenTelemetry spans, skip to [OTel ingestion]({% link usage/otel-ingest.md %}).
 
 ### TypeScript / Node
 
@@ -201,7 +207,7 @@ run := api.AgentRun{
 if err := run.Validate(); err != nil { /* fail fast in your recorder, not in CI */ }
 ```
 
-You can also embed the engines instead of shelling out to the binary — see [modes-cookbook.md](modes-cookbook.md#embedding-gust-as-a-go-library).
+You can also embed the engines instead of shelling out to the binary — see [Embedding gust as a Go library]({% link usage/modes-cookbook.md %}#embedding-gust-as-a-go-library).
 
 ## Step 2: Declare what "correct" means
 
@@ -226,7 +232,7 @@ For anything long-lived, keep assertions in a separate file so your production r
 ./gust analyze run.json --assertions tests/cancel_order.assertions.json
 ```
 
-That file is a plain JSON array of the same objects. The full catalogue of the nine assertion types and their fields is in [modes-cookbook.md](modes-cookbook.md#assertion-catalogue).
+That file is a plain JSON array of the same objects. The full catalogue of the nine assertion types and their fields is in the [assertion catalogue]({% link usage/modes-cookbook.md %}#assertion-catalogue).
 
 ## Step 3: Gate it
 
@@ -273,11 +279,11 @@ Scenario: cancel_latest_order
 VERDICT: [?] FLAKY (Inconclusive)
 ```
 
-That verdict is the point: at 100 samples with a 95% floor, 97% observed is *not* enough evidence to call it passing. Details on runners, sample sizing, and what each verdict means are in [modes-cookbook.md](modes-cookbook.md#mode-3-test).
+That verdict is the point: at 100 samples with a 95% floor, 97% observed is *not* enough evidence to call it passing. Details on runners, sample sizing, and what each verdict means are in [Mode 3: Test]({% link usage/modes-cookbook.md %}#mode-3-test).
 
 ## Step 5 (optional): Use the Python SDK
 
-If you are in Python, [`sdk/python`](../../sdk/python/) packages the recorder above so you do not maintain span plumbing yourself:
+If you are in Python, [`sdk/python`](https://github.com/ShadyD45/gust/tree/main/sdk/python) packages the recorder above so you do not maintain span plumbing yourself:
 
 ```bash
 pip install -e sdk/python
@@ -299,11 +305,12 @@ rec.complete(output=final_answer)
 rec.write("run.json")
 ```
 
-The SDK captures and invokes; the Go binary remains the evaluation authority. Full reference: [`sdk/python/README.md`](../../sdk/python/README.md).
+The SDK captures and invokes; the Go binary remains the evaluation authority. Full reference: [Python SDK](https://github.com/ShadyD45/gust/blob/main/sdk/python/README.md).
 
 ## Where to go next
 
-- Recipes for every mode, fixture matching, and failure injection: [modes-cookbook.md](modes-cookbook.md)
-- Already emitting OTel spans: [otel-ingest.md](otel-ingest.md)
-- Wire it into GitHub Actions: [ci-github-actions.md](ci-github-actions.md)
-- Write your own evaluator: [../extending/custom-evaluator-go.md](../extending/custom-evaluator-go.md)
+- Recipes for every mode, fixture matching, and failure injection: [Modes cookbook]({% link usage/modes-cookbook.md %})
+- Already emitting OTel spans: [OTel ingestion]({% link usage/otel-ingest.md %})
+- Wire it into GitHub Actions: [CI integration]({% link usage/ci-github-actions.md %})
+- Write your own evaluator: [Custom evaluator]({% link extending/custom-evaluator-go.md %})
+

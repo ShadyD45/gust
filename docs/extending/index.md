@@ -1,17 +1,24 @@
+---
+title: Extending
+nav_order: 3
+has_children: true
+has_toc: false
+has_mermaid: true
+---
 # Extending gust
 
-gust is a hexagonal core: every pluggable capability is a small Go interface in [`internal/ports`](../../internal/ports/), and every built-in is just one implementation of one of them. There is no privileged built-in path — the evaluators that ship with gust use exactly the same interface yours will.
+gust is a hexagonal core: every pluggable capability is a small Go interface in [`internal/ports`](https://github.com/ShadyD45/gust/tree/main/internal/ports), and every built-in is just one implementation of one of them. There is no privileged built-in path — the evaluators that ship with gust use exactly the same interface yours will.
 
 ## Pick an extension path
 
 | You want to... | Path | Language | Guide |
 |---|---|---|---|
-| Assert something the built-in evaluators cannot express | Implement `ports.Evaluator` | Go | [custom-evaluator-go.md](custom-evaluator-go.md) |
-| Reuse existing Python/TS validation logic as an evaluator | Tier-2 JSON-RPC plugin | Python, TypeScript, anything | [wire-plugin-python.md](wire-plugin-python.md) |
-| Drive your own agent in Mode 3 | Implement `ports.TestRunner` | Go | [custom-test-runner.md](custom-test-runner.md) |
-| Inject new failure classes into mutation testing | Implement `ports.Mutator` | Go | [custom-evaluator-go.md](custom-evaluator-go.md#adding-a-mutator) |
-| Serve fixtures from your own store | Implement `ports.FixtureProvider` | Go | [custom-test-runner.md](custom-test-runner.md#custom-fixture-providers) |
-| Persist scenarios/runs somewhere other than the filesystem | Implement the store ports | Go | [`internal/ports/store.go`](../../internal/ports/store.go) |
+| Assert something the built-in evaluators cannot express | Implement `ports.Evaluator` | Go | [Custom evaluator]({% link extending/custom-evaluator-go.md %}) |
+| Reuse existing Python/TS validation logic as an evaluator | Tier-2 JSON-RPC plugin | Python, TypeScript, anything | [Wire plugins]({% link extending/wire-plugin-python.md %}) |
+| Drive your own agent in Mode 3 | Implement `ports.TestRunner` | Go | [Custom test runner]({% link extending/custom-test-runner.md %}) |
+| Inject new failure classes into mutation testing | Implement `ports.Mutator` | Go | [Adding a mutator]({% link extending/custom-evaluator-go.md %}#adding-a-mutator) |
+| Serve fixtures from your own store | Implement `ports.FixtureProvider` | Go | [Custom fixture providers]({% link extending/custom-test-runner.md %}#custom-fixture-providers) |
+| Persist scenarios/runs somewhere other than the filesystem | Implement the store ports | Go | [`internal/ports/store.go`](https://github.com/ShadyD45/gust/blob/main/internal/ports/store.go) |
 
 ## The two tiers
 
@@ -48,6 +55,7 @@ flowchart TB
 
 ## Architecture background
 
-For the design reasoning behind the ports, registry, and wire protocol, read [`../architecture/hexagonal-design.md`](../architecture/hexagonal-design.md) and [`../architecture/extension-points.md`](../architecture/extension-points.md). These guides are the practical how-to; those are the why.
+For the design reasoning behind the ports, registry, and wire protocol, read [Hexagonal design]({% link architecture/hexagonal-design.md %}) and [Extension points]({% link architecture/extension-points.md %}). These guides are the practical how-to; those are the why.
 
-Contributing your extension back upstream: [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md).
+Contributing your extension back upstream: [contributor guide](https://github.com/ShadyD45/gust/blob/main/CONTRIBUTING.md).
+

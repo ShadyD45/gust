@@ -119,7 +119,7 @@ Wherever tool results come back:
 | LlamaIndex | Callback manager events |
 | CrewAI / AutoGen | Tool wrappers or observer hooks |
 
-Packaged adapters for these frameworks are planned in [Phase 11](../../docs/plans/framework/phase-11-sdks-and-framework-adapters.md); the recorder above works with all of them today.
+Packaged adapters for these frameworks are planned; the recorder above works with all of them today.
 
 ## Development
 

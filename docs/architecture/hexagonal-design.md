@@ -1,3 +1,8 @@
+---
+title: Hexagonal design
+nav_order: 3
+parent: Architecture
+---
 # Hexagonal Design
 
 gust uses ports & adapters so domain logic stays free of I/O frameworks and LLM SDKs.
@@ -70,3 +75,4 @@ gust/
 ## Concurrency
 
 Mode 3 sampling and mutation batches use bounded worker pools (`sync.WaitGroup` + semaphore channel). All blocking APIs take `context.Context` for cancellation.
+

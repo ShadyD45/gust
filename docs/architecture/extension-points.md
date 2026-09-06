@@ -1,3 +1,8 @@
+---
+title: Extension points
+nav_order: 6
+parent: Architecture
+---
 # Extension Points
 
 ## Registry
@@ -10,7 +15,7 @@
 
 Built-ins register at init; CLI resolves components by name (`--runner synthetic`, mutator class lists, etc.). The CLI merges registry-registered evaluators and mutators with the built-in suites, so registering is sufficient to make a custom component available to `analyze`, `test`, and `mutate`.
 
-Task-oriented walkthroughs live in [`docs/extending/`](../extending/); this page is the map.
+Task-oriented walkthroughs live in [Extending]({% link extending/index.md %}); this page is the map.
 
 ## Adding an evaluator
 
@@ -48,3 +53,4 @@ Task-oriented walkthroughs live in [`docs/extending/`](../extending/); this page
 - Filesystem JSON store: `internal/adapters/storage/filesystem` implementing `ScenarioStore`, `FixtureStore`, `RunStore`
 
 Swap storage by implementing the store ports; core engines depend only on interfaces.
+

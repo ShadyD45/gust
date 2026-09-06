@@ -1,3 +1,8 @@
+---
+title: Data model
+nav_order: 4
+parent: Architecture
+---
 # Data Model
 
 Primary types live in `pkg/api`. JSON Schema contracts (documentation) live under `spec/schemas/`.
@@ -52,3 +57,4 @@ Mode 3 aggregate:
 ## Content addressing
 
 `pkg/jcs` implements RFC 8785 JSON Canonicalization Scheme. Content hashes (SHA-256 over canonical bytes) identify fixtures and dataset manifests so comparisons are bit-for-bit stable across languages and formatters.
+

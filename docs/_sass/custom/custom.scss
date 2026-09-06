@@ -1,0 +1,196 @@
+// gust branding — teal-to-blue wind mark on near-black.
+
+:root {
+  --gust-teal: #3ee6c8;
+  --gust-blue: #4d88ff;
+  --gust-ink: #07090d;
+  --gust-panel: #10151e;
+  --gust-line: #1c2430;
+  --gust-grad: linear-gradient(115deg, #3ee6c8 0%, #4d88ff 100%);
+}
+
+html {
+  background: var(--gust-ink);
+}
+
+.side-bar {
+  border-right: 1px solid var(--gust-line);
+  background:
+    radial-gradient(120% 60% at 0% 0%, rgba(62, 230, 200, 0.08), transparent 55%),
+    #05070b;
+}
+
+// Theme centers a 50rem column and grows the sidebar to fill leftover space.
+// Pin the nav to the left edge and let the article use the remaining width.
+@media (min-width: 50rem) {
+  .side-bar {
+    width: 16.5rem;
+    min-width: 16.5rem;
+    align-items: stretch;
+  }
+
+  .side-bar + .main {
+    margin-left: 16.5rem;
+  }
+
+  .main {
+    margin: 0;
+    max-width: none;
+    width: calc(100% - 16.5rem);
+  }
+
+  .site-nav,
+  .site-header,
+  .site-footer {
+    width: 100%;
+  }
+}
+
+.site-header {
+  min-height: 7.5rem;
+  height: auto;
+  max-height: none;
+  border-bottom: 1px solid var(--gust-line);
+  background: #05070b;
+}
+
+.site-title {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.site-logo-img {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  max-height: 6.25rem;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.nav-list .nav-list-link {
+  border-radius: 0.5rem;
+}
+
+.nav-list .nav-list-link:hover,
+.nav-list .nav-list-link.active {
+  background: rgba(62, 230, 200, 0.1);
+}
+
+.nav-list .nav-list-link.active {
+  font-weight: 650;
+  color: var(--gust-teal);
+}
+
+.main-header,
+.main-content,
+.search-overlay {
+  background: var(--gust-ink);
+}
+
+.main-content-wrap {
+  max-width: 72rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.main-content h1,
+.main-content h2,
+.main-content h3 {
+  letter-spacing: -0.02em;
+}
+
+.main-content h1 {
+  background: var(--gust-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.main-content a:not(.btn) {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.main-content a:not(.btn):hover {
+  color: #7ef0dc;
+}
+
+.main-content table {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid var(--gust-line);
+}
+
+.main-content thead th {
+  background: #0c121a;
+  color: #e8eef6;
+}
+
+.main-content pre.highlight,
+.main-content .highlighter-rouge {
+  border: 1px solid var(--gust-line);
+  border-radius: 0.75rem;
+  background: var(--gust-panel);
+}
+
+.btn {
+  border-radius: 999px;
+}
+
+.btn-primary {
+  background: var(--gust-grad);
+  background-color: transparent;
+  border: 0;
+  color: #061018;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+}
+
+.search-input {
+  border-radius: 999px;
+}
+
+.home-hero {
+  margin: 0 0 2rem;
+  padding: 1.5rem 1.25rem 1.25rem;
+  border: 1px solid var(--gust-line);
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(80% 120% at 100% 0%, rgba(77, 136, 255, 0.18), transparent 55%),
+    radial-gradient(70% 100% at 0% 100%, rgba(62, 230, 200, 0.12), transparent 50%),
+    #05070b;
+  text-align: center;
+}
+
+.home-hero img {
+  display: block;
+  width: min(420px, 88%);
+  height: auto;
+  margin: 0 auto;
+}
+
+.home-kicker {
+  margin: 0.75rem 0 0;
+  color: #9aa8bb;
+  font-size: 0.95rem;
+}
+
+.site-footer {
+  border-top: 1px solid var(--gust-line);
+  color: #8b97a8;
+}
+
+@media (max-width: 46.5rem) {
+  .site-header {
+    min-height: 4.5rem;
+  }
+
+  .site-logo-img {
+    max-height: 3.5rem;
+    max-width: 160px;
+  }
+}

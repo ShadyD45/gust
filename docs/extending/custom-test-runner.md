@@ -1,3 +1,8 @@
+---
+title: Custom test runner
+nav_order: 3
+parent: Extending
+---
 # Writing a custom test runner
 
 A `TestRunner` is what Mode 3 calls *N* times. It drives your actual agent and hands back a trace. The built-ins — `synthetic` (seeded, no dependencies) and `ollama` (local LLM) — are useful for development, but testing *your* agent means teaching gust how to invoke it.
@@ -38,7 +43,7 @@ Content-Type: application/json
 { "status": "success", "status_code": 200, "body": [{ "id": 123, "status": "PROCESSING" }] }
 ```
 
-A `404` means no fixture matched the call — usually a hash mismatch on the arguments, which is itself worth failing on. Fixtures can also inject latency, timeouts, malformed bodies, and 500s; see [failure injection](../usage/modes-cookbook.md#failure-injection).
+A `404` means no fixture matched the call — usually a hash mismatch on the arguments, which is itself worth failing on. Fixtures can also inject latency, timeouts, malformed bodies, and 500s; see [failure injection]({% link usage/modes-cookbook.md %}#failure-injection).
 
 ## Example: HTTP agent runner
 
@@ -112,7 +117,7 @@ func (r *HTTPAgentRunner) Run(ctx context.Context, scenario api.TestScenario, fi
 }
 ```
 
-The recorder inside your service is the same one from [integrate-your-app.md](../usage/integrate-your-app.md) — a runner is just the piece that triggers it *N* times against controlled fixtures.
+The recorder inside your service is the same one from [Integrate your app]({% link usage/integrate-your-app.md %}) — a runner is just the piece that triggers it *N* times against controlled fixtures.
 
 ## Building the run yourself
 
@@ -186,7 +191,7 @@ type FixtureProvider interface {
 Semantics to preserve:
 
 - `Lookup` returns `(response, found, error)`. A miss is `found == false` with a `nil` error — not an error.
-- Matching should be content-addressed: hash canonical arguments with [`pkg/jcs`](../../pkg/jcs/) so key ordering and whitespace never change the result.
+- Matching should be content-addressed: hash canonical arguments with [`pkg/jcs`](https://github.com/ShadyD45/gust/tree/main/pkg/jcs) so key ordering and whitespace never change the result.
 - `Reset` clears sequence counters so stateful ordered fixtures restart cleanly between samples.
 
 Wrap it in the mock proxy to serve it over HTTP:
@@ -209,3 +214,4 @@ defer proxy.Close()
 - [ ] Agent failures reported as `outcome.status`, not as a returned error
 - [ ] `run.Validate()` passes before returning
 - [ ] Registered with `registry.DefaultRegistry.RegisterTestRunner`
+
