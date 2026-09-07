@@ -2,6 +2,7 @@
 title: Statistics and policy
 nav_order: 5
 parent: Architecture
+math: true
 ---
 # Statistics and Policy
 
