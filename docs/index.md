@@ -25,6 +25,8 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 | Wire gust into an agent you already run | [Integrate your app]({% link usage/integrate-your-app.md %}) |
 | Run the live-agent Mode 3 demo (N=20 Wilson) | [Live-agent demo]({% link usage/live-agent-demo.md %}) |
 | Learn Analyze / Replay / Test / Compare | [Modes cookbook]({% link usage/modes-cookbook.md %}) |
+| Tune policy, criticality, and CI knobs | [Tuning the gate]({% link usage/tuning.md %}) |
+| Copy multi-step scenario YAML | [Scenario examples]({% link usage/examples.md %}) |
 | See self-benchmark (AEE + Validation Suite) | [Benchmarks]({% link benchmarks/index.md %}) |
 | Convert OpenTelemetry traces | [OTel ingestion]({% link usage/otel-ingest.md %}) |
 | Put a gate in GitHub Actions (gust on CI; agent in the job or QA) | [CI integration]({% link usage/ci-github-actions.md %}) |
@@ -43,7 +45,7 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 go build -o gust ./cmd/gust
 ./gust analyze testdata/runs/golden_cancel.json --policy testdata/policy.yaml
 ./demo/run.sh                 # synthetic MVP CLI demo
-./demo/live-agent/run.sh      # Mode 3 against a support agent (N=20)
+./demo/live-agent/run.sh      # Mode 3 live-agent demo (N=20)
 ```
 
 ## Source & contributing

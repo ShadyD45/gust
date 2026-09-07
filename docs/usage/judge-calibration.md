@@ -20,7 +20,7 @@ Gust uses Spearman’s rank correlation ρ on a versioned dataset of at least 50
      --out docs/usage/judge-calibration-mock.json
    ```
 
-2. Replace labels with traces your team actually cares about (tone misses, bad refunds, hallucinated policy). Keep the JSON schema: each case has a run plus a human score.
+2. Replace labels with traces your team actually cares about (tone misses, wrong tools, hallucinated policy). Keep the JSON schema: each case has a run plus a human score.
 
 3. Calibrate the same plugin you will run in CI:
 

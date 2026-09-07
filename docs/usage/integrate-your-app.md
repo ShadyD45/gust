@@ -29,41 +29,6 @@ When you are ready for Mode 3 (N samples against fixtures), the [live-agent demo
 
 An `AgentRun` is a trace: who ran, what was asked, what steps happened, how it ended. The full type lives in [`pkg/api/types.go`](https://github.com/ShadyD45/gust/blob/main/pkg/api/types.go) and the JSON Schema in [`spec/schemas/`](https://github.com/ShadyD45/gust/tree/main/spec/schemas/).
 
-Minimum viable run:
-
-```json
-{
-  "schema_version": "0.5",
-  "run_id": "run-2026-09-06-8f21",
-  "agent": { "name": "support-agent", "version": "1.4", "git_commit": "abc1234" },
-  "task": { "id": "refund-001", "input": "Cancel my latest order" },
-  "trace": [
-    {
-      "span_id": "s1",
-      "name": "get_orders",
-      "type": "tool",
-      "start_time": "2026-09-06T10:00:00Z",
-      "end_time": "2026-09-06T10:00:00.010Z",
-      "attributes": {
-        "input": { "customer_id": 42 },
-        "output": [{ "id": 122, "status": "DELIVERED" }, { "id": 123, "status": "PROCESSING" }]
-      },
-      "status": { "code": "ok" }
-    },
-    {
-      "span_id": "s2",
-      "name": "cancel_order",
-      "type": "tool",
-      "start_time": "2026-09-06T10:00:00.015Z",
-      "end_time": "2026-09-06T10:00:00.025Z",
-      "attributes": { "input": { "order_id": 123 }, "output": { "ok": true } },
-      "status": { "code": "ok" }
-    }
-  ],
-  "outcome": { "status": "completed", "output": "Order 123 cancelled successfully." }
-}
-```
-
 Field rules that matter (enforced by `AgentRun.Validate`):
 
 | Field | Requirement |
@@ -76,8 +41,45 @@ Field rules that matter (enforced by `AgentRun.Validate`):
 
 Two conventions carry all the assertion weight:
 
-- **Tool calls must be spans with `"type": "tool"`.** Every evaluator that reasons about tools filters on this. An LLM span named `get_orders` is invisible to tool assertions.
+- **Tool calls must be spans with `"type": "tool"`.** Every evaluator that reasons about tools filters on this. An LLM span named `lookup` is invisible to tool assertions.
 - **Tool arguments go in `attributes.input` as an object.** `tool_call` assertions with `arguments` compare against exactly this map.
+
+### Example
+
+Minimum viable run:
+
+```json
+{
+  "schema_version": "0.5",
+  "run_id": "run-2026-09-06-8f21",
+  "agent": { "name": "my-agent", "version": "1.4", "git_commit": "abc1234" },
+  "task": { "id": "task-001", "input": "Complete the assigned item" },
+  "trace": [
+    {
+      "span_id": "s1",
+      "name": "lookup",
+      "type": "tool",
+      "start_time": "2026-09-06T10:00:00Z",
+      "end_time": "2026-09-06T10:00:00.010Z",
+      "attributes": {
+        "input": { "key": "item-42" },
+        "output": [{ "id": 122, "status": "closed" }, { "id": 123, "status": "open" }]
+      },
+      "status": { "code": "ok" }
+    },
+    {
+      "span_id": "s2",
+      "name": "apply",
+      "type": "tool",
+      "start_time": "2026-09-06T10:00:00.015Z",
+      "end_time": "2026-09-06T10:00:00.025Z",
+      "attributes": { "input": { "id": 123 }, "output": { "ok": true } },
+      "status": { "code": "ok" }
+    }
+  ],
+  "outcome": { "status": "completed", "output": "Item 123 applied." }
+}
+```
 
 ### Python
 
@@ -112,8 +114,8 @@ def record_tool(name, args, output, error=None):
 run = {
     "schema_version": "0.5",
     "run_id": str(uuid.uuid4()),
-    "agent": {"name": "support-agent", "version": "1.4"},
-    "task": {"id": "refund-001", "input": user_message},
+    "agent": {"name": "my-agent", "version": "1.4"},
+    "task": {"id": "task-001", "input": user_message},
     "trace": spans,
     "outcome": {"status": "completed", "output": final_answer},
 }
@@ -175,8 +177,8 @@ export function writeRun(path: string, taskInput: string, output: string) {
   writeFileSync(path, JSON.stringify({
     schema_version: "0.5",
     run_id: crypto.randomUUID(),
-    agent: { name: "support-agent", version: "1.4" },
-    task: { id: "refund-001", input: taskInput },
+    agent: { name: "my-agent", version: "1.4" },
+    task: { id: "task-001", input: taskInput },
     trace: spans,
     outcome: { status: "completed", output },
   }, null, 2));
@@ -193,15 +195,15 @@ import "gust/pkg/api"
 run := api.AgentRun{
     SchemaVersion: api.SchemaVersion,
     RunID:         "run-2026-09-06-8f21",
-    Agent:         api.AgentInfo{Name: "support-agent", Version: "1.4"},
-    Task:          api.TaskInfo{ID: "refund-001", Input: userMessage},
+    Agent:         api.AgentInfo{Name: "my-agent", Version: "1.4"},
+    Task:          api.TaskInfo{ID: "task-001", Input: userMessage},
     Trace: []api.Span{{
         SpanID:     "s1",
-        Name:       "cancel_order",
+        Name:       "apply",
         Type:       api.SpanTypeTool,
         StartTime:  start,
         EndTime:    end,
-        Attributes: map[string]any{"input": map[string]any{"order_id": 123}},
+        Attributes: map[string]any{"input": map[string]any{"id": 123}},
         Status:     api.SpanStatus{Code: "ok"},
     }},
     Outcome: api.RunOutcome{Status: "completed", Output: finalAnswer},
@@ -217,12 +219,14 @@ Assertions are the test. They are deliberately written by a human, not derived f
 
 For a quick start, attach them to the run under `metadata.assertions` — `gust analyze` picks them up automatically:
 
+### Example
+
 ```json
 "metadata": {
   "assertions": [
-    { "id": "a1", "type": "task_success", "parameters": { "expected_output": "cancelled" } },
-    { "id": "a2", "type": "tool_call", "tool": "cancel_order", "arguments": { "order_id": 123 } },
-    { "id": "a3", "type": "forbidden_tool_call", "tool": "issue_refund", "criticality": "hard" },
+    { "id": "a1", "type": "task_success", "parameters": { "expected_output": "done" } },
+    { "id": "a2", "type": "tool_call", "tool": "apply", "arguments": { "id": 123 } },
+    { "id": "a3", "type": "forbidden_tool_call", "tool": "wipe_data", "criticality": "hard" },
     { "id": "a4", "type": "max_steps", "limit": 6 }
   ]
 }
@@ -231,7 +235,7 @@ For a quick start, attach them to the run under `metadata.assertions` — `gust 
 For anything long-lived, keep assertions in a separate file so your production recorder never carries test logic:
 
 ```bash
-./gust analyze run.json --assertions tests/cancel_order.assertions.json
+./gust analyze run.json --assertions tests/assertions.json
 ```
 
 That file is a plain JSON array of the same objects. The full catalogue of the nine assertion types and their fields is in the [assertion catalogue]({% link usage/modes-cookbook.md %}#assertion-catalogue).
@@ -246,7 +250,7 @@ That file is a plain JSON array of the same objects. The full catalogue of the n
 Analyze run-2026-09-06-8f21 → PASS (4 assertions, 182375 ns)
   ✓ task_success: task completed successfully
   ✓ tool_arguments: tool arguments matched expected specifications
-  ✓ forbidden_tool: no forbidden tool "issue_refund" was called
+  ✓ forbidden_tool: no forbidden tool "wipe_data" was called
   ✓ max_steps: step count 2 within budget of 6
 ```
 
@@ -264,7 +268,7 @@ One run is a coin flip. When you want a number you can gate on, promote the trac
 
 ```bash
 # Extract the skeleton — task and candidate fixtures are filled in, assertions are NOT
-./gust scenario from-run run.json --output tests/cancel_order.yaml
+./gust scenario from-run run.json --output tests/scenario.yaml
 ```
 
 Open the file, write the assertions, then:
@@ -274,7 +278,7 @@ Open the file, write the assertions, then:
 ```
 
 ```text
-Scenario: cancel_latest_order
+Scenario: task_001
   97/100 passed  (observed pass rate: 97.0%)
   95% confidence interval: [91.5%, 99.0%]
 
@@ -294,14 +298,14 @@ pip install -e sdk/python
 ```python
 from gust_sdk import RunRecorder
 
-rec = RunRecorder(agent_name="support-agent", agent_version="1.4",
-                  task_id="refund-001", task_input=user_message)
+rec = RunRecorder(agent_name="my-agent", agent_version="1.4",
+                  task_id="task-001", task_input=user_message)
 
-with rec.tool("get_orders", {"customer_id": 42}) as span:
-    span.output = get_orders(customer_id=42)
+with rec.tool("lookup", {"key": "item-42"}) as span:
+    span.output = lookup(key="item-42")
 
-with rec.tool("cancel_order", {"order_id": 123}) as span:
-    span.output = cancel_order(order_id=123)
+with rec.tool("apply", {"id": 123}) as span:
+    span.output = apply(id=123)
 
 rec.complete(output=final_answer)
 rec.write("run.json")

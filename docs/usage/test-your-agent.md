@@ -50,10 +50,10 @@ from gust_sdk import FixtureClient, RunRecorder
 
 fixtures = FixtureClient()  # AGENTEVAL_FIXTURE_ENDPOINT
 
-def get_orders(customer_id):
+def lookup(key):
     if fixtures.enabled:
-        return fixtures.call("get_orders", {"customer_id": customer_id})
-    return orders_api.list(customer_id)
+        return fixtures.call("lookup", {"key": key})
+    return production_api.get(key)
 ```
 
 ## 2. Expose one sample
@@ -64,7 +64,7 @@ def get_orders(customer_id):
 from gust_sdk import run_sample
 
 def handle(request, fixtures):
-    rec = RunRecorder(agent_name="support-agent", agent_version="1.4",
+    rec = RunRecorder(agent_name="my-agent", agent_version="1.4",
                       task_input=request.get("input") or "")
     # ... run the agent once, using fixtures.call for tools ...
     rec.complete(output="done")
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 ```
 
 ```bash
-gust test tests/cancel.yaml --runner exec -- python -m my_agent.sample
+gust test tests/scenario.yaml --runner exec -- python -m my_agent.sample
 ```
 
 gust writes the scenario JSON on stdin and sets `AGENTEVAL_FIXTURE_ENDPOINT`, `AGENTEVAL_SAMPLE_ID`, and (when the in-process receiver is up) the `OTEL_EXPORTER_OTLP_*` / `AGENTEVAL_INGEST_URL` variables. Your process can print one `AgentRun` on stdout, `RunRecorder.export()` it, or emit OTLP.
@@ -88,17 +88,17 @@ serve_sample(handle, port=8080).serve_forever()
 ```
 
 ```bash
-gust test tests/cancel.yaml --runner http --endpoint http://localhost:8080
+gust test tests/scenario.yaml --runner http --endpoint http://localhost:8080
 ```
 
 POST `/invoke` body:
 
 ```json
 {
-  "input": "Cancel my latest order",
+  "input": "Complete the assigned item",
   "context": {},
   "tool_endpoint": "http://127.0.0.1:49152",
-  "sample_id": "cancel_latest_order-…",
+  "sample_id": "task-001-…",
   "otel_endpoint": "http://127.0.0.1:4318",
   "ingest_url": "http://127.0.0.1:4318/v1/runs"
 }
@@ -119,8 +119,8 @@ Respond with an `AgentRun`, or write a file / export OTel and tell gust how to c
 `--runner exec|http` with `auto` or `otel` starts OTLP/HTTP + gRPC for you. `--otel-listen` is only needed to pin the port.
 
 ```bash
-gust test tests/cancel.yaml --runner exec --trace-source otel -- python -m my_agent
-gust test tests/cancel.yaml --runner http --endpoint http://localhost:8080 --trace-source otel
+gust test tests/scenario.yaml --runner exec --trace-source otel -- python -m my_agent
+gust test tests/scenario.yaml --runner http --endpoint http://localhost:8080 --trace-source otel
 ```
 
 Concurrent samples cannot share one `run.json`. Stamp `AGENTEVAL_SAMPLE_ID` on `run_id` / `metadata.sample_id`, or rely on the injected `OTEL_RESOURCE_ATTRIBUTES`. The SDKs do this automatically.
@@ -132,29 +132,31 @@ Keep the **document** (a reviewed `TestScenario`). Do not put fixture bodies and
 ```text
 tests/
   _shared/
-    assertions/cancel.yaml
+    assertions/core.yaml
     policy.yaml
-  cancel_latest/
+  case_a/
     scenario.yaml          # task, refs, reliability, optional runner
     fixtures/
-      fx_get_orders_001.json
-      fx_cancel_order_001.json
+      fx_lookup_001.json
+      fx_apply_001.json
 ```
 
 `scenario.yaml` stays thin:
 
+### Example
+
 ```yaml
-id: cancel_latest
+id: case_a
 version: "1.0"
-description: "Cancel the latest processing order"
+description: "Apply the open item, not a closed one"
 task:
-  id: refund-001
-  input: "Cancel my latest order"
+  id: task-001
+  input: "Complete the assigned item"
 environment:
   fixtures: []
   fixtures_dir: fixtures          # or omit; a sibling fixtures/ is loaded automatically
 assertion_files:
-  - ../_shared/assertions/cancel.yaml
+  - ../_shared/assertions/core.yaml
 assertions:
   - $ref: ../_shared/assertions/extra.yaml   # spliced in place
   - id: max_8
@@ -171,13 +173,15 @@ runner:
     source: response
 ```
 
-CLI flags override `runner`. One file still works: `gust test tests/cancel.yaml`.
+CLI flags override `runner`. One file still works: `gust test tests/scenario.yaml`.
 
 ```bash
 gust test tests/ --policy tests/_shared/policy.yaml
 ```
 
-discovers every `scenario.yaml` under the tree (skips `_shared`) and any top-level `*.yaml` that looks like a scenario. One fixture proxy and one OTel listener cover the suite; each scenario gets its own fixtures so cases cannot bleed.
+This discovers every `scenario.yaml` under the tree (skips `_shared`) and any top-level `*.yaml` that looks like a scenario. One fixture proxy and one OTel listener cover the suite; each scenario gets its own fixtures so cases cannot bleed.
+
+Policy counts, criticality, sample size, and `on_flaky` are documented in [Tuning the gate]({% link usage/tuning.md %}).
 
 `gust scenario from-run run.json --layout dir --output tests/new_case/` writes this folder shape with empty assertions.
 
@@ -185,7 +189,7 @@ discovers every `scenario.yaml` under the tree (skips `_shared`) and any top-lev
 
 No gust process in production; the job is the listener. See [CI integration]({% link usage/ci-github-actions.md %}).
 
-The [live-agent demo]({% link usage/live-agent-demo.md %}) is this layout in-tree (`healthy/`, `recovery/`, `buggy/`, `unsafe/`) with `run.sh` / `run.ps1` wrapping `gust test`.
+The [live-agent demo]({% link usage/live-agent-demo.md %}) is this layout in-tree (`healthy/`, `recovery/`, `buggy/`, `unsafe/`) with `run.sh` / `run.ps1` wrapping `gust test`. More YAML compositions: [Scenario examples]({% link usage/examples.md %}).
 
 ## Agent failures vs infrastructure errors
 

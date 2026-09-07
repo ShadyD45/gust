@@ -50,8 +50,10 @@ How to wire the job: [CI integration]({% link usage/ci-github-actions.md %}). Ho
 |------|----------------|
 | [Integrate your app]({% link usage/integrate-your-app.md %}) | Emit an `AgentRun` from your existing Python, TypeScript, or Go service and run your first gate. Start here. |
 | [Test your agent]({% link usage/test-your-agent.md %}) | Mode 3 against *your* agent via `--runner http` or `--runner exec` — no Go |
-| [Live-agent demo]({% link usage/live-agent-demo.md %}) | Worked example: fixtures, sequence, recovery, forbidden refund, recorded N=20 results |
+| [Live-agent demo]({% link usage/live-agent-demo.md %}) | Worked Mode 3 example: fixtures, recovery, forbidden tool, recorded N=20 results |
 | [Modes cookbook]({% link usage/modes-cookbook.md %}) | Recipes per mode, all assertion types, fixtures, and policies |
+| [Tuning the gate]({% link usage/tuning.md %}) | Policy, criticality, hard-constraint counts, retry, `gust.yaml`, and CLI knobs |
+| [Scenario examples]({% link usage/examples.md %}) | Multi-step retrieve/apply, polling + recovery, schema output, judges, plugins, suites |
 | [OTel ingestion]({% link usage/otel-ingest.md %}) | Point an existing OTLP exporter at gust, or pull a Langfuse trace |
 | [CI integration]({% link usage/ci-github-actions.md %}) | gust on the CI runner; agent in the job or QA; exit codes |
 | [Compatibility]({% link usage/compatibility.md %}) | SDK × schema × CLI and framework adapter versions |
@@ -87,5 +89,5 @@ echo $?
 
 Everything else in these docs is a variation on that: where the run comes from, how many times you sample it, and what policy decides "pass".
 
-A full Mode 3 walkthrough against a tool-calling support agent — including injected 500s and a forbidden refund — is the [live-agent demo]({% link usage/live-agent-demo.md %}).
+A full Mode 3 walkthrough — injected failures, a forbidden tool, and recorded N=20 numbers — is the [live-agent demo]({% link usage/live-agent-demo.md %}).
 

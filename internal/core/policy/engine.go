@@ -45,12 +45,12 @@ func (e *Engine) Evaluate(policy api.Policy, results []*api.ReliabilityResult) V
 		}
 		verdict.ScenarioResults[res.ScenarioID] = res
 
-		if hardConstraintViolated(policy, res) {
+		if msg, ok := hardConstraintViolation(policy, res); ok {
 			hardFailed = true
 			verdict.Violations = append(verdict.Violations, PolicyViolation{
 				ClauseType: "hard_constraint",
 				Severity:   "fatal",
-				Message:    fmt.Sprintf("%s violated a hard constraint (forbidden tool, schema, or criticality=hard)", res.ScenarioID),
+				Message:    msg,
 			})
 			continue
 		}
@@ -97,18 +97,14 @@ func (e *Engine) Evaluate(policy api.Policy, results []*api.ReliabilityResult) V
 	return verdict
 }
 
-func hardConstraintViolated(policy api.Policy, res *api.ReliabilityResult) bool {
+func hardConstraintViolation(policy api.Policy, res *api.ReliabilityResult) (string, bool) {
 	if res == nil {
-		return false
+		return "", false
 	}
-	forbidden, schema, other := api.CountPolicyHardFailures(res.PerRunEvidence)
-	if api.HardConstraintsExceeded(policy.HardConstraints, forbidden, schema, other) {
-		return true
+	counts := api.CountPolicyHardFailures(res.PerRunEvidence)
+	breaches := counts.Breaches(policy.HardConstraints)
+	if len(breaches) == 0 {
+		return "", false
 	}
-	return res.HardConstraintFailed && forbidden+schema+other == 0
-}
-
-func hasHardEvidence(res *api.ReliabilityResult) bool {
-	forbidden, schema, other := api.CountPolicyHardFailures(res.PerRunEvidence)
-	return forbidden+schema+other > 0
+	return fmt.Sprintf("%s hard_constraints exceeded: %s", res.ScenarioID, strings.Join(breaches, ", ")), true
 }

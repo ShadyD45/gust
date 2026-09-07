@@ -461,16 +461,14 @@ func AssertionFailsSample(a Assertion) bool {
 	return SampleCriticality(a, false) != CriticalitySoft
 }
 
-// AssertionPolicyHard reports whether a failed assertion counts toward hard constraints.
+// AssertionPolicyHard reports whether a failed assertion counts toward a named
+// hard_constraints YAML bucket (forbidden_tools / schema_violations).
 func AssertionPolicyHard(a Assertion) bool {
 	if a.Criticality == CriticalitySoft {
 		return false
 	}
 	if IsJudgeAssertionType(a.Type) {
 		return false
-	}
-	if a.Criticality == CriticalityHard {
-		return true
 	}
 	switch a.Type {
 	case AssertForbiddenToolCall, AssertSchemaValid:
@@ -489,35 +487,52 @@ func EffectiveSampleCriticality(a Assertion) CriticalityLevel {
 	return SampleCriticality(a, false)
 }
 
-// CountPolicyHardFailures tallies failed hard-constraint evaluations.
-func CountPolicyHardFailures(evs []EvaluationResult) (forbidden, schema, other int) {
+// HardConstraintCounts is the tally of failed named hard-constraint evaluations.
+type HardConstraintCounts struct {
+	Forbidden int
+	Schema    int
+}
+
+// namedHardConstraintInc maps evaluator names onto HardConstraintCounts fields.
+// A later YAML key (security_violations, …) is a struct field plus one map entry.
+var namedHardConstraintInc = map[string]func(*HardConstraintCounts){
+	"forbidden_tool":    func(c *HardConstraintCounts) { c.Forbidden++ },
+	"schema_validation": func(c *HardConstraintCounts) { c.Schema++ },
+}
+
+// CountPolicyHardFailures tallies failed named hard-constraint evaluations.
+// Soft (and uncalibrated-judge) results are evidence only and are not counted.
+func CountPolicyHardFailures(evs []EvaluationResult) HardConstraintCounts {
+	var c HardConstraintCounts
 	for _, ev := range evs {
-		if ev.Passed {
+		if ev.Passed || ev.Criticality == CriticalitySoft {
 			continue
 		}
-		hard := false
-		if ev.Evidence != nil {
-			hard, _ = ev.Evidence["policy_hard"].(bool)
-		}
-		switch ev.EvaluatorName {
-		case "forbidden_tool":
-			if hard || ev.Criticality != CriticalitySoft {
-				forbidden++
-			}
-		case "schema_validation":
-			if hard || ev.Criticality != CriticalitySoft {
-				schema++
-			}
-		default:
-			if hard || ev.Criticality == CriticalityHard {
-				other++
-			}
+		if inc, ok := namedHardConstraintInc[ev.EvaluatorName]; ok {
+			inc(&c)
 		}
 	}
-	return
+	return c
+}
+
+// Exceeds reports whether the tally breaches policy maxima.
+func (c HardConstraintCounts) Exceeds(hc HardConstraints) bool {
+	return c.Forbidden > hc.ForbiddenTools || c.Schema > hc.SchemaViolations
+}
+
+// Breaches describes each YAML field whose count exceeded the configured max.
+func (c HardConstraintCounts) Breaches(hc HardConstraints) []string {
+	var out []string
+	if c.Forbidden > hc.ForbiddenTools {
+		out = append(out, fmt.Sprintf("forbidden_tools %d > %d", c.Forbidden, hc.ForbiddenTools))
+	}
+	if c.Schema > hc.SchemaViolations {
+		out = append(out, fmt.Sprintf("schema_violations %d > %d", c.Schema, hc.SchemaViolations))
+	}
+	return out
 }
 
 // HardConstraintsExceeded reports whether counted failures breach policy maxima.
-func HardConstraintsExceeded(hc HardConstraints, forbidden, schema, other int) bool {
-	return other > 0 || forbidden > hc.ForbiddenTools || schema > hc.SchemaViolations
+func HardConstraintsExceeded(hc HardConstraints, counts HardConstraintCounts) bool {
+	return counts.Exceeds(hc)
 }

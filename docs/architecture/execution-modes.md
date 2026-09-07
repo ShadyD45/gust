@@ -94,5 +94,5 @@ In-tree proof of that split: the [live-agent demo]({% link usage/live-agent-demo
 
 ## Policy layer
 
-Policy sits **above** raw evaluation. It combines hard constraints (zero-tolerance), soft reliability thresholds, `on_flaky` behavior, and optional baseline-vs-candidate regression into CI exit codes.
+Policy sits **above** raw evaluation. It combines named hard-constraint **counts** (`forbidden_tools` / `schema_violations` maxima), Wilson reliability thresholds, `on_flaky` behavior, and optional baseline-vs-candidate regression into CI exit codes. See [Tuning the gate]({% link usage/tuning.md %}).
 

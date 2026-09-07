@@ -44,7 +44,7 @@ Typed checks (`tool_call`, `forbidden_tool_call`, `max_steps`, …) with optiona
 
 CI acceptance gate:
 
-- Hard constraints: max allowed failed `forbidden_tool` / `schema_validation` evaluations (`0` = zero tolerance). Assertions with `criticality: hard` also fail CI immediately; `criticality: soft` is recorded but does not fail the sample.
+- Hard constraints: max allowed failed `forbidden_tool` / `schema_validation` evaluations (`0` = zero tolerance). Those named counts fail CI immediately when exceeded. Other assertions with `criticality: hard` fail the sample (Wilson); `criticality: soft` is recorded but does not fail the sample.
 - Reliability defaults (`default_minimum_pass_rate` applied when a scenario omits `minimum_pass_rate`), `on_flaky`, optional `max_execution_error_rate` (omit → 0.20; `0` → zero tolerance), optional `retry`
 - Regression thresholds (pass-rate drop, latency increase). Unmeasurable baseline latency omits `latency_increase_ratio` rather than reporting `0.0`.
 

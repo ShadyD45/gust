@@ -28,7 +28,7 @@ Evaluate assertions against a captured trace. This is the cheapest gate you can 
 ./gust analyze testdata/runs/golden_cancel.json --policy testdata/policy.yaml
 
 # Assertions from a separate file (recommended for real projects)
-./gust analyze run.json --assertions tests/cancel_order.assertions.json
+./gust analyze run.json --assertions tests/assertions.json
 
 # Machine-readable evidence
 ./gust analyze run.json --json > report.json
@@ -55,23 +55,27 @@ Built-in assertion types, the evaluator each one resolves to, and the fields tha
 | `llm_judge` | `llm_judge` | `parameters.rubric`, optional threshold; requires `allow_llm_judge` | Soft, opt-in judge signal until calibrated |
 | `judge_panel` | `judge_panel` | `parameters.judges`, `aggregation`, optional `threshold` / `rubric` | Aggregated votes from named judge evaluators; see [LLM judge]({% link usage/llm-judge.md %}) |
 
-Two of these are **hard constraints**: a failing `forbidden_tool` or `schema_validation` fails the build immediately in Mode 3, regardless of pass rate or `on_flaky`. Set `"criticality": "hard"` to document that intent in the assertion.
+`criticality: hard` (the default except for judges) fails the **sample** and moves the Wilson pass rate. `criticality: soft` is evidence and score only.
 
-A realistic assertions file:
+Named **hard constraints** are separate: `hard_constraints.forbidden_tools` and `schema_violations` in policy are **max allowed** failed evaluations of those evaluators (`0` = any miss exits `1` immediately, skipping `on_flaky`). A failed `tool_sequence` does not use that clause. Full knob catalog: [Tuning the gate]({% link usage/tuning.md %}).
+
+### Example (simple)
 
 ```json
 [
-  { "id": "completes",     "type": "task_success", "parameters": { "expected_output": "cancelled" } },
-  { "id": "reads_orders",  "type": "required_tool", "tool": "get_orders" },
-  { "id": "cancels_right", "type": "tool_call", "tool": "cancel_order", "arguments": { "order_id": 123 } },
-  { "id": "order_matters", "type": "tool_sequence", "parameters": { "sequence": ["get_orders", "cancel_order"] } },
-  { "id": "no_refunds",    "type": "forbidden_tool_call", "tool": "issue_refund", "criticality": "hard" },
+  { "id": "completes",     "type": "task_success", "parameters": { "expected_output": "done" } },
+  { "id": "needs_lookup",  "type": "required_tool", "tool": "lookup" },
+  { "id": "applies",       "type": "tool_call", "tool": "apply", "arguments": { "id": 123 } },
+  { "id": "order_matters", "type": "tool_sequence", "parameters": { "sequence": ["lookup", "apply"] } },
+  { "id": "no_wipe",       "type": "forbidden_tool_call", "tool": "wipe_data", "criticality": "hard" },
   { "id": "stays_cheap",   "type": "max_steps", "limit": 6 },
   { "id": "stays_fast",    "type": "max_latency_ms", "limit": 8000 }
 ]
 ```
 
-Argument matching is a subset check with structured diffs: expected keys must match, extra keys in the actual call are ignored, and nested paths are reported individually in `evidence.discrepancies` so a failure tells you `order_id: expected 123, got 122` rather than "mismatch".
+Longer compositions (exact sequence, recovery, schema, judges): [Scenario examples]({% link usage/examples.md %}).
+
+Argument matching is a subset check with structured diffs: expected keys must match, extra keys in the actual call are ignored, and nested paths are reported individually in `evidence.discrepancies` so a failure tells you `id: expected 123, got 122` rather than "mismatch".
 
 ## Mode 2: Replay
 
@@ -83,15 +87,17 @@ Re-drive a recorded trajectory against fixtures. Identical inputs produce identi
 
 `--fixtures` points at a directory of `.json` files, one fixture each:
 
+### Example
+
 ```json
 {
-  "fixture_id": "fx_get_orders_001",
-  "tool": "get_orders",
+  "fixture_id": "fx_lookup_001",
+  "tool": "lookup",
   "match_strategy": "exact_hash",
-  "recorded_input": { "customer_id": 42 },
+  "recorded_input": { "key": "item-42" },
   "recorded_response": {
     "status": "success",
-    "body": [{ "id": 122, "status": "DELIVERED" }, { "id": 123, "status": "PROCESSING" }]
+    "body": [{ "id": 122, "status": "closed" }, { "id": 123, "status": "open" }]
   },
   "provenance": "recorded"
 }
@@ -119,12 +125,14 @@ Set `mode` on a fixture to test what your agent does when the world misbehaves:
 | `malformed` | Return truncated, unparseable JSON |
 | `partial_failure` | Return HTTP 500 with an injected server error |
 
+### Example
+
 ```json
 {
-  "fixture_id": "fx_cancel_order_flaky",
-  "tool": "cancel_order",
+  "fixture_id": "fx_apply_flaky",
+  "tool": "apply",
   "match_strategy": "exact_hash",
-  "recorded_input": { "order_id": 123 },
+  "recorded_input": { "id": 123 },
   "mode": "partial_failure",
   "delay_ms": 250,
   "recorded_response": { "status": "success", "body": { "ok": true } },
@@ -140,7 +148,7 @@ For Mode 3 runners that call real tools, gust exposes an ephemeral HTTP mock pro
 
 ```http
 POST /v1/tools/call
-{ "tool": "get_orders", "arguments": { "customer_id": 42 } }
+{ "tool": "lookup", "arguments": { "key": "item-42" } }
 
 200 OK
 { "status": "success", "status_code": 200, "body": [ ... ] }
@@ -186,19 +194,21 @@ The `synthetic` runner is seeded and needs no GPU or API key, which makes it the
 
 A scenario file (or a folder — see [Authoring scenarios]({% link usage/test-your-agent.md %})):
 
+### Example
+
 ```yaml
-id: cancel_latest_order
+id: case_a
 version: "1.0"
-description: "Agent should cancel the latest processing order (123), not delivered (122)."
+description: "Apply the open item (123), not a closed one (122)."
 task:
-  id: refund-001
-  input: "Cancel my latest order"
+  id: task-001
+  input: "Complete the assigned item"
 environment:
   fixture_strategy: prefer_exact_then_sequence
   fixtures: []
   fixtures_dir: fixtures
 assertion_files:
-  - ../_shared/assertions/cancel.yaml
+  - ../_shared/assertions/core.yaml
 reliability:
   samples: 100
   minimum_pass_rate: 0.95
@@ -247,7 +257,7 @@ The [live-agent demo]({% link usage/live-agent-demo.md %}) uses **N=20** at an *
 version: "1.0"
 name: production-ci-gate
 hard_constraints:
-  forbidden_tools: 0
+  forbidden_tools: 0      # max failed forbidden_tool evaluations (0 = any miss → exit 1)
   schema_violations: 0
 reliability:
   default_minimum_pass_rate: 0.95
@@ -257,6 +267,8 @@ regression:
   max_pass_rate_drop: 0.02
   max_latency_increase_ratio: 0.15
 ```
+
+`forbidden_tools: 1` allows one failed `forbidden_tool` evaluation and still lets Wilson / `on_flaky` decide. Counts, criticality, retry, and `gust.yaml` are listed in [Tuning the gate]({% link usage/tuning.md %}).
 
 `on_flaky` is the knob that decides how strict your pipeline is:
 
@@ -339,7 +351,9 @@ In CI, prefer `gust test --runner exec --trace-source otel` so the listener dies
 
 ## Worked example (Mode 3)
 
-[`demo/live-agent/`](https://github.com/ShadyD45/gust/tree/main/demo/live-agent) is a fixture-backed support agent. `./demo/live-agent/run.sh` (or `run.ps1`) runs healthy + recovery (must PASS) and buggy + unsafe (must FAIL) at N=20. Recorded numbers and how each assertion fires: [Live-agent demo]({% link usage/live-agent-demo.md %}).
+Copy-paste YAML for retrieve/apply, polling + recovery, schema output, and mixed hard/soft judges: [Scenario examples]({% link usage/examples.md %}).
+
+The in-tree [live-agent demo]({% link usage/live-agent-demo.md %}) (`demo/live-agent/`) is a full Mode 3 walkthrough with recorded N=20 numbers: `./demo/live-agent/run.sh` (or `run.ps1`).
 
 ## Embedding gust as a Go library
 

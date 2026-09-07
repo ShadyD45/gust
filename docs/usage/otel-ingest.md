@@ -142,7 +142,7 @@ That last fallback matters: assertions about tools only see spans of type `tool`
 
 ## Worked example
 
-A trace with an agent root and two tool spans ships in [`testdata/otel/openinference_cancel.json`](https://github.com/ShadyD45/gust/blob/main/testdata/otel/openinference_cancel.json):
+The mapping below is the shape gust produces for a TOOL span. A full OTLP export you can ingest ships in [`testdata/otel/openinference_cancel.json`](https://github.com/ShadyD45/gust/blob/main/testdata/otel/openinference_cancel.json).
 
 ```json
 {
@@ -154,8 +154,8 @@ A trace with an agent root and two tool spans ships in [`testdata/otel/openinfer
   "endTimeUnixNano": "1767225600010000000",
   "attributes": [
     { "key": "openinference.span.kind", "value": { "stringValue": "TOOL" } },
-    { "key": "tool.name", "value": { "stringValue": "get_orders" } },
-    { "key": "tool.parameters", "value": { "stringValue": "{\"customer_id\": 42}" } }
+    { "key": "tool.name", "value": { "stringValue": "lookup" } },
+    { "key": "tool.parameters", "value": { "stringValue": "{\"key\": \"item-42\"}" } }
   ],
   "status": { "code": 1 }
 }
@@ -167,11 +167,11 @@ Becomes:
 {
   "span_id": "1a2b3c4d5e6f7081",
   "parent_span_id": "00f067aa0ba902b7",
-  "name": "get_orders",
+  "name": "lookup",
   "type": "tool",
   "start_time": "2026-01-01T00:00:00Z",
   "end_time": "2026-01-01T00:00:00.01Z",
-  "attributes": { "input": { "customer_id": 42 } },
+  "attributes": { "input": { "key": "item-42" } },
   "status": { "code": "ok" }
 }
 ```
@@ -205,9 +205,9 @@ tracer = trace.get_tracer(__name__)
 
 with tracer.start_as_current_span("tool.execute") as span:
     span.set_attribute("openinference.span.kind", "TOOL")
-    span.set_attribute("tool.name", "cancel_order")
-    span.set_attribute("tool.parameters", json.dumps({"order_id": order_id}))
-    result = cancel_order(order_id)
+    span.set_attribute("tool.name", "apply")
+    span.set_attribute("tool.parameters", json.dumps({"id": item_id}))
+    result = apply(item_id)
     span.set_attribute("output.value", json.dumps(result))
 ```
 

@@ -29,11 +29,13 @@ flowchart LR
 | Code | Meaning | Typical CI response |
 |---|---|---|
 | `0` | Gate passed: all `PASS`, or `FLAKY` under `on_flaky: warn` (structured verdict stays `FLAKY`) / `ignore` (structured verdict `PASS`) | Green |
-| `1` | `FAIL`, hard constraint violation, or regression | Red — block the merge |
+| `1` | Wilson `FAIL`, named hard-constraint count exceeded (`forbidden_tools` / `schema_violations`), or regression | Red — block the merge |
 | `2` | Configuration or runtime error (bad path, unparseable input) | Red — fix the pipeline, not the agent |
 | `3` | `FLAKY` under `on_flaky: fail` | Red, but distinguishable from a proven failure |
 
 Code `3` exists so you can treat "we cannot prove this is reliable" differently from "this is broken" — for example, blocking the merge but routing to a different alert channel.
+
+Named hard-constraint counts (`hard_constraints.forbidden_tools` / `schema_violations`) skip `on_flaky` and exit `1` when exceeded. Wilson `FLAKY` still follows `on_flaky`. How to set those knobs: [Tuning the gate]({% link usage/tuning.md %}).
 
 ## The minimal PR gate
 
@@ -79,13 +81,13 @@ If you consume gust from another repository, replace the build step with a downl
 
 | Scenario | Samples | Pass Rate | 95% CI | Verdict |
 |---|---|---|---|---|
-| `cancel_latest_order` | 100 | 100.0% | `[96.3%, 100.0%]` | ✅ **PASS** |
+| `case_a` | 100 | 100.0% | `[96.3%, 100.0%]` | ✅ **PASS** |
 
 To keep the machine-readable evidence as well, run once with `--json` and upload it:
 
 ```yaml
       - name: Reliability gate
-        run: ./gust test tests/cancel_order.yaml --samples 100 --policy policy.yaml --json > reliability.json
+        run: ./gust test tests/scenario.yaml --samples 100 --policy policy.yaml --json > reliability.json
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -121,7 +123,7 @@ When you set `on_flaky: fail`, branch on the exit code so an inconclusive result
       - name: Reliability gate
         run: |
           set +e
-          ./gust test tests/cancel_order.yaml --samples 100 --policy strict-policy.yaml
+          ./gust test tests/scenario.yaml --samples 100 --policy strict-policy.yaml
           code=$?
           set -e
           case $code in

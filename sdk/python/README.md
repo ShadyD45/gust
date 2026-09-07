@@ -16,19 +16,19 @@ pip install -e sdk/python
 from gust_sdk import RunRecorder
 
 rec = RunRecorder(
-    agent_name="support-agent",
+    agent_name="my-agent",
     agent_version="1.4",
-    task_id="refund-001",
-    task_input="Cancel my latest order",
+    task_id="task-001",
+    task_input="Complete the assigned item",
 )
 
-with rec.tool("get_orders", {"customer_id": 42}) as span:
-    span.output = get_orders(customer_id=42)
+with rec.tool("lookup", {"key": "item-42"}) as span:
+    span.output = lookup(key="item-42")
 
-with rec.tool("cancel_order", {"order_id": 123}) as span:
-    span.output = cancel_order(order_id=123)
+with rec.tool("apply", {"id": 123}) as span:
+    span.output = apply(id=123)
 
-rec.complete(output="Order 123 cancelled successfully.")
+rec.complete(output="Item 123 applied.")
 rec.write("out/run.json")
 ```
 
@@ -66,10 +66,10 @@ from gust_sdk import FixtureClient
 
 fixtures = FixtureClient()   # reads AGENTEVAL_FIXTURE_ENDPOINT
 
-def get_orders(customer_id: int):
+def lookup(key: str):
     if fixtures.enabled:
-        return fixtures.call("get_orders", {"customer_id": customer_id})
-    return orders_api.list(customer_id)   # production path
+        return fixtures.call("lookup", {"key": key})
+    return production_api.get(key)   # production path
 ```
 
 `enabled` is `False` when no endpoint is configured, which is what lets the same code run in production and under test. Missing fixtures and injected failures raise `FixtureError`.

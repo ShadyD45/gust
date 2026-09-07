@@ -7,7 +7,7 @@ parent: Usage
 
 Deterministic evaluators stay the default CI path. An LLM judge is an **opt-in soft signal** for the parts of a run that are annoyingly subjective: tone, helpfulness, “did this summary actually answer the question?” Those sit *beside* tool/schema assertions — they never replace them.
 
-The [live-agent demo]({% link usage/live-agent-demo.md %}) is that default path: sequence, arguments, recovery, and a forbidden refund — no judge.
+The [live-agent demo]({% link usage/live-agent-demo.md %}) is that default path: sequence, arguments, recovery, and a forbidden tool — no judge.
 
 Yes: this is an LLM grading another LLM. The industry still does it, because humans do not want to read 10,000 traces. The trick is not to pretend the judge is ground truth. Treat it like a noisy sensor you calibrate, ensemble, and keep behind a safety rail.
 
@@ -17,7 +17,7 @@ Teams usually pick one of three shapes:
 
 | Pattern | What the judge returns | Typical use |
 |---------|------------------------|-------------|
-| **Pass/fail rubric** | score + boolean against a threshold | “Was the refund explanation polite and complete?” |
+| **Pass/fail rubric** | score + boolean against a threshold | “Was the explanation complete and on-policy?” |
 | **Scalar quality** | 0–1 or 1–5 | Ranking prompt variants |
 | **Pairwise** | A vs B preference | Offline eval of two agent versions |
 
@@ -56,11 +56,11 @@ Assertion:
 
 ```json
 {
-  "id": "helpful_cancel",
+  "id": "helpful_tone",
   "type": "llm_judge",
   "criticality": "soft",
   "parameters": {
-    "rubric": "Confirm the order was cancelled in a clear, helpful tone.",
+    "rubric": "Confirm the task completed in a clear, helpful tone.",
     "threshold": 0.7
   }
 }
@@ -101,7 +101,7 @@ When you want one assertion that asks several judges and records the argument th
   "type": "judge_panel",
   "criticality": "soft",
   "parameters": {
-    "rubric": "Confirm the order was cancelled in a clear, helpful tone.",
+    "rubric": "Confirm the task completed in a clear, helpful tone.",
     "aggregation": "majority",
     "threshold": 0.7,
     "judges": [

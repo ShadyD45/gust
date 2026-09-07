@@ -22,7 +22,7 @@ One method, called once per sample. The sampler runs these concurrently (`--conc
 
 ## The fixture endpoint contract
 
-`fixtureEndpoint` is the single most important parameter. gust hands you the base URL of an ephemeral mock tool proxy; your agent's tool calls must go there instead of to real systems. If you ignore it, your "test" will page someone at 3am by issuing a real refund a hundred times.
+`fixtureEndpoint` is the single most important parameter. gust hands you the base URL of an ephemeral mock tool proxy; your agent's tool calls must go there instead of to real systems. If you ignore it, your "test" will hit production APIs a hundred times.
 
 Fall back to the environment variable when the argument is empty — that is how out-of-process agents receive it:
 
@@ -38,11 +38,11 @@ The proxy exposes one route:
 POST {fixtureEndpoint}/v1/tools/call
 Content-Type: application/json
 
-{ "tool": "get_orders", "arguments": { "customer_id": 42 } }
+{ "tool": "lookup", "arguments": { "key": "item-42" } }
 ```
 
 ```json
-{ "status": "success", "status_code": 200, "body": [{ "id": 123, "status": "PROCESSING" }] }
+{ "status": "success", "status_code": 200, "body": [{ "id": 123, "status": "open" }] }
 ```
 
 A `404` means no fixture matched the call — usually a hash mismatch on the arguments, which is itself worth failing on. Fixtures can also inject latency, timeouts, malformed bodies, and 500s; see [failure injection]({% link usage/modes-cookbook.md %}#failure-injection).
@@ -173,7 +173,7 @@ func init() {
 ```
 
 ```bash
-./gust test tests/cancel_order.yaml --runner http_agent --samples 100
+./gust test tests/scenario.yaml --runner http_agent --samples 100
 ```
 
 Runner resolution checks the built-in names `synthetic` and `ollama` first, then falls back to the registry, so any registered name works as a `--runner` value.

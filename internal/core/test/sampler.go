@@ -201,8 +201,8 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 		perRun = append(perRun, sl.evals...)
 	}
 
-	forbidden, schema, other := api.CountPolicyHardFailures(perRun)
-	hardFail := api.HardConstraintsExceeded(cfg.HardConstraints, forbidden, schema, other)
+	counts := api.CountPolicyHardFailures(perRun)
+	hardFail := api.HardConstraintsExceeded(cfg.HardConstraints, counts)
 
 	if float64(execErrors)/float64(n) > maxExecRate {
 		return nil, fmt.Errorf("%w: %d/%d samples (max rate %.2f)", ErrRunnerUnstable, execErrors, n, maxExecRate)

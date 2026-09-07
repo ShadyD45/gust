@@ -113,9 +113,13 @@ func init() {
 
 Custom assertion types fall through to an evaluator of the same name, so no resolver change is needed:
 
+### Example
+
 ```json
 { "id": "no_card_leak", "type": "pii_leak", "tool": "send_email", "criticality": "hard" }
 ```
+
+`criticality: hard` fails the **sample**. Named CI `hard_constraints` counts today cover only `forbidden_tool` and `schema_validation`; a custom evaluator is not in that clause until a bucket exists for it. See [Tuning the gate]({% link usage/tuning.md %}).
 
 ```bash
 ./gust analyze run.json --assertions tests/assertions.json

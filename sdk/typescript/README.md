@@ -22,16 +22,16 @@ npm install ./sdk/typescript
 import { RunRecorder } from "gust-sdk";
 
 const rec = new RunRecorder({
-  agentName: "support-agent",
+  agentName: "my-agent",
   agentVersion: "1.4",
-  taskId: "refund-001",
-  taskInput: "Cancel my latest order",
+  taskId: "task-001",
+  taskInput: "Complete the assigned item",
 });
 
-const span = rec.tool("cancel_order", { order_id: 123 });
+const span = rec.tool("apply", { id: 123 });
 span.output = { ok: true };
 span.finish();
-rec.complete("Order 123 cancelled.");
+rec.complete("Item 123 applied.");
 await rec.export(); // AGENTEVAL_INGEST_URL or OTEL_EXPORTER_OTLP_ENDPOINT + /v1/runs
 ```
 

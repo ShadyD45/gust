@@ -225,9 +225,13 @@ plugins:
 
 The assertion `type` is the plugin's manifest `name` (or the `name=` alias):
 
+### Example
+
 ```json
 { "id": "no_card_leak", "type": "pii_leak", "tool": "send_email", "criticality": "hard" }
 ```
+
+`criticality: hard` fails the sample. Named `hard_constraints` counts cover `forbidden_tool` and `schema_validation` only; see [Tuning the gate]({% link usage/tuning.md %}).
 
 Embedders can still start a process from Go:
 

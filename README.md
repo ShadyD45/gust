@@ -21,7 +21,7 @@ go build -o gust ./cmd/gust
 ./demo/run.sh          # Linux/macOS
 ./demo/run.ps1         # Windows PowerShell
 
-# Optional: Mode 3 against a support agent (fixtures + Wilson N=20)
+# Optional: Mode 3 live-agent demo (fixtures + Wilson N=20)
 ./demo/live-agent/run.sh                 # scripted
 ./demo/live-agent/run.sh --ollama        # local llama3.2:3b
 # Windows: .\demo\live-agent\run.ps1  /  .\demo\live-agent\run.ps1 -Ollama

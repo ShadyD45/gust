@@ -1,6 +1,7 @@
 package policy
 
 import (
+	"strings"
 	"testing"
 
 	"gust/pkg/api"
@@ -190,5 +191,96 @@ func TestHardConstraintThresholdAllowsSomeFailures(t *testing.T) {
 	v = eng.Evaluate(pol, []*api.ReliabilityResult{res})
 	if v.ExitCode != api.ExitFailure {
 		t.Fatalf("two forbidden failures should exceed max 1, got exit=%d", v.ExitCode)
+	}
+	if len(v.Violations) == 0 || !strings.Contains(v.Violations[0].Message, "forbidden_tools 2 > 1") {
+		t.Fatalf("expected named-count violation, got %#v", v.Violations)
+	}
+}
+
+func TestHardConstraintSchemaThreshold(t *testing.T) {
+	eng := NewEngine()
+	res := &api.ReliabilityResult{
+		ScenarioID: "sc_schema",
+		Samples:    10,
+		Passes:     10,
+		Verdict:    api.VerdictPass,
+		PerRunEvidence: []api.EvaluationResult{
+			{EvaluatorName: "schema_validation", Passed: false},
+		},
+	}
+	allow := api.Policy{
+		Name:            "allow_one",
+		HardConstraints: api.HardConstraints{ForbiddenTools: 0, SchemaViolations: 1},
+		Reliability:     api.PolicyReliability{DefaultMinimumPassRate: 0.95, OnFlaky: "warn"},
+	}
+	v := eng.Evaluate(allow, []*api.ReliabilityResult{res})
+	if v.ExitCode != api.ExitSuccess {
+		t.Fatalf("one schema failure should be allowed when max is 1, got exit=%d", v.ExitCode)
+	}
+
+	deny := allow
+	deny.HardConstraints.SchemaViolations = 0
+	v = eng.Evaluate(deny, []*api.ReliabilityResult{res})
+	if v.ExitCode != api.ExitFailure {
+		t.Fatalf("one schema failure should exceed max 0, got exit=%d", v.ExitCode)
+	}
+	if len(v.Violations) == 0 || !strings.Contains(v.Violations[0].Message, "schema_violations 1 > 0") {
+		t.Fatalf("expected schema count violation, got %#v", v.Violations)
+	}
+}
+
+func TestHardConstraintBooleanCannotOverrideYAML(t *testing.T) {
+	eng := NewEngine()
+	res := &api.ReliabilityResult{
+		ScenarioID:           "sc_flag",
+		Samples:              10,
+		Passes:               9,
+		Verdict:              api.VerdictPass,
+		HardConstraintFailed: true,
+		PerRunEvidence: []api.EvaluationResult{
+			{EvaluatorName: "forbidden_tool", Passed: false},
+		},
+	}
+	pol := api.Policy{
+		Name:            "tol",
+		HardConstraints: api.HardConstraints{ForbiddenTools: 1, SchemaViolations: 0},
+		Reliability:     api.PolicyReliability{DefaultMinimumPassRate: 0.95, OnFlaky: "warn"},
+	}
+	v := eng.Evaluate(pol, []*api.ReliabilityResult{res})
+	if v.ExitCode != api.ExitSuccess {
+		t.Fatalf("HardConstraintFailed must not override YAML max 1, got exit=%d", v.ExitCode)
+	}
+
+	res.PerRunEvidence = nil
+	v = eng.Evaluate(pol, []*api.ReliabilityResult{res})
+	if v.ExitCode != api.ExitSuccess {
+		t.Fatalf("stale HardConstraintFailed with no evidence must not fail, got exit=%d", v.ExitCode)
+	}
+}
+
+func TestHardConstraintIgnoresHardToolSequence(t *testing.T) {
+	eng := NewEngine()
+	res := &api.ReliabilityResult{
+		ScenarioID: "sc_seq",
+		Samples:    20,
+		Passes:     0,
+		Verdict:    api.VerdictFail,
+		PerRunEvidence: []api.EvaluationResult{{
+			EvaluatorName: "tool_sequence",
+			Passed:        false,
+			Criticality:   api.CriticalityHard,
+		}},
+	}
+	pol := api.Policy{
+		Name:            "prod",
+		HardConstraints: api.HardConstraints{ForbiddenTools: 0, SchemaViolations: 0},
+		Reliability:     api.PolicyReliability{DefaultMinimumPassRate: 0.95, OnFlaky: "warn"},
+	}
+	v := eng.Evaluate(pol, []*api.ReliabilityResult{res})
+	if v.ExitCode != api.ExitFailure {
+		t.Fatalf("reliability FAIL should still fail CI, got exit=%d", v.ExitCode)
+	}
+	if len(v.Violations) != 1 || v.Violations[0].ClauseType != "reliability" {
+		t.Fatalf("hard tool_sequence must not trip hard_constraint clause, got %#v", v.Violations)
 	}
 }

@@ -5,7 +5,9 @@ parent: Usage
 ---
 # Live-agent demo
 
-This is the worked Mode 3 example: a multi-step support agent, Gust fixtures instead of production APIs, independent assertions, and a Wilson gate at **N=20**.
+This page is a **worked example** of Mode 3 (a multi-step tool-calling agent). Knob and policy semantics are in [Tuning the gate]({% link usage/tuning.md %}) and the [modes cookbook]({% link usage/modes-cookbook.md %}).
+
+It uses Gust fixtures instead of production APIs, independent assertions, and a Wilson gate at **N=20**.
 
 The synthetic [`demo/run.sh`](https://github.com/ShadyD45/gust/blob/main/demo/run.sh) proves gust’s own CLI. This page proves gust against **an agent** — lookup, orders, cancel-policy, cancel, email — including injected failures and a forbidden refund.
 
