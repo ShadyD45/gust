@@ -18,16 +18,33 @@ For definitions of each metric and the product narrative, start with the site se
 ## How to reproduce
 
 ```bash
-go build -o gust ./cmd/gust
-./gust aee report
-./gust aee report --json --out aee.json
-./gust aee report --doc benchmarks/RESULTS.md --site-doc docs/benchmarks/results.md
+go build -o gust-aee ./cmd/gust-aee
+./gust-aee report
+./gust-aee report --json --out aee.json
+./gust-aee report --doc benchmarks/RESULTS.md --site-doc docs/benchmarks/results.md
 ```
+
+Maintainer/CI only — end users install **`gust`**, not `gust-aee`.
 
 Or in tests:
 
 ```bash
 go test ./internal/core/aee/ -count=1
+```
+
+## Gust Validation Suite
+
+Complementary adversarial catalog (`gust-aee validate`) — ~80 crafted cases answering “should this pass / fail / be flaky / be infra / mutation / fixture / recovery?”. Gate requires **100%** case agreement.
+
+```bash
+./gust-aee validate
+./gust-aee validate --out benchmarks/fixtures/gust_validation.json \
+  --doc benchmarks/VALIDATION.md \
+  --site-doc docs/benchmarks/validation.md
+go test ./internal/core/validation/ -count=1
+```
+
+See [Validation Suite]({% link benchmarks/validation.md %}).
 ```
 
 ## Inputs

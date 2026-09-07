@@ -50,14 +50,23 @@ jobs:
           cache: true
 
       - name: Build
-        run: go build -o gust ./cmd/gust
+        run: |
+          go build -o gust ./cmd/gust
+          go build -o gust-aee ./cmd/gust-aee
 
       - name: AEE report
         run: |
-          ./gust aee report \
+          ./gust-aee report \
             --out benchmarks/fixtures/gust_self_aee.json \
             --doc benchmarks/RESULTS.md \
             --site-doc docs/benchmarks/results.md
+
+      - name: Validation Suite
+        run: |
+          ./gust-aee validate \
+            --out benchmarks/fixtures/gust_validation.json \
+            --doc benchmarks/VALIDATION.md \
+            --site-doc docs/benchmarks/validation.md
 
       - name: Judge calibrate (mock harness)
         run: |
@@ -79,6 +88,10 @@ jobs:
             echo ""
             cat benchmarks/RESULTS.md
             echo ""
+            echo "### Validation Suite"
+            echo ""
+            cat benchmarks/VALIDATION.md
+            echo ""
             echo "### Judge calibrate (mock)"
             echo ""
             if command -v jq >/dev/null 2>&1; then
@@ -95,6 +108,9 @@ jobs:
           name: aee-report
           path: |
             benchmarks/RESULTS.md
+            benchmarks/VALIDATION.md
             benchmarks/fixtures/gust_self_aee.json
+            benchmarks/fixtures/gust_validation.json
             docs/benchmarks/results.md
+            docs/benchmarks/validation.md
           if-no-files-found: error

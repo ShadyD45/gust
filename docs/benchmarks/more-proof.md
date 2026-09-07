@@ -13,6 +13,7 @@ AEE is the core self-score. These additional signals strengthen the claim that g
 |--------|-------|----------------|
 | **Unit + package tests** | [`test` workflow](https://github.com/ShadyD45/gust/actions/workflows/test.yml) | Go core, Python SDK, TypeScript SDK stay green |
 | **End-to-end smoke** | [`smoke` workflow](https://github.com/ShadyD45/gust/actions/workflows/smoke.yml) | Demo path, SDK record→analyze, Mode 3 exec |
+| **Gust Validation Suite** | `gust-aee validate` in [`benchmark`](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml) | ≥50 adversarial cases with expected pass/fail/flaky/infra/mutation/fixture/recovery outcomes |
 | **Mock judge calibration** | `gust judge calibrate --provider mock` in [`benchmark`](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml) | Calibration harness + Spearman ρ path works offline |
 | **Hard vs soft policy** | Policy engine + docs | Forbidden tools fail immediately; soft thresholds use Wilson |
 | **Trace ≠ test** | `gust scenario from-run` leaves `assertions: []` | We refuse to auto-enshrine observed bugs as the spec |

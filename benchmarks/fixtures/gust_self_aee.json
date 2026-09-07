@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-09-06T19:16:05.3398538Z",
+  "generated_at": "2026-09-07T04:13:08.8664279Z",
   "detection_rate": 1,
   "false_positive_rate": 0,
   "mutants_applied": 16,
   "mutants_detected": 16,
-  "eval_throughput_cps": 19177920.88739898,
+  "eval_throughput_cps": 8373442.429022082,
   "analyze_duration_ns": 0,
   "reproducibility": 1,
   "repro_hash": "sha256:cd08ad1640705a9d4ab226b71800cfe0f5bb74a6046b419b207c55f6ff2f9364",

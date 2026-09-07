@@ -7,11 +7,11 @@ parent: Benchmarks
 
 This page is **updated by CI** via a pull request from the `benchmark` workflow
 (so a protected `main` branch still works). Do not edit the metrics tables by
-hand — re-run `gust aee report --site-doc` instead.
+hand — re-run `gust-aee report --site-doc` instead.
 
 ## gust AEE self-report
 
-**Gate:** **PASS** | **Score:** `1.000` | **Generated:** `2026-09-06T19:16:05Z`
+**Gate:** **PASS** | **Score:** `1.000` | **Generated:** `2026-09-07T04:13:08Z`
 
 ### Metrics
 
@@ -19,7 +19,7 @@ hand — re-run `gust aee report --site-doc` instead.
 | --- | --- | --- |
 | Detection rate | **100.0%** (16/16 mutants) | >= 90% |
 | False positive rate | **0.0%** | <= 5% |
-| Eval throughput | **19.2M** cases/sec | >= 1000 |
+| Eval throughput | **8.4M** cases/sec | >= 1000 |
 | Reproducibility | **100%** identical (20 trials) | 100% |
 
 ### Reliability engine (H7)
@@ -38,8 +38,8 @@ _Self-benchmark only — [metrics explained]({% link benchmarks/metrics.md %}) �
 ## Reproduce locally
 
 ```bash
-go build -o gust ./cmd/gust
-./gust aee report
-./gust aee report --json --out benchmarks/fixtures/gust_self_aee.json
-./gust aee report --doc benchmarks/RESULTS.md --site-doc docs/benchmarks/results.md
+go build -o gust-aee ./cmd/gust-aee
+./gust-aee report
+./gust-aee report --json --out benchmarks/fixtures/gust_self_aee.json
+./gust-aee report --doc benchmarks/RESULTS.md --site-doc docs/benchmarks/results.md
 ```

@@ -24,6 +24,7 @@ gust separates the jobs and measures each with the right instrument:
 | Offline gates fit CI budgets | **Evaluator throughput** (deterministic path only) |
 | Analyze/Replay are trustworthy | **Reproducibility** (JCS hash stability) |
 | Stochastic agents get honest verdicts | **H7** Wilson vectors (`PASS` / `FLAKY` / `FAIL`) |
+| Gust cannot be easily fooled | **[Validation Suite]({% link benchmarks/validation.md %})** — adversarial pass/fail/flaky/infra/mutation/fixture/recovery cases |
 
 That is the “new way”: **test infrastructure for agents**, not another answer-scoring library. See [Metrics explained]({% link benchmarks/metrics.md %}) for definitions, and [Latest results]({% link benchmarks/results.md %}) for the published numbers (also [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)).
 
@@ -44,13 +45,13 @@ Full tables and regenerate commands: [Latest results]({% link benchmarks/results
 | Page | What it covers |
 |------|----------------|
 | [Metrics explained]({% link benchmarks/metrics.md %}) | Meaning, method, and value of each AEE input |
-| [Latest results]({% link benchmarks/results.md %}) | Published numbers from `gust aee report` (updated locally; see [workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)) |
+| [Latest results]({% link benchmarks/results.md %}) | Published numbers from `gust-aee report` (updated locally; see [workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)) |
 | [More proof]({% link benchmarks/more-proof.md %}) | Additional signals beyond the AEE table |
 
 Reproduce anytime:
 
 ```bash
-go build -o gust ./cmd/gust
-./gust aee report
-./gust aee report --doc benchmarks/RESULTS.md --site-doc docs/benchmarks/results.md
+go build -o gust-aee ./cmd/gust-aee
+./gust-aee report
+./gust-aee report --doc benchmarks/RESULTS.md --site-doc docs/benchmarks/results.md
 ```

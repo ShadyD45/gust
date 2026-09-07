@@ -8,7 +8,15 @@ Thanks for considering a contribution. gust is test infrastructure — people wi
 git clone https://github.com/your-org/gust && cd gust
 go test ./...
 go build -o gust ./cmd/gust
+go build -o gust-aee ./cmd/gust-aee   # internal self-benchmarks (not for end users)
 ./demo/run.sh            # Linux/macOS; ./demo/run.ps1 on Windows
+```
+
+Self-trust checks (maintainers/CI):
+
+```bash
+./gust-aee report
+./gust-aee validate
 ```
 
 Requirements: Go 1.23+ (the module targets a newer toolchain; `go.mod` is authoritative). Ollama is optional and only needed for live Mode 3 runs — the `synthetic` runner covers everything else.

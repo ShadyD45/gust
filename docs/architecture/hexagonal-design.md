@@ -33,7 +33,7 @@ flowchart TB
 | **Ports** | `internal/ports` | `Evaluator`, `Mutator`, `FixtureProvider`, `TestRunner`, stores |
 | **Core** | `internal/core/*` | Use cases: modes, stats, policy, extraction |
 | **Adapters** | `internal/adapters/*` | Built-in implementations and I/O |
-| **Entry** | `cmd/gust`, `internal/cli` | Cobra CLI, formatters, exit codes |
+| **Entry** | `cmd/gust`, `cmd/gust-aee`, `internal/cli` | End-user Cobra CLI; internal self-benchmark CLI |
 
 ## Package map (MVP)
 

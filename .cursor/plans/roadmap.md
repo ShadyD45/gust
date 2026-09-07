@@ -46,6 +46,7 @@ This master roadmap outlines the progression of the project from inception (Phas
 | - Phase 16: Multi-Agent Coordination Evaluators & AEE Self-Benchmark                  |
 | - Phase 17: Semantic Hardening & Adoption Front Door (evaluators, init, mutation UX)  |
 | - Phase 18: Real-Agent End-to-End Example (deferred; builds on LangChain demo)        |
+| - Phase 19: Public Releases (publish gust only; gust-aee remains internal)           |
 +---------------------------------------------------------------------------------------+
 ```
 
@@ -110,3 +111,4 @@ Detailed engineering plans: **[`docs/plans/framework/`](framework/README.md)**.
 | **16** | Multi-Agent & Self-AEE | Multi-agent handoff/coordination evaluators; AEE remains a gust self-benchmark (no peer-framework leaderboard). | Multi-agent suite, CI self-score |
 | **17** | Semantic Hardening & Adoption | Correct evaluator/validation semantics; `gust init`; mutation score prominence; README front door. | Match/occurrence/recovery/latency/Validate; init CLI |
 | **18** | Real-Agent E2E Example | Realistic demo with real LLM + tools + intentional failure Gust detects (extends LangChain demo). | Deferred until after Phase 17 |
+| **19** | Public Releases | Publish end-user **`gust`** only (GitHub Releases / package managers); keep **`gust-aee`** as internal CI/maintainer binary. | Tag releases, Homebrew/`go install`; no public `gust-aee` |

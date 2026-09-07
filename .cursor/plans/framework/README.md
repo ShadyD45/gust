@@ -4,7 +4,7 @@ Post-MVP work that turns gust from a Go-native MVP into production-ready **test 
 
 Read after the MVP index: [`../mvp/README.md`](../mvp/README.md) and the master [`../roadmap.md`](../roadmap.md).
 
-Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel`, docs in [`../../usage/otel-ingest.md`](../../usage/otel-ingest.md)), Phase 11 Python/TypeScript SDKs + LangChain adapter, and Phase 12 optional LLM judge (`gust_sdk.judge` official SDK wrappers + `gust judge calibrate` / `gust aee report`). User-facing guides live in [`docs/usage/`](../../usage/) and [`docs/extending/`](../../extending/).
+Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel`, docs in [`../../usage/otel-ingest.md`](../../usage/otel-ingest.md)), Phase 11 Python/TypeScript SDKs + LangChain adapter, and Phase 12 optional LLM judge (`gust_sdk.judge` official SDK wrappers + `gust judge calibrate`). Self-benchmarks use internal **`gust-aee`** (`report` / `validate`), not the end-user `gust` CLI. User-facing guides live in [`docs/usage/`](../../usage/) and [`docs/extending/`](../../extending/).
 
 ## Goals
 
@@ -27,6 +27,7 @@ Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel
 | **16** | [phase-16-multi-agent-leaderboard.md](phase-16-multi-agent-leaderboard.md) | Multi-agent & self-AEE (incl. AEE proof hardening backlog) |
 | **17** | [phase-17-semantic-hardening.md](phase-17-semantic-hardening.md) | Evaluator semantics, `gust init`, mutation UX |
 | **18** | [phase-18-real-agent-e2e.md](phase-18-real-agent-e2e.md) | Real LLM agent E2E example (deferred) |
+| **19** | [phase-19-releases.md](phase-19-releases.md) | Public `gust` releases; `gust-aee` stays internal |
 
 ## Suggested sequencing
 
@@ -38,6 +39,8 @@ Phase 10 (ingestion) ──► Phase 11 (SDKs/adapters) ──► Phase 14 (cont
                                       Phase 16 (multi-agent + self-AEE)
 
 Phase 17 (semantic hardening + adoption) ──► Phase 18 (real-agent E2E)
+Phase 19 (public gust releases; gust-aee internal) can run in parallel with 17/18
+once the binary split is stable.
          │
          └── prefer before further breadth (13–16 feature work)
 ```

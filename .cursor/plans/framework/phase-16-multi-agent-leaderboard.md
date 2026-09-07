@@ -3,7 +3,7 @@
 ## Objectives
 
 1. Evaluators for multi-agent **handoffs, coordination, and role adherence**.
-2. Keep **AEE as a gust self-benchmark** (mutation DR/FPR, throughput, reproducibility, H7) — already started in Wave 1 via `gust aee report`.
+2. Keep **AEE as a gust self-benchmark** (mutation DR/FPR, throughput, reproducibility, H7) — already started in Wave 1 via `gust-aee report`.
 3. Do **not** build peer-framework comparisons. gust is CI test infrastructure; other “eval frameworks” are a different product category unless they offer the same first-class features (replay + mutation trust + statistical Mode 3 gates).
 
 ## Scope
@@ -23,7 +23,7 @@
 
 ## AEE proof hardening (backlog)
 
-Not exit criteria yet. Extend `gust aee report` / site RESULTS when ready; keep peer scoreboards out of scope.
+Not exit criteria yet. Extend `gust-aee report` / site RESULTS when ready; keep peer scoreboards out of scope.
 
 1. **Per-mutator detection breakdown** — publish DR by mutation class so coverage is not concentrated in one easy mutant.
 2. **Judge calibration on the site** — after each `benchmark` run, record mock (and optionally labeled) Spearman ρ next to AEE as a separate table; never mix into the deterministic gate.
@@ -37,7 +37,7 @@ Docs polish (optional): surface CI workflow badges on the docs home page and REA
 ## Verification
 
 - Multi-agent golden suite with known coordination bugs is detected.
-- `gust aee report` remains green in CI with pinned versions.
+- `gust-aee report` remains green in CI with pinned versions.
 
 ## Exit criteria
 

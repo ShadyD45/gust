@@ -212,14 +212,14 @@ This repository splits CI into three workflows (Linux-only, free-tier friendly):
 | --- | --- | --- |
 | [`test`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/test.yml) | `go test ./...`, Python pytest, TypeScript `npm test` | Per-language pass + log tail |
 | [`smoke`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/smoke.yml) | Demo, SDK record→analyze, Mode 3 exec e2e | Checklist of e2e gates |
-| [`benchmark`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/benchmark.yml) | `gust aee report` + mock judge calibrate | Job summary + artifacts; [workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml). Checked-in [`benchmarks/RESULTS.md`](https://github.com/ShadyD45/gust/blob/main/benchmarks/RESULTS.md) is updated locally when needed (no auto PR/push) |
+| [`benchmark`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/benchmark.yml) | `gust-aee report` + mock judge calibrate | Job summary + artifacts; [workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml). Checked-in [`benchmarks/RESULTS.md`](https://github.com/ShadyD45/gust/blob/main/benchmarks/RESULTS.md) is updated locally when needed (no auto PR/push) |
 
 Shared habits:
 
 - `paths-ignore` for docs/images (and RESULTS.md) so doc-only changes do not burn runner minutes.
 - `concurrency` with `cancel-in-progress` to kill superseded runs.
 - Build the binary once per job and reuse it (`--bin` / `--skip-build`).
-- `gust aee report` and `gust test` append to `$GITHUB_STEP_SUMMARY` automatically when that env var is set.
+- `gust-aee report` and `gust test` append to `$GITHUB_STEP_SUMMARY` automatically when that env var is set.
 
 ### Free-tier notes
 

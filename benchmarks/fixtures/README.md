@@ -1,10 +1,8 @@
-# Shared AEE fixtures
+# Shared self-benchmark fixtures
 
-Optional place for exported `gust aee report --json` outputs.
+| File | Command |
+|------|---------|
+| [`gust_self_aee.json`](gust_self_aee.json) | `gust-aee report --out …` |
+| [`gust_validation.json`](gust_validation.json) | `gust-aee validate --out …` |
 
-CI writes [`gust_self_aee.json`](gust_self_aee.json) on every successful `benchmark` run on `main`.
-
-```bash
-./gust aee report --json --out benchmarks/fixtures/gust_self_aee.json \
-  --doc benchmarks/RESULTS.md
-```
+CI regenerates both on the `benchmark` workflow; commit refreshed copies when publishing numbers.

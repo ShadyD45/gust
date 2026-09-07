@@ -128,18 +128,19 @@ Demo: [`demo/`](demo/).
 ## Project layout
 
 ```text
-cmd/gust/                 CLI entrypoint
+cmd/gust/                 End-user CLI entrypoint (published releases)
+cmd/gust-aee/             Internal self-benchmark CLI (CI/maintainers only)
 pkg/api/                  Public domain types
 pkg/jcs/                  RFC 8785 canonical JSON hashing
 internal/ports/           Tier-1 Go interfaces
-internal/core/            Analyze, Replay, Test, stats, mutate, policy, scenario
+internal/core/            Analyze, Replay, Test, stats, mutate, policy, scenario, aee, validation
 internal/adapters/        Evaluators, mutators, fixtures, ingest, testrunner, wire, storage
 sdk/python/               Python capture SDK, Mode 3 harness, LangChain adapter
 sdk/typescript/           TypeScript capture SDK (stdlib / Node 18+)
 spec/schemas/             JSON Schema contracts (Draft 2020-12)
 demo/                     End-to-end MVP demo scripts
 docs/                     GitHub Pages site (usage, benchmarks, extending, architecture)
-benchmarks/               AEE self-report (RESULTS.md updated locally as needed)
+benchmarks/               AEE + Validation Suite reports (updated locally as needed)
 ```
 
 
@@ -152,12 +153,13 @@ Phase 10–12 have landed (OTel ingest, SDKs, optional LLM judge, AEE self-bench
 
 ## Self-benchmark (AEE)
 
-gust continuously measures its own evaluation suite (mutation detection / FPR, throughput, reproducibility, Wilson H7). Latest numbers:
+gust continuously measures its own evaluation suite (mutation detection / FPR, throughput, reproducibility, Wilson H7) plus an adversarial **Validation Suite**. Latest numbers:
 
-**→ [benchmarks/RESULTS.md](benchmarks/RESULTS.md)** · **[benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)**
+**→ [benchmarks/RESULTS.md](benchmarks/RESULTS.md)** · **[benchmarks/VALIDATION.md](benchmarks/VALIDATION.md)** · **[benchmark workflow](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)**
 
 ```bash
-./gust aee report
+./gust-aee report
+./gust-aee validate
 ```
 
 

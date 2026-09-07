@@ -1,0 +1,672 @@
+{
+  "generated_at": "2026-09-07T04:13:08.3193542Z",
+  "suite_version": "1.0.0",
+  "total": 78,
+  "passed": 78,
+  "failed": 0,
+  "pass_rate": 1,
+  "gate_passed": true,
+  "by_category": {
+    "fail": {
+      "total": 20,
+      "passed": 20,
+      "rate": 1
+    },
+    "fixture": {
+      "total": 9,
+      "passed": 9,
+      "rate": 1
+    },
+    "flaky": {
+      "total": 3,
+      "passed": 3,
+      "rate": 1
+    },
+    "infra": {
+      "total": 4,
+      "passed": 4,
+      "rate": 1
+    },
+    "mutation": {
+      "total": 18,
+      "passed": 18,
+      "rate": 1
+    },
+    "pass": {
+      "total": 18,
+      "passed": 18,
+      "rate": 1
+    },
+    "recovery": {
+      "total": 6,
+      "passed": 6,
+      "rate": 1
+    }
+  },
+  "results": [
+    {
+      "id": "pass_task_success",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_required_tool",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_tool_args",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_forbidden_absent",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_tool_sequence_subseq",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_tool_sequence_exact",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_max_steps_tools_only",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_max_latency",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_schema_output",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_empty_trace_task_only",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_extra_tool_keys_ignored",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "pass_occurrence_last",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "fail_task_status",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_wrong_order_id",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_forbidden_present",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_missing_required",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_sequence_wrong_order",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_max_steps",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_schema_missing_field",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_schema_non_json",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_schema_not_envelope_noop",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_exact_sequence_extra",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_missing_span_tool",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "fail_duplicate_exact_sequence",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "wilson_pass_100_100",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=PASS want=PASS ci=[0.963,1.000]"
+    },
+    {
+      "id": "wilson_flaky_20_20",
+      "category": "flaky",
+      "question": "Should this be flaky?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=FLAKY want=FLAKY ci=[0.839,1.000]"
+    },
+    {
+      "id": "wilson_fail_17_20",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=FAIL want=FAIL ci=[0.640,0.948]"
+    },
+    {
+      "id": "wilson_fail_0_20",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=FAIL want=FAIL ci=[0.000,0.161]"
+    },
+    {
+      "id": "wilson_insufficient_n3",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=INSUFFICIENT_SAMPLES want=INSUFFICIENT_SAMPLES ci=[0.439,1.000]"
+    },
+    {
+      "id": "wilson_pass_loose_threshold",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=PASS want=PASS ci=[0.764,0.991]"
+    },
+    {
+      "id": "wilson_flaky_straddle_80",
+      "category": "flaky",
+      "question": "Should this be flaky?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=FLAKY want=FLAKY ci=[0.584,0.919]"
+    },
+    {
+      "id": "wilson_conf_990_stricter",
+      "category": "flaky",
+      "question": "Should this be flaky?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=FLAKY want=FLAKY ci=[0.861,0.983]"
+    },
+    {
+      "id": "wilson_pass_nonstandard_975",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=PASS want=PASS ci=[0.952,1.000]"
+    },
+    {
+      "id": "wilson_fail_40_100",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "wilson",
+      "passed": true,
+      "detail": "verdict=FAIL want=FAIL ci=[0.309,0.498]"
+    },
+    {
+      "id": "infra_one_error_tolerated",
+      "category": "infra",
+      "question": "Should this be an infrastructure error?",
+      "kind": "infra",
+      "passed": true,
+      "detail": "exec_errors=1 want=1 passes=4"
+    },
+    {
+      "id": "infra_unstable_over_rate",
+      "category": "infra",
+      "question": "Should this be an infrastructure error?",
+      "kind": "infra",
+      "passed": true,
+      "detail": "runner unstable as expected"
+    },
+    {
+      "id": "infra_all_fail_unstable",
+      "category": "infra",
+      "question": "Should this be an infrastructure error?",
+      "kind": "infra",
+      "passed": true,
+      "detail": "runner unstable as expected"
+    },
+    {
+      "id": "infra_zero_errors_clean",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "infra",
+      "passed": true,
+      "detail": "exec_errors=0 want=0 passes=5"
+    },
+    {
+      "id": "infra_boundary_rate_ok",
+      "category": "infra",
+      "question": "Should this be an infrastructure error?",
+      "kind": "infra",
+      "passed": true,
+      "detail": "exec_errors=1 want=1 passes=4"
+    },
+    {
+      "id": "mut_detect_g0_remove_required_tool",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g1_remove_required_tool",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g0_wrong_tool",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g1_wrong_tool",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g0_corrupt_argument",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g1_corrupt_argument",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "mutator skipped (acceptable)"
+    },
+    {
+      "id": "mut_detect_g0_duplicate_call",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g1_duplicate_call",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g0_infinite_loop",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g1_infinite_loop",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g0_skip_recovery",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "mutator skipped (acceptable)"
+    },
+    {
+      "id": "mut_detect_g1_skip_recovery",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g0_excessive_tool_calls",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g1_excessive_tool_calls",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g0_introduce_forbidden_tool",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g1_introduce_forbidden_tool",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g0_change_final_output",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "mut_detect_g1_change_final_output",
+      "category": "mutation",
+      "question": "Should this mutation be detected?",
+      "kind": "mutation",
+      "passed": true,
+      "detail": "detected=true want=true"
+    },
+    {
+      "id": "fix_exact_hit",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "found=true status=success"
+    },
+    {
+      "id": "fix_exact_miss",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "found=false status="
+    },
+    {
+      "id": "fix_ordered_fifo",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "bodies=[PENDING DONE]"
+    },
+    {
+      "id": "fix_ordered_exhausted",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "found=false status="
+    },
+    {
+      "id": "fix_malformed_mode",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "found=true status=success"
+    },
+    {
+      "id": "fix_partial_failure_mode",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "found=true status=error"
+    },
+    {
+      "id": "fix_recorded_error_preserved",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "found=true status=error"
+    },
+    {
+      "id": "fix_wrong_tool_miss",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "found=false status="
+    },
+    {
+      "id": "fix_clone_isolates_sequence",
+      "category": "fixture",
+      "question": "Should this fixture match?",
+      "kind": "fixture",
+      "passed": true,
+      "detail": "clone_found=true body=PENDING"
+    },
+    {
+      "id": "recovery_retry_same_tool",
+      "category": "recovery",
+      "question": "Should this be considered recovery?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "recovery_missing_retry",
+      "category": "recovery",
+      "question": "Should this be considered recovery?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "recovery_with_intervening_llm",
+      "category": "recovery",
+      "question": "Should this be considered recovery?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "recovery_no_error_passes",
+      "category": "recovery",
+      "question": "Should this be considered recovery?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "recovery_explicit_recovery_tool",
+      "category": "recovery",
+      "question": "Should this be considered recovery?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "recovery_wrong_listed_tool",
+      "category": "recovery",
+      "question": "Should this be considered recovery?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "adv_latency_unordered_spans",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "adv_partial_trace_required",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "adv_malformed_input_attr",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "adv_agent_span_counts_step",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "adv_retrieval_not_step",
+      "category": "pass",
+      "question": "Should this pass?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=true want=true"
+    },
+    {
+      "id": "adv_output_substring_fail",
+      "category": "fail",
+      "question": "Should this fail?",
+      "kind": "analyze",
+      "passed": true,
+      "detail": "analyze.passed=false want=false"
+    }
+  ]
+}

@@ -43,7 +43,6 @@ func NewRoot() *cobra.Command {
 		newScenarioCmd(),
 		newIngestCmd(),
 		newJudgeCmd(),
-		newAEECmd(),
 	)
 	return root
 }
