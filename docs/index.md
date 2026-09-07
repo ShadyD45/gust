@@ -11,7 +11,7 @@ layout: default
   <p class="home-kicker">Test infrastructure for autonomous software</p>
 </div>
 
-gust is the role that JUnit, a mocking framework, and a CI regression gate play for ordinary backends — adapted for LLM-driven agents that do not give the same answer twice.
+gust is test infrastructure for LLM-driven agents that do not give the same answer twice — offline analysis, fixture replay, and statistical CI gates over agent behavior.
 
 It is **not** a final-answer LLM evaluation library. It measures agent *behavior* (tool choice, arguments, sequences, safety constraints, latency) and treats correctness as a **statistical pass rate** with confidence intervals.
 

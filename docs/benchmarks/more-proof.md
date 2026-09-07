@@ -5,7 +5,7 @@ parent: Benchmarks
 ---
 # More proof (beyond AEE)
 
-AEE is the core self-score. These additional signals strengthen the claim that gust is **test infrastructure for agents** — not an answer scorer with a CI badge.
+AEE is the core self-score. These additional signals strengthen the claim that gust is **test infrastructure for agents**.
 
 ## Already shipping
 
@@ -19,9 +19,3 @@ AEE is the core self-score. These additional signals strengthen the claim that g
 | **Trace ≠ test** | `gust scenario from-run` leaves `assertions: []` | We refuse to auto-enshrine observed bugs as the spec |
 
 The workflows above are the source of truth for CI health.
-
-## What we will not add
-
-- Leaderboards vs DeepEval, Phoenix, Braintrust, etc. — different category; unfair and uninformative.
-- Production agent pass-rate dashboards as a gust “benchmark” — that is *your* product quality, not suite effectiveness.
-- Uncalibrated LLM-judge scores as a hard CI gate.

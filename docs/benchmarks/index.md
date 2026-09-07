@@ -9,11 +9,11 @@ has_toc: false
 gust publishes a **self-benchmark** of its own evaluation suite — Agent Evaluation Effectiveness (AEE). These numbers prove the *test infrastructure* works: it catches injected faults, stays quiet on clean runs, finishes fast enough for CI, and reproduces bit-identically.
 
 {: .important }
-AEE scores **gust**, not your agent. Agent pass rates belong to Mode 3 and your scenarios. Cross-tool scoreboards against other LLM-eval products are intentionally out of scope — gust solves a different problem (behavior + fixtures + Wilson gates), not “is this answer good?”.
+AEE scores **gust**, not your agent. Agent pass rates belong to Mode 3 and your scenarios. AEE measures behavior gates, fixtures, mutation detection, and Wilson verdicts — the effectiveness of gust as test infrastructure.
 
 ## Why this is the proof that matters
 
-Most agent tooling today treats a **trace** or a **final-answer score** as the test. That collapses three different jobs into one number and cannot tell you whether your assertions would catch a real bug.
+A captured **trace** or a **final-answer score** alone cannot tell you whether your assertions would catch a real bug. Those signals collapse three different jobs into one number.
 
 gust separates the jobs and measures each with the right instrument:
 
@@ -26,7 +26,7 @@ gust separates the jobs and measures each with the right instrument:
 | Stochastic agents get honest verdicts | **H7** Wilson vectors (`PASS` / `FLAKY` / `FAIL`) |
 | Gust cannot be easily fooled | **[Validation Suite]({% link benchmarks/validation.md %})** — adversarial pass/fail/flaky/infra/mutation/fixture/recovery cases |
 
-That is the “new way”: **test infrastructure for agents**, not another answer-scoring library. See [Metrics explained]({% link benchmarks/metrics.md %}) for definitions, and [Latest results]({% link benchmarks/results.md %}) for the published numbers (also [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)).
+That is gust’s job: **test infrastructure for agents**. See [Metrics explained]({% link benchmarks/metrics.md %}) for definitions, and [Latest results]({% link benchmarks/results.md %}) for the published numbers (also [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)).
 
 ## Latest snapshot
 

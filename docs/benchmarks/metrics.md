@@ -71,6 +71,5 @@ Composite `aee_score` is a documented weighted blend in `internal/core/aee/repor
 |----------|-----|
 | Mode 3 agent pass rates | Property of *your* agent and scenarios, not gust |
 | LLM judge latency / agreement | Optional soft signal; calibrate separately |
-| Peer-framework leaderboards | Different product category; not a fair or useful comparison |
 
 Deeper stats design: [Statistics and policy]({% link architecture/statistics-and-policy.md %}). Reproduce commands and gates: [AEE methodology]({% link usage/aee-methodology.md %}).

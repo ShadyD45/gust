@@ -11,7 +11,7 @@ AEE scores **gust's evaluation suite**, not an agent under test. It answers: can
 AEE ≈ f(detection_rate, false_positive_rate, reproducibility, eval_latency)
 ```
 
-This is a **self-benchmark** only. gust is test infrastructure (replay, mutation, Wilson CI gates), not a generic LLM-eval scoreboard.
+This is a **self-benchmark** only. It measures gust's own suite: replay, mutation detection, Wilson CI gates, and reproducibility.
 
 For definitions of each metric and the product narrative, start with the site section: **[Benchmarks]({% link benchmarks/index.md %})**.
 
@@ -65,4 +65,3 @@ Latest numbers: [Latest results]({% link benchmarks/results.md %}) (also [`bench
 
 - Mode 3 agent pass rates (property of the *agent*, not the suite)
 - LLM judge latency / agreement (optional soft signal; calibrate separately)
-- Cross-tool / peer-framework scorecards
