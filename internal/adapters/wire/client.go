@@ -14,9 +14,6 @@ import (
 
 const defaultMaxLineBytes = 16 << 20 // 16 MiB — generous for any legitimate EvaluationResult
 
-// maxLineBytes is the protocol line limit; tests may lower it.
-var maxLineBytes = defaultMaxLineBytes
-
 var (
 	ErrClientClosed   = errors.New("wire client closed")
 	ErrInvalidJSONRPC = errors.New("invalid json-rpc response")
@@ -25,23 +22,32 @@ var (
 
 // Client conducts JSON-RPC 2.0 communication over standard in/out streams.
 type Client struct {
-	reader  *bufio.Reader
-	writer  io.Writer
-	mu      sync.Mutex
-	reqID   int64
-	pending map[int64]chan *Response
-	pMu     sync.Mutex
-	closed  bool
-	closeCh chan struct{}
+	reader       *bufio.Reader
+	writer       io.Writer
+	mu           sync.Mutex
+	reqID        int64
+	pending      map[int64]chan *Response
+	pMu          sync.Mutex
+	closed       bool
+	closeCh      chan struct{}
+	maxLineBytes int
 }
 
 // NewClient initializes a Client over provided reader and writer.
 func NewClient(r io.Reader, w io.Writer) *Client {
+	return newClient(r, w, defaultMaxLineBytes)
+}
+
+func newClient(r io.Reader, w io.Writer, maxLine int) *Client {
+	if maxLine <= 0 {
+		maxLine = defaultMaxLineBytes
+	}
 	c := &Client{
-		reader:  bufio.NewReaderSize(r, 64*1024),
-		writer:  w,
-		pending: make(map[int64]chan *Response),
-		closeCh: make(chan struct{}),
+		reader:       bufio.NewReaderSize(r, 64*1024),
+		writer:       w,
+		pending:      make(map[int64]chan *Response),
+		closeCh:      make(chan struct{}),
+		maxLineBytes: maxLine,
 	}
 	go c.listen()
 	return c
@@ -77,7 +83,7 @@ func readLineLimited(r *bufio.Reader, max int) ([]byte, error) {
 
 func (c *Client) listen() {
 	for {
-		line, err := readLineLimited(c.reader, maxLineBytes)
+		line, err := readLineLimited(c.reader, c.maxLineBytes)
 		if err != nil {
 			c.Close()
 			return

@@ -171,15 +171,11 @@ func TestReadLineLimited(t *testing.T) {
 }
 
 func TestWireClientLineTooLongCloses(t *testing.T) {
-	old := maxLineBytes
-	maxLineBytes = 64
-	defer func() { maxLineBytes = old }()
-
 	clientRead, serverWrite := io.Pipe()
 	serverRead, clientWrite := io.Pipe()
 	go io.Copy(io.Discard, serverRead)
 
-	client := NewClient(clientRead, clientWrite)
+	client := newClient(clientRead, clientWrite, 64)
 	defer func() { _ = client.Close() }()
 
 	go func() {
