@@ -30,7 +30,9 @@
     "per_run_evidence": {
       "type": "array",
       "items": { "type": "object" }
-    }
+    },
+    "hard_constraint_failed": { "type": "boolean" },
+    "execution_errors": { "type": "integer", "minimum": 0 }
   },
   "additionalProperties": false
 }

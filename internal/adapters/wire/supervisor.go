@@ -165,6 +165,10 @@ func NewWireEvaluator(proc *PluginProcess) *WireEvaluator {
 func (we *WireEvaluator) Name() string    { return we.proc.manifest.Name }
 func (we *WireEvaluator) Version() string { return we.proc.manifest.Version }
 
+const (
+	defaultEvaluateTimeout = 60 * time.Second
+)
+
 func (we *WireEvaluator) Evaluate(ctx context.Context, run api.AgentRun, expected *api.Assertion, evalCtx ports.EvaluationContext) (ports.EvaluationResult, error) {
 	params := map[string]any{
 		"run":      run,
@@ -172,7 +176,18 @@ func (we *WireEvaluator) Evaluate(ctx context.Context, run api.AgentRun, expecte
 		"context":  evalCtx,
 	}
 
+	callCtx := ctx
+	cancel := func() {}
+	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+		callCtx, cancel = context.WithTimeout(ctx, defaultEvaluateTimeout)
+	}
+	defer cancel()
+
 	var res ports.EvaluationResult
-	err := we.proc.client.Call(ctx, "evaluate", params, &res)
+	err := we.proc.client.Call(callCtx, "evaluate", params, &res)
+	if err != nil && callCtx.Err() != nil {
+		_ = we.proc.Close()
+		return res, fmt.Errorf("plugin evaluate timed out or cancelled: %w", err)
+	}
 	return res, err
 }

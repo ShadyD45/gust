@@ -20,6 +20,7 @@ type RegressionResult struct {
 	Regressed            bool    `json:"regressed"`
 	PassRateDrop         float64 `json:"pass_rate_drop"`
 	LatencyIncreaseRatio float64 `json:"latency_increase_ratio"`
+	LatencyComparable    bool    `json:"latency_comparable"`
 	Significant          bool    `json:"significant"`
 	PValue               float64 `json:"p_value"`
 	Message              string  `json:"message"`
@@ -38,8 +39,9 @@ func CompareRegression(baseline, candidate ExperimentStats, policy api.PolicyReg
 	}
 
 	drop := baseline.PassRate - candidate.PassRate
+	latComparable := baseline.LatencyNs > 0
 	latRatio := 0.0
-	if baseline.LatencyNs > 0 {
+	if latComparable {
 		latRatio = (candidate.LatencyNs - baseline.LatencyNs) / baseline.LatencyNs
 	}
 
@@ -58,6 +60,7 @@ func CompareRegression(baseline, candidate ExperimentStats, policy api.PolicyReg
 	res := RegressionResult{
 		PassRateDrop:         drop,
 		LatencyIncreaseRatio: latRatio,
+		LatencyComparable:    latComparable,
 		Significant:          significant,
 		PValue:               pValue,
 	}
@@ -67,9 +70,13 @@ func CompareRegression(baseline, candidate ExperimentStats, policy api.PolicyReg
 		res.Message = "statistically significant pass-rate regression"
 		return res
 	}
-	if latRatio > maxLat && candidate.LatencyNs > baseline.LatencyNs {
+	if latComparable && latRatio > maxLat && candidate.LatencyNs > baseline.LatencyNs {
 		res.Regressed = true
 		res.Message = "latency increase exceeds policy threshold"
+		return res
+	}
+	if !latComparable {
+		res.Message = "no significant pass-rate regression; latency regression not measurable (baseline latency unset)"
 		return res
 	}
 	res.Message = "no significant regression"
@@ -86,10 +93,13 @@ func twoProportionPValue(k1, n1, k2, n2 int) float64 {
 	p := float64(k1+k2) / float64(n1+n2)
 	se := math.Sqrt(p * (1 - p) * (1/float64(n1) + 1/float64(n2)))
 	if se == 0 {
-		return 1.0
+		if p1 == p2 {
+			return 1.0
+		}
+		return 0.0
 	}
 	z := math.Abs(p1-p2) / se
-	// Approximate two-tailed p from normal survival function.
+	// Two-sided: 2 * (1 - Φ(z))
 	return 2 * (1 - normalCDF(z))
 }
 

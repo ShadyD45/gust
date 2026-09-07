@@ -3,6 +3,7 @@ module gust
 go 1.26.1
 
 require (
+	github.com/google/jsonschema-go v0.4.3
 	github.com/spf13/cobra v1.9.1
 	go.opentelemetry.io/proto/otlp v1.11.0
 	google.golang.org/grpc v1.83.2

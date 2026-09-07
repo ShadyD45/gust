@@ -106,6 +106,9 @@ const (
 	FailureModeMalformed      FailureMode = "malformed"
 	FailureModeSlow           FailureMode = "slow"
 	FailureModePartialFailure FailureMode = "partial_failure"
+	// FailureModeRecordedError marks a fixture captured from a real tool error span
+	// (distinct from synthetic failure-injection modes).
+	FailureModeRecordedError FailureMode = "recorded_error"
 )
 
 type ProvenanceType string
@@ -238,6 +241,9 @@ type PolicyReliability struct {
 	DefaultMinimumPassRate float64 `json:"default_minimum_pass_rate" yaml:"default_minimum_pass_rate"`
 	MinSamplesForVerdict   int     `json:"min_samples_for_verdict" yaml:"min_samples_for_verdict"`
 	OnFlaky                string  `json:"on_flaky" yaml:"on_flaky"`
+	// MaxExecutionErrorRate is the fraction of samples that may fail as infrastructure
+	// errors before the run is aborted as runner-unstable (default 0.20 when unset/≤0).
+	MaxExecutionErrorRate float64 `json:"max_execution_error_rate,omitempty" yaml:"max_execution_error_rate,omitempty"`
 }
 
 type PolicyRegression struct {

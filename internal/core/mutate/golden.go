@@ -86,8 +86,10 @@ func BuildGoldenSuite() []GoldenCase {
 	assertions2 := []api.Assertion{
 		{ID: "b1", Type: api.AssertErrorRecovery},
 		{ID: "b2", Type: api.AssertTaskSuccess, Parameters: map[string]any{"expected_output": "recovered doc"}},
-		{ID: "b3", Type: api.AssertMaxSteps, Limit: 2},
+		// One top-level tool action is expected (error spans do not count toward max_steps).
+		{ID: "b3", Type: api.AssertMaxSteps, Limit: 1},
 		{ID: "b4", Type: api.AssertToolCall, Tool: "fetch_doc"},
+		{ID: "b5", Type: api.AssertForbiddenToolCall, Tool: "forbidden_admin_access"},
 	}
 
 	return []GoldenCase{

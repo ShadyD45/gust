@@ -37,6 +37,7 @@ func (e *Engine) Evaluate(policy api.Policy, results []*api.ReliabilityResult) V
 	}
 
 	hasFlaky := false
+	hardFailed := false
 
 	for _, res := range results {
 		if res == nil {
@@ -45,14 +46,13 @@ func (e *Engine) Evaluate(policy api.Policy, results []*api.ReliabilityResult) V
 		verdict.ScenarioResults[res.ScenarioID] = res
 
 		if res.HardConstraintFailed || hasHardEvidence(res) {
-			verdict.OverallVerdict = api.VerdictFail
-			verdict.ExitCode = api.ExitFailure
+			hardFailed = true
 			verdict.Violations = append(verdict.Violations, PolicyViolation{
 				ClauseType: "hard_constraint",
 				Severity:   "fatal",
 				Message:    fmt.Sprintf("%s violated a hard constraint (forbidden tool or schema)", res.ScenarioID),
 			})
-			return verdict
+			continue
 		}
 
 		switch res.Verdict {
@@ -74,12 +74,21 @@ func (e *Engine) Evaluate(policy api.Policy, results []*api.ReliabilityResult) V
 		}
 	}
 
+	if hardFailed {
+		verdict.OverallVerdict = api.VerdictFail
+		verdict.ExitCode = api.ExitFailure
+		return verdict
+	}
+
 	if hasFlaky && verdict.OverallVerdict != api.VerdictFail {
 		switch strings.ToLower(policy.Reliability.OnFlaky) {
 		case "fail":
 			verdict.OverallVerdict = api.VerdictFlaky
 			verdict.ExitCode = api.ExitFlakyFailure
-		case "warn", "ignore", "":
+		case "warn":
+			verdict.OverallVerdict = api.VerdictFlaky
+			verdict.ExitCode = api.ExitSuccess
+		case "ignore", "":
 			verdict.OverallVerdict = api.VerdictPass
 			verdict.ExitCode = api.ExitSuccess
 		}

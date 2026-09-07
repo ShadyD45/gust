@@ -2,6 +2,7 @@ package wire
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,9 +12,15 @@ import (
 	"sync/atomic"
 )
 
+const defaultMaxLineBytes = 16 << 20 // 16 MiB — generous for any legitimate EvaluationResult
+
+// maxLineBytes is the protocol line limit; tests may lower it.
+var maxLineBytes = defaultMaxLineBytes
+
 var (
 	ErrClientClosed   = errors.New("wire client closed")
 	ErrInvalidJSONRPC = errors.New("invalid json-rpc response")
+	ErrLineTooLong    = errors.New("wire protocol line exceeds maximum size")
 )
 
 // Client conducts JSON-RPC 2.0 communication over standard in/out streams.
@@ -31,7 +38,7 @@ type Client struct {
 // NewClient initializes a Client over provided reader and writer.
 func NewClient(r io.Reader, w io.Writer) *Client {
 	c := &Client{
-		reader:  bufio.NewReader(r),
+		reader:  bufio.NewReaderSize(r, 64*1024),
 		writer:  w,
 		pending: make(map[int64]chan *Response),
 		closeCh: make(chan struct{}),
@@ -40,9 +47,37 @@ func NewClient(r io.Reader, w io.Writer) *Client {
 	return c
 }
 
+func readLineLimited(r *bufio.Reader, max int) ([]byte, error) {
+	var buf bytes.Buffer
+	for {
+		chunk, err := r.ReadSlice('\n')
+		if err == nil {
+			buf.Write(chunk)
+			if buf.Len() > max {
+				return nil, ErrLineTooLong
+			}
+			return buf.Bytes(), nil
+		}
+		if errors.Is(err, bufio.ErrBufferFull) {
+			buf.Write(chunk)
+			if buf.Len() > max {
+				return nil, ErrLineTooLong
+			}
+			continue
+		}
+		if len(chunk) > 0 {
+			buf.Write(chunk)
+		}
+		if buf.Len() > max {
+			return nil, ErrLineTooLong
+		}
+		return buf.Bytes(), err
+	}
+}
+
 func (c *Client) listen() {
 	for {
-		line, err := c.reader.ReadBytes('\n')
+		line, err := readLineLimited(c.reader, maxLineBytes)
 		if err != nil {
 			c.Close()
 			return
@@ -128,7 +163,10 @@ func (c *Client) Call(ctx context.Context, method string, params any, result any
 		return ctx.Err()
 	case <-c.closeCh:
 		return ErrClientClosed
-	case resp := <-respCh:
+	case resp, ok := <-respCh:
+		if !ok {
+			return ErrClientClosed
+		}
 		if resp.Error != nil {
 			return resp.Error
 		}

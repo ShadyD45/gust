@@ -66,6 +66,11 @@ func (e *Extractor) ExtractFromRun(run api.AgentRun) (*api.TestScenario, error) 
 			},
 			Provenance: api.ProvenanceRecorded,
 		}
+		if span.Status.Code == "error" {
+			fx.RecordedResponse.Status = "error"
+			fx.RecordedResponse.Error = span.Status.Message
+			fx.Mode = api.FailureModeRecordedError
+		}
 		sc.Environment.Fixtures = append(sc.Environment.Fixtures, fx)
 	}
 

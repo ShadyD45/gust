@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -117,4 +118,85 @@ func TestWireClientTimeout(t *testing.T) {
 	if err != context.DeadlineExceeded {
 		t.Errorf("expected context.DeadlineExceeded, got %v", err)
 	}
+}
+
+func TestWireClientCloseNoPanic(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		clientRead, serverWrite := io.Pipe()
+		serverRead, clientWrite := io.Pipe()
+		client := NewClient(clientRead, clientWrite)
+
+		go func() {
+			buf := make([]byte, 1)
+			for {
+				if _, err := serverRead.Read(buf); err != nil {
+					return
+				}
+			}
+		}()
+		_ = serverWrite
+
+		done := make(chan error, 1)
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			done <- client.Call(ctx, "hang", nil, nil)
+		}()
+
+		time.Sleep(time.Millisecond)
+		_ = client.Close()
+		err := <-done
+		if err != nil && err != ErrClientClosed && err != context.DeadlineExceeded && err != context.Canceled {
+			t.Fatalf("iteration %d: unexpected error %v", i, err)
+		}
+		_ = clientRead.Close()
+		_ = clientWrite.Close()
+		_ = serverRead.Close()
+	}
+}
+
+func TestReadLineLimited(t *testing.T) {
+	r := bufio.NewReader(strings.NewReader("ok\n"))
+	line, err := readLineLimited(r, 16)
+	if err != nil || string(line) != "ok\n" {
+		t.Fatalf("got %q err=%v", line, err)
+	}
+
+	huge := strings.Repeat("a", 64) + "\n"
+	r2 := bufio.NewReaderSize(strings.NewReader(huge), 8)
+	_, err = readLineLimited(r2, 32)
+	if err != ErrLineTooLong {
+		t.Fatalf("expected ErrLineTooLong, got %v", err)
+	}
+}
+
+func TestWireClientLineTooLongCloses(t *testing.T) {
+	old := maxLineBytes
+	maxLineBytes = 64
+	defer func() { maxLineBytes = old }()
+
+	clientRead, serverWrite := io.Pipe()
+	serverRead, clientWrite := io.Pipe()
+	go io.Copy(io.Discard, serverRead)
+
+	client := NewClient(clientRead, clientWrite)
+	defer func() { _ = client.Close() }()
+
+	go func() {
+		huge := append([]byte(strings.Repeat("a", 128)), '\n')
+		_, _ = serverWrite.Write(huge)
+		_ = serverWrite.Close()
+	}()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		err := client.Call(ctx, "ping", nil, nil)
+		cancel()
+		if err == ErrClientClosed {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatal("expected client to close after oversized line")
 }

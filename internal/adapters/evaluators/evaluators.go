@@ -1,10 +1,14 @@
 package evaluators
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/google/jsonschema-go/jsonschema"
 
 	"gust/internal/domain/evidence"
 	"gust/internal/ports"
@@ -458,7 +462,14 @@ func (e *MaxStepsEvaluator) Evaluate(ctx context.Context, run api.AgentRun, expe
 		limit = expected.Limit
 	}
 
-	steps := len(run.Trace)
+	// Count top-level agent actions (tool + agent spans), not nested llm/retrieval sub-steps.
+	steps := 0
+	for _, span := range run.Trace {
+		switch span.Type {
+		case api.SpanTypeTool, api.SpanTypeAgent:
+			steps++
+		}
+	}
 	if steps > limit {
 		res.Passed = false
 		res.Score = float64(limit) / float64(steps)
@@ -669,10 +680,48 @@ func (e *SchemaValidationEvaluator) Evaluate(ctx context.Context, run api.AgentR
 		EvaluatorVersion: e.Version(),
 	}
 
-	if err := run.Validate(); err != nil {
+	schemaRaw, ok := extractOutputSchema(expected)
+	if !ok {
+		// No schema declared: fall back to envelope validation as a weaker default.
+		if err := run.Validate(); err != nil {
+			res.Passed = false
+			res.Score = 0.0
+			res.Message = fmt.Sprintf("run failed structural envelope validation: %v", err)
+			res.Evidence = map[string]any{"validation_error": err.Error(), "envelope_only": true}
+			res.ExecutionTimeNs = time.Since(start).Nanoseconds()
+			return res, nil
+		}
+		res.Passed = true
+		res.Score = 1.0
+		res.Message = "no output schema declared; only structural envelope was checked"
+		res.Evidence = map[string]any{"envelope_only": true}
+		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
+		return res, nil
+	}
+
+	var output any
+	if err := json.Unmarshal([]byte(run.Outcome.Output), &output); err != nil {
 		res.Passed = false
 		res.Score = 0.0
-		res.Message = fmt.Sprintf("run failed schema validation: %v", err)
+		res.Message = fmt.Sprintf("output is not valid JSON: %v", err)
+		res.Evidence = map[string]any{"parse_error": err.Error()}
+		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
+		return res, nil
+	}
+
+	resolved, err := compileOutputSchema(schemaRaw)
+	if err != nil {
+		res.Passed = false
+		res.Score = 0.0
+		res.Message = fmt.Sprintf("invalid output schema: %v", err)
+		res.Evidence = map[string]any{"schema_error": err.Error()}
+		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
+		return res, nil
+	}
+	if err := resolved.Validate(output); err != nil {
+		res.Passed = false
+		res.Score = 0.0
+		res.Message = fmt.Sprintf("output failed schema validation: %v", err)
 		res.Evidence = map[string]any{"validation_error": err.Error()}
 		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
 		return res, nil
@@ -680,9 +729,66 @@ func (e *SchemaValidationEvaluator) Evaluate(ctx context.Context, run api.AgentR
 
 	res.Passed = true
 	res.Score = 1.0
-	res.Message = "run satisfies schema validation"
+	res.Message = "output satisfies declared schema"
+	res.Evidence = map[string]any{"envelope_only": false}
 	res.ExecutionTimeNs = time.Since(start).Nanoseconds()
 	return res, nil
+}
+
+// compileOutputSchema turns an assertion schema document into a resolved validator.
+// Resolve is called without a Loader so external $ref cannot fetch over the network.
+func compileOutputSchema(schemaDoc any) (*jsonschema.Resolved, error) {
+	schemaBytes, err := json.Marshal(schemaDoc)
+	if err != nil {
+		return nil, fmt.Errorf("marshal schema: %w", err)
+	}
+	if len(bytes.TrimSpace(schemaBytes)) == 0 || string(schemaBytes) == "null" {
+		return nil, fmt.Errorf("schema document is empty")
+	}
+	var sch jsonschema.Schema
+	if err := json.Unmarshal(schemaBytes, &sch); err != nil {
+		return nil, fmt.Errorf("unmarshal schema: %w", err)
+	}
+	// Resolve(nil) uses no external loader — local/$defs only.
+	resolved, err := sch.Resolve(nil)
+	if err != nil {
+		return nil, fmt.Errorf("resolve schema: %w", err)
+	}
+	return resolved, nil
+}
+
+func extractOutputSchema(expected *api.Assertion) (any, bool) {
+	if expected == nil || expected.Parameters == nil {
+		return nil, false
+	}
+	raw, ok := expected.Parameters["schema"]
+	if !ok || raw == nil {
+		return nil, false
+	}
+	switch v := raw.(type) {
+	case map[string]any:
+		return v, true
+	case string:
+		if strings.TrimSpace(v) == "" {
+			return nil, false
+		}
+		var doc any
+		if err := json.Unmarshal([]byte(v), &doc); err != nil {
+			return nil, false
+		}
+		return doc, true
+	default:
+		// Attempt JSON round-trip for typed YAML maps.
+		b, err := json.Marshal(v)
+		if err != nil {
+			return nil, false
+		}
+		var doc any
+		if err := json.Unmarshal(b, &doc); err != nil {
+			return nil, false
+		}
+		return doc, true
+	}
 }
 
 // RegisterBuiltinEvaluators registers all built-in evaluators with the registry.

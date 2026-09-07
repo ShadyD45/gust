@@ -85,7 +85,7 @@ func ValidateFixtureObject(f *Fixture) error {
 	}
 	if f.Mode != "" {
 		switch f.Mode {
-		case FailureModeSuccess, FailureModeTimeout, FailureModeMalformed, FailureModeSlow, FailureModePartialFailure:
+		case FailureModeSuccess, FailureModeTimeout, FailureModeMalformed, FailureModeSlow, FailureModePartialFailure, FailureModeRecordedError:
 		default:
 			return fmt.Errorf("mode %q is invalid", f.Mode)
 		}

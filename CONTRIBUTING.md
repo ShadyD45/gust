@@ -73,10 +73,11 @@ Detection rate must stay ≥ 90% and false positive rate ≤ 5%.
 
 Changing `pkg/api` types, `spec/schemas/`, or the wire protocol is a compatibility event:
 
+- **JSON Schema = wire contract; Go `Validate()` = semantic invariants.** Keep assertion-type (and similar) enums in sync; `spec/schemas/schemas_test.go` guards the assertion enum.
 - Update the JSON Schema in [`spec/schemas/`](spec/schemas/) alongside the Go type.
 - Update the affected docs in the same PR.
 - Explain the migration path for existing `run.json` and scenario files in the PR description.
-- Content addressing uses RFC 8785 JCS — never change canonicalization behavior without treating it as a breaking change, since it invalidates every stored hash.
+- Content addressing uses RFC 8785 JCS with a deliberate deviation: integers that fit in `int64` are preserved exactly (not coerced through `float64`) so nanosecond timestamps and large IDs hash stably. Do not "fix" that back to pure double semantics without a breaking-change migration.
 
 ### Documentation
 

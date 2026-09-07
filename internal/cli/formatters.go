@@ -39,6 +39,9 @@ func PrintReliabilityTerminal(res *api.ReliabilityResult) {
 		res.Passes, res.Samples, res.ObservedPassRate*100)
 	fmt.Printf("  95%% confidence interval: [%.1f%%, %.1f%%]\n",
 		res.ConfidenceInterval[0]*100, res.ConfidenceInterval[1]*100)
+	if res.ExecutionErrors > 0 {
+		fmt.Printf("  execution errors: %d/%d (counted as failed samples)\n", res.ExecutionErrors, res.Samples)
+	}
 
 	switch res.Verdict {
 	case api.VerdictPass:
@@ -54,7 +57,7 @@ func PrintReliabilityTerminal(res *api.ReliabilityResult) {
 
 // PrintSuiteVerdict renders the aggregated policy decision after a directory run.
 func PrintSuiteVerdict(n int, v policy.Verdict) {
-	fmt.Printf("\nSuite: %d scenarios → %s\n", n, v.OverallVerdict)
+	fmt.Printf("\nSuite: %d scenarios → %s (exit %d)\n", n, v.OverallVerdict, v.ExitCode)
 	for _, viol := range v.Violations {
 		fmt.Printf("  - %s: %s\n", viol.Severity, viol.Message)
 	}

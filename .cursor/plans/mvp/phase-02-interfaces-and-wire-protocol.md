@@ -213,7 +213,7 @@ External plugins run as companion child processes. Communication occurs via line
 ### 5.2 Subprocess Supervisor & Sandboxing
 To ensure security and stability:
 1. **Isolation:** Child processes are spawned in an isolated temporary working directory with environment scrubbed (only explicit `PATH` and non-sensitive variables passed).
-2. **Network Policy:** Untrusted Evaluators and Mutators are executed in an environment with no network access (`unshare` on Linux or Windows Job Objects with network restrictions). `TestRunner` plugins are explicitly granted outbound network permissions as configured.
+2. **Network Policy (planned, Phase 8.5):** Untrusted Evaluators and Mutators are intended to run with network isolation (`unshare` on Linux or Windows Job Objects). **Not implemented yet** — today plugins get a scrubbed environment, handshake/call timeouts, and a line-size bound only. `TestRunner` plugins are expected to need outbound network as configured.
 3. **Deadlines & Cancellation:** Every request passes a `context.Context` with timeout. If the plugin fails to respond within the deadline, `SIGKILL` / `TerminateProcess` is sent and an `ErrPluginTimeout` is returned.
 
 ---

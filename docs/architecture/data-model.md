@@ -5,7 +5,9 @@ parent: Architecture
 ---
 # Data Model
 
-Primary types live in `pkg/api`. JSON Schema contracts (documentation) live under `spec/schemas/`.
+Primary types live in `pkg/api`. JSON Schema contracts (wire/public shape) live under `spec/schemas/`. Go `Validate()` methods enforce semantic invariants beyond structural shape — keep both aligned for closed enums (assertion types, failure modes, etc.).
+
+`max_steps` counts top-level `tool` and `agent` spans only (not nested `llm` / `retrieval` sub-steps).
 
 ## AgentRun
 
@@ -19,7 +21,7 @@ Captured or synthesized execution trace:
 Recorded or authored tool response used for Replay / Test mocking:
 
 - `fixture_id`, `tool`, `input_hash`, match strategy, recorded I/O
-- Failure modes: `success`, `timeout`, `malformed`, `slow`, `partial_failure`
+- Failure modes: `success`, `timeout`, `malformed`, `slow`, `partial_failure`, `recorded_error` (captured from a real error span)
 - Provenance: `recorded` | `authored`
 
 Match strategies: exact hash, ordered sequence (FIFO), hybrid (prefer exact then sequence).

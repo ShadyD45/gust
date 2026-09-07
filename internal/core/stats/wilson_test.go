@@ -1,10 +1,47 @@
 package stats
 
 import (
+	"math"
 	"testing"
 
 	"gust/pkg/api"
 )
+
+func TestZForConfidence(t *testing.T) {
+	cases := []struct {
+		confidence float64
+		wantZ      float64
+	}{
+		{0.90, 1.64485},
+		{0.95, 1.95996},
+		{0.99, 2.57583},
+		{0.975, 2.24140},
+	}
+	for _, tc := range cases {
+		got, err := zForConfidence(tc.confidence)
+		if err != nil {
+			t.Fatalf("confidence %v: %v", tc.confidence, err)
+		}
+		if math.Abs(got-tc.wantZ) > 1e-3 {
+			t.Errorf("confidence %v: got z=%f want ~%f", tc.confidence, got, tc.wantZ)
+		}
+	}
+
+	for _, bad := range []float64{0, 1, -0.1, 1.5} {
+		if _, err := zForConfidence(bad); err == nil {
+			t.Errorf("expected error for confidence %v", bad)
+		}
+	}
+}
+
+func TestCalculateWilsonScoreInvalidConfidence(t *testing.T) {
+	if _, err := CalculateWilsonScore(10, 20, 0); err == nil {
+		t.Fatal("expected error for confidence 0")
+	}
+	if _, err := CalculateWilsonScore(10, 20, 1); err == nil {
+		t.Fatal("expected error for confidence 1")
+	}
+}
 
 func TestCalculateWilsonScore(t *testing.T) {
 	// 1. Zero passes (k=0, n=20)

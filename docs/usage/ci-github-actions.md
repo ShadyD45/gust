@@ -28,7 +28,7 @@ flowchart LR
 
 | Code | Meaning | Typical CI response |
 |---|---|---|
-| `0` | Gate passed (including `FLAKY` under `on_flaky: warn` / `ignore`) | Green |
+| `0` | Gate passed: all `PASS`, or `FLAKY` under `on_flaky: warn` (structured verdict stays `FLAKY`) / `ignore` (structured verdict `PASS`) | Green |
 | `1` | `FAIL`, hard constraint violation, or regression | Red — block the merge |
 | `2` | Configuration or runtime error (bad path, unparseable input) | Red — fix the pipeline, not the agent |
 | `3` | `FLAKY` under `on_flaky: fail` | Red, but distinguishable from a proven failure |

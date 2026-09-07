@@ -22,7 +22,8 @@
       "properties": {
         "default_minimum_pass_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
         "min_samples_for_verdict": { "type": "integer", "minimum": 1 },
-        "on_flaky": { "type": "string", "enum": ["warn", "fail", "ignore"] }
+        "on_flaky": { "type": "string", "enum": ["warn", "fail", "ignore"] },
+        "max_execution_error_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
       },
       "additionalProperties": false
     },

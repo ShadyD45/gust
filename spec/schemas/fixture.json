@@ -41,7 +41,7 @@
     },
     "mode": {
       "type": "string",
-      "enum": ["success", "timeout", "malformed", "slow", "partial_failure"]
+      "enum": ["success", "timeout", "malformed", "slow", "partial_failure", "recorded_error"]
     },
     "delay_ms": {
       "type": "integer",

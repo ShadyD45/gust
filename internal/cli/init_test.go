@@ -15,7 +15,7 @@ func TestScaffoldProject(t *testing.T) {
 	want := []string{
 		"gust.yaml",
 		"tests/policy.yaml",
-		"tests/scenarios/.gitkeep",
+		"tests/scenarios/example.yaml",
 		"tests/fixtures/.gitkeep",
 		"tests/assertions/.gitkeep",
 	}

@@ -122,11 +122,40 @@ func serializeString(buf *bytes.Buffer, s string) error {
 }
 
 func serializeNumber(buf *bytes.Buffer, num json.Number) error {
+	// Deliberate RFC 8785 deviation: preserve integers that fit in int64 exactly
+	// so content hashes stay stable for nanosecond timestamps and large IDs.
+	// Strict JCS would coerce all numbers through IEEE-754 doubles (exact only to 2^53).
+	s := num.String()
+	if isIntegerLiteral(s) {
+		if i, err := strconv.ParseInt(s, 10, 64); err == nil {
+			buf.WriteString(strconv.FormatInt(i, 10))
+			return nil
+		}
+	}
 	f, err := num.Float64()
 	if err != nil {
 		return err
 	}
 	return serializeFloat(buf, f)
+}
+
+func isIntegerLiteral(s string) bool {
+	if s == "" {
+		return false
+	}
+	i := 0
+	if s[0] == '-' {
+		if len(s) == 1 {
+			return false
+		}
+		i = 1
+	}
+	for ; i < len(s); i++ {
+		if s[i] < '0' || s[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func serializeFloat(buf *bytes.Buffer, f float64) error {

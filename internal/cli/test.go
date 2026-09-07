@@ -149,24 +149,23 @@ func newTestCmd() *cobra.Command {
 				if err := provider.Replace(allFixtures); err != nil {
 					return err
 				}
-				scConcurrency := concurrency
-				if fixtures.HasOrderedFixtures(allFixtures) && scConcurrency > 1 {
-					scConcurrency = 1
-				}
+				ordered := fixtures.HasOrderedFixtures(allFixtures)
 
 				runner, err := resolveRunner(flags)
 				if err != nil {
 					return err
 				}
 				result, err := sampler.RunScenario(context.Background(), coretest.SamplingConfig{
-					Scenario:        sc,
-					Runner:          runner,
-					Concurrency:     scConcurrency,
-					Endpoint:        flags.Endpoint,
-					FixtureEndpoint: fixtureEndpoint,
-					FixtureProvider: provider,
-					MinSamples:      pol.Reliability.MinSamplesForVerdict,
-					EvalContext:     evalContextFromPolicy(pol, sc.ID),
+					Scenario:              sc,
+					Runner:                runner,
+					Concurrency:           concurrency,
+					Endpoint:              flags.Endpoint,
+					FixtureEndpoint:       fixtureEndpoint,
+					FixtureProvider:       provider,
+					MinSamples:            pol.Reliability.MinSamplesForVerdict,
+					MaxExecutionErrorRate: pol.Reliability.MaxExecutionErrorRate,
+					HasOrderedFixtures:    ordered,
+					EvalContext:           evalContextFromPolicy(pol, sc.ID),
 				})
 				if err != nil {
 					return fmt.Errorf("%s: %w", sc.ID, err)

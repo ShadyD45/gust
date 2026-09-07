@@ -22,10 +22,28 @@ reliability:
   default_minimum_pass_rate: 0.95
   min_samples_for_verdict: 5
   on_flaky: warn
+  max_execution_error_rate: 0.20
 `
 
-const scenariosGitkeep = `# Place TestScenario YAML/JSON files here.
-# Example: gust test tests/scenarios/ --runner synthetic --samples 20
+const exampleScenarioYAML = `id: example_synthetic
+version: "1.0"
+description: Minimal example scenario for gust test --runner synthetic
+task:
+  id: example_task
+  input: complete the task
+environment:
+  fixture_strategy: prefer_exact_then_sequence
+  fixtures: []
+assertions:
+  - id: succeeds
+    type: task_success
+reliability:
+  samples: 20
+  minimum_pass_rate: 0.95
+  confidence: 0.95
+provenance:
+  source: authored
+  extracted_at: "2026-01-01T00:00:00Z"
 `
 
 const fixturesGitkeep = `# Place Fixture JSON files here (content-addressed tool responses).
@@ -60,11 +78,11 @@ func scaffoldProject(root string) error {
 	}
 
 	files := map[string]string{
-		"gust.yaml":                    gustYAML,
-		"tests/policy.yaml":            defaultPolicyYAML,
-		"tests/scenarios/.gitkeep":     scenariosGitkeep,
-		"tests/fixtures/.gitkeep":      fixturesGitkeep,
-		"tests/assertions/.gitkeep":    assertionsGitkeep,
+		"gust.yaml":                         gustYAML,
+		"tests/policy.yaml":                 defaultPolicyYAML,
+		"tests/scenarios/example.yaml":      exampleScenarioYAML,
+		"tests/fixtures/.gitkeep":           fixturesGitkeep,
+		"tests/assertions/.gitkeep":         assertionsGitkeep,
 	}
 
 	created := make([]string, 0, len(files))
@@ -88,10 +106,10 @@ func scaffoldProject(root string) error {
 
 	fmt.Printf("\nInitialized gust project in %s\n", abs)
 	fmt.Println("Next steps:")
-	fmt.Println("  1. Record an AgentRun (see docs/usage/integrate-your-app.md)")
-	fmt.Println("  2. gust analyze <run.json> --policy tests/policy.yaml")
-	fmt.Println("  3. gust scenario from-run <run.json> --output tests/scenarios/example.yaml")
-	fmt.Println("  4. Add assertions, then: gust test tests/scenarios/ --runner synthetic --samples 20")
+	fmt.Println("  1. gust test tests/scenarios --runner synthetic")
+	fmt.Println("  2. Record a real AgentRun (see docs/usage/integrate-your-app.md)")
+	fmt.Println("  3. gust scenario from-run <run.json> --output tests/scenarios/from_prod.yaml")
+	fmt.Println("  4. Add assertions, then: gust test tests/scenarios/ --runner exec -- <your agent>")
 	fmt.Println("  5. gust mutate <golden-run.json>  # evaluator mutation score")
 	if len(created) == 0 {
 		fmt.Println("(all scaffold files already existed)")

@@ -47,7 +47,11 @@ Go embedders:
 
 ## Tier-2 wire plugins
 
-`internal/adapters/wire` hosts JSON-RPC 2.0 over stdio for cross-language plugins (Python/TypeScript evaluators). The supervisor manages process lifecycle, timeouts, and a scrubbed environment limited to the OS baseline needed to start an interpreter; plugin stderr is forwarded so failures are debuggable. Extend by implementing the wire methods expected by the client and wrapping them in a Go adapter that satisfies a port interface.
+`internal/adapters/wire` hosts JSON-RPC 2.0 over stdio for cross-language plugins (Python/TypeScript evaluators). The supervisor manages process lifecycle with a **scrubbed environment**, a **bounded handshake** (5s), a **default per-call evaluate timeout** (60s when the caller has no deadline), and a **16 MiB line-size cap** on protocol messages. Plugin stderr is forwarded so failures are debuggable.
+
+**Trust boundary today (honest):** env scrubbing + timeouts + line bounds. CPU/memory/network sandboxing (cgroups, Job Objects, network namespaces) is **not yet implemented** — treat that as Phase 8.5 before advertising untrusted community plugins as fully sandboxed.
+
+Extend by implementing the wire methods expected by the client and wrapping them in a Go adapter that satisfies a port interface.
 
 `sdk/python` provides `EvaluatorPlugin` + `serve()`, which implement the transport so a plugin author only writes `evaluate`.
 

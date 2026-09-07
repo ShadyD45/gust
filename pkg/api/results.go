@@ -2,7 +2,7 @@ package api
 
 // CI exit codes used by the policy engine and CLI.
 const (
-	ExitSuccess      = 0 // All scenarios PASS (or FLAKY under warn/ignore)
+	ExitSuccess      = 0 // All scenarios PASS, or FLAKY under on_flaky: warn (exit 0) / ignore (PASS)
 	ExitFailure      = 1 // FAIL, hard constraint, or regression
 	ExitConfigError  = 2 // Bad flags, invalid paths, unparseable input
 	ExitFlakyFailure = 3 // FLAKY under on_flaky: fail
@@ -29,4 +29,5 @@ type ReliabilityResult struct {
 	Verdict              VerdictType        `json:"verdict"`
 	PerRunEvidence       []EvaluationResult `json:"per_run_evidence,omitempty"`
 	HardConstraintFailed bool               `json:"hard_constraint_failed,omitempty"`
+	ExecutionErrors      int                `json:"execution_errors,omitempty"`
 }

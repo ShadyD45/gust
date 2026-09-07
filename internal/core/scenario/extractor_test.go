@@ -28,6 +28,18 @@ func TestExtractFromRun_H8EmptyAssertions(t *testing.T) {
 				EndTime:   time.Now().UTC(),
 				Status:    api.SpanStatus{Code: "ok"},
 			},
+			{
+				SpanID: "s2",
+				Name:   "lookup_order",
+				Type:   api.SpanTypeTool,
+				Attributes: map[string]any{
+					"input":  map[string]any{"order_id": 999},
+					"output": map[string]any{"error": "timeout"},
+				},
+				StartTime: time.Now().UTC(),
+				EndTime:   time.Now().UTC(),
+				Status:    api.SpanStatus{Code: "error", Message: "tool timed out"},
+			},
 		},
 	}
 
@@ -38,8 +50,8 @@ func TestExtractFromRun_H8EmptyAssertions(t *testing.T) {
 	if len(sc.Assertions) != 0 {
 		t.Fatalf("H8 violated: assertions must be empty, got %+v", sc.Assertions)
 	}
-	if len(sc.Environment.Fixtures) != 1 {
-		t.Fatalf("expected 1 fixture, got %d", len(sc.Environment.Fixtures))
+	if len(sc.Environment.Fixtures) != 2 {
+		t.Fatalf("expected 2 fixtures, got %d", len(sc.Environment.Fixtures))
 	}
 	fx := sc.Environment.Fixtures[0]
 	if fx.Tool != "cancel_order" || fx.Provenance != api.ProvenanceRecorded {
@@ -47,6 +59,19 @@ func TestExtractFromRun_H8EmptyAssertions(t *testing.T) {
 	}
 	if fx.InputHash == "" {
 		t.Fatal("expected content hash on fixture")
+	}
+	if fx.RecordedResponse.Status != "success" {
+		t.Fatalf("ok span should be success, got %q", fx.RecordedResponse.Status)
+	}
+	errFx := sc.Environment.Fixtures[1]
+	if errFx.RecordedResponse.Status != "error" {
+		t.Fatalf("error span status want error, got %q", errFx.RecordedResponse.Status)
+	}
+	if errFx.RecordedResponse.Error != "tool timed out" {
+		t.Fatalf("error message mismatch: %q", errFx.RecordedResponse.Error)
+	}
+	if errFx.Mode != api.FailureModeRecordedError {
+		t.Fatalf("expected recorded_error mode, got %q", errFx.Mode)
 	}
 	// Must not enshrine buggy cancel as an assertion expectation
 	for _, a := range sc.Assertions {

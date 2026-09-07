@@ -31,6 +31,11 @@ func TestCanonicalize(t *testing.T) {
 			expected: `{"outer":{"alpha":true,"beta":[3,2,1]}}`,
 		},
 		{
+			name:     "large integer precision preserved",
+			input:    `{"ts":1735689600123456789}`,
+			expected: `{"ts":1735689600123456789}`,
+		},
+		{
 			name:     "number formatting integer and float",
 			input:    `{"int": 100, "float": 100.5, "zero": 0}`,
 			expected: `{"float":100.5,"int":100,"zero":0}`,

@@ -69,7 +69,8 @@
               "max_steps",
               "max_latency_ms",
               "schema_valid",
-              "error_recovery"
+              "error_recovery",
+              "llm_judge"
             ]
           },
           "criticality": {

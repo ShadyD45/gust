@@ -48,10 +48,11 @@ All nine assertion types, the evaluator each one resolves to, and the fields tha
 | `tool_sequence` | `tool_sequence` | `parameters.sequence: [names]`, optional `parameters.match` (`subsequence` default, or `exact`) | Subsequence: names appear in relative order (gaps allowed). Exact: tool names equal the sequence with no extras |
 | `forbidden_tool_call` | `forbidden_tool` | `tool`, optional `arguments` | The tool was never called (or never with those arguments) |
 | `required_tool` | `required_tool` | `tool` | The tool was called at least once |
-| `max_steps` | `max_steps` | `limit` (default 10) | `len(trace) <= limit` |
+| `max_steps` | `max_steps` | `limit` (default 10) | Count of top-level `tool` + `agent` spans ≤ limit (`llm` / `retrieval` spans are sub-steps and do not count) |
 | `max_latency_ms` | `max_latency` | `limit` ms (default 5000), optional `parameters.latency_source: wall_clock` | `max(end) - min(start)` across the trace is within the limit (order-independent) |
 | `error_recovery` | `error_recovery` | optional `parameters.after_error_tool`, `parameters.recovery_tools` | No matching error spans, or a later successful span retries the same op (or a listed recovery tool) |
-| `schema_valid` | `schema_validation` | — | The run passes `AgentRun.Validate()` (including span type/status/times) |
+| `schema_valid` | `schema_validation` | `parameters.schema` (JSON Schema for `outcome.output`) | Output must be JSON matching the declared schema; if no schema is given, only the AgentRun envelope is checked (explicitly reported) |
+| `llm_judge` | `llm_judge` | `parameters.rubric`, optional threshold; requires `allow_llm_judge` | Soft, opt-in calibrated judge signal |
 
 Two of these are **hard constraints**: a failing `forbidden_tool` or `schema_validation` fails the build immediately in Mode 3, regardless of pass rate or `on_flaky`. Set `"criticality": "hard"` to document that intent in the assertion.
 
@@ -246,11 +247,11 @@ regression:
 
 `on_flaky` is the knob that decides how strict your pipeline is:
 
-| `on_flaky` | Exit code on FLAKY | Use when |
-|---|---|---|
-| `warn` | `0` | Adopting gust; you want visibility without blocking merges |
-| `ignore` | `0` | Flakiness is tracked elsewhere |
-| `fail` | `3` | Mature suite; inconclusive is not good enough to ship |
+| `on_flaky` | Exit code | OverallVerdict | Use when |
+|---|---|---|---|
+| `warn` | `0` | `FLAKY` | Adopting gust; visibility without blocking merges |
+| `ignore` | `0` | `PASS` | Flakiness is tracked elsewhere |
+| `fail` | `3` | `FLAKY` | Mature suite; inconclusive is not good enough to ship |
 
 Exit code `3` is deliberately distinct from `1` so CI can treat "unproven" differently from "broken".
 

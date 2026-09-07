@@ -306,7 +306,7 @@ func TestRequiredToolEvaluator(t *testing.T) {
 func TestMaxStepsEvaluator(t *testing.T) {
 	eval := &MaxStepsEvaluator{}
 	ctx := context.Background()
-	run := sampleRun() // 2 spans
+	run := sampleRun() // 2 tool spans
 
 	assertPass := &api.Assertion{Type: api.AssertMaxSteps, Limit: 5}
 	res, err := eval.Evaluate(ctx, run, assertPass, ports.EvaluationContext{})
@@ -318,6 +318,109 @@ func TestMaxStepsEvaluator(t *testing.T) {
 	res, err = eval.Evaluate(ctx, run, assertFail, ports.EvaluationContext{})
 	if err != nil || res.Passed {
 		t.Fatalf("expected fail for step limit 1: %+v", res)
+	}
+
+	// LLM spans do not count toward max_steps.
+	now := time.Now().UTC()
+	mixed := api.AgentRun{
+		SchemaVersion: api.SchemaVersion,
+		RunID:         "run_steps",
+		Agent:         api.AgentInfo{Name: "agent", Version: "1.0"},
+		Task:          api.TaskInfo{ID: "t1", Input: "x"},
+		Trace: []api.Span{
+			{SpanID: "1", Name: "think", Type: api.SpanTypeLLM, StartTime: now, EndTime: now, Status: api.SpanStatus{Code: "ok"}},
+			{SpanID: "2", Name: "tool_a", Type: api.SpanTypeTool, StartTime: now, EndTime: now, Status: api.SpanStatus{Code: "ok"}},
+			{SpanID: "3", Name: "retrieve", Type: api.SpanTypeRetrieval, StartTime: now, EndTime: now, Status: api.SpanStatus{Code: "ok"}},
+		},
+		Outcome: api.RunOutcome{Status: "completed", Output: "ok"},
+	}
+	res, err = eval.Evaluate(ctx, mixed, &api.Assertion{Type: api.AssertMaxSteps, Limit: 1}, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("expected pass counting only tool/agent spans: %+v", res)
+	}
+}
+
+func TestSchemaValidationEvaluator(t *testing.T) {
+	eval := &SchemaValidationEvaluator{}
+	ctx := context.Background()
+	run := sampleRun()
+
+	// Envelope-only fallback when no schema is declared.
+	res, err := eval.Evaluate(ctx, run, nil, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("expected envelope pass: %+v", res)
+	}
+	if !strings.Contains(res.Message, "envelope") {
+		t.Fatalf("expected envelope-only message, got %q", res.Message)
+	}
+	if res.Evidence["envelope_only"] != true {
+		t.Fatalf("expected envelope_only evidence, got %#v", res.Evidence)
+	}
+
+	schemaAssert := &api.Assertion{
+		Type: api.AssertSchemaValid,
+		Parameters: map[string]any{
+			"schema": map[string]any{
+				"type":     "object",
+				"required": []any{"status", "order_id"},
+				"properties": map[string]any{
+					"status":   map[string]any{"type": "string"},
+					"order_id": map[string]any{"type": "integer"},
+				},
+			},
+		},
+	}
+
+	passRun := run
+	passRun.Outcome.Output = `{"status":"cancelled","order_id":123}`
+	res, err = eval.Evaluate(ctx, passRun, schemaAssert, ports.EvaluationContext{})
+	if err != nil || !res.Passed {
+		t.Fatalf("expected schema pass: %+v", res)
+	}
+	if res.Message != "output satisfies declared schema" {
+		t.Fatalf("expected real schema pass message, got %q", res.Message)
+	}
+	if res.Evidence["envelope_only"] != false {
+		t.Fatalf("pass path must not be envelope-only, got %#v", res.Evidence)
+	}
+
+	failRun := run
+	failRun.Outcome.Output = `{"status":"cancelled"}`
+	res, err = eval.Evaluate(ctx, failRun, schemaAssert, ports.EvaluationContext{})
+	if err != nil || res.Passed {
+		t.Fatalf("expected schema fail for missing required field: %+v", res)
+	}
+	if !strings.Contains(res.Message, "schema validation") {
+		t.Fatalf("expected schema validation failure message, got %q", res.Message)
+	}
+	if _, ok := res.Evidence["validation_error"]; !ok {
+		t.Fatalf("expected validation_error evidence, got %#v", res.Evidence)
+	}
+
+	typeFail := run
+	typeFail.Outcome.Output = `{"status":"cancelled","order_id":"not-an-int"}`
+	res, err = eval.Evaluate(ctx, typeFail, schemaAssert, ports.EvaluationContext{})
+	if err != nil || res.Passed {
+		t.Fatalf("expected schema fail for wrong type: %+v", res)
+	}
+
+	badJSON := run
+	badJSON.Outcome.Output = `not-json`
+	res, err = eval.Evaluate(ctx, badJSON, schemaAssert, ports.EvaluationContext{})
+	if err != nil || res.Passed {
+		t.Fatalf("expected non-JSON fail: %+v", res)
+	}
+
+	// Valid AgentRun envelope must still fail if output violates the declared schema
+	// (guards against regressing to envelope-only no-op when schema is present).
+	envelopeOK := run
+	envelopeOK.Outcome.Output = `{"wrong":true}`
+	if err := envelopeOK.Validate(); err != nil {
+		t.Fatalf("precondition: envelope should validate: %v", err)
+	}
+	res, err = eval.Evaluate(ctx, envelopeOK, schemaAssert, ports.EvaluationContext{})
+	if err != nil || res.Passed {
+		t.Fatalf("must not no-op to envelope pass when schema is declared: %+v", res)
 	}
 }
 
@@ -464,17 +567,6 @@ func TestErrorRecoveryRejectsUnrelatedSuccess(t *testing.T) {
 	res, err = eval.Evaluate(ctx, run, okAssert, ports.EvaluationContext{})
 	if err != nil || !res.Passed {
 		t.Fatalf("expected pass with explicit recovery_tools: %+v", res)
-	}
-}
-
-func TestSchemaValidationEvaluator(t *testing.T) {
-	eval := &SchemaValidationEvaluator{}
-	ctx := context.Background()
-	run := sampleRun()
-
-	res, err := eval.Evaluate(ctx, run, nil, ports.EvaluationContext{})
-	if err != nil || !res.Passed {
-		t.Fatalf("expected pass for valid schema: %+v", res)
 	}
 }
 

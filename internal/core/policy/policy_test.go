@@ -17,7 +17,7 @@ func flakyResult() *api.ReliabilityResult {
 	}
 }
 
-func TestOnFlakyWarnVsFail(t *testing.T) {
+func TestOnFlakyWarnVsFailVsIgnore(t *testing.T) {
 	eng := NewEngine()
 	results := []*api.ReliabilityResult{flakyResult()}
 
@@ -30,8 +30,16 @@ func TestOnFlakyWarnVsFail(t *testing.T) {
 		},
 	}
 	vWarn := eng.Evaluate(warnPol, results)
-	if vWarn.ExitCode != api.ExitSuccess || vWarn.OverallVerdict != api.VerdictPass {
-		t.Fatalf("warn: want exit 0 PASS, got exit=%d verdict=%s", vWarn.ExitCode, vWarn.OverallVerdict)
+	if vWarn.ExitCode != api.ExitSuccess || vWarn.OverallVerdict != api.VerdictFlaky {
+		t.Fatalf("warn: want exit 0 FLAKY, got exit=%d verdict=%s", vWarn.ExitCode, vWarn.OverallVerdict)
+	}
+
+	ignorePol := warnPol
+	ignorePol.Name = "ignore"
+	ignorePol.Reliability.OnFlaky = "ignore"
+	vIgnore := eng.Evaluate(ignorePol, results)
+	if vIgnore.ExitCode != api.ExitSuccess || vIgnore.OverallVerdict != api.VerdictPass {
+		t.Fatalf("ignore: want exit 0 PASS, got exit=%d verdict=%s", vIgnore.ExitCode, vIgnore.OverallVerdict)
 	}
 
 	failPol := warnPol
@@ -40,6 +48,56 @@ func TestOnFlakyWarnVsFail(t *testing.T) {
 	vFail := eng.Evaluate(failPol, results)
 	if vFail.ExitCode != api.ExitFlakyFailure || vFail.OverallVerdict != api.VerdictFlaky {
 		t.Fatalf("fail: want exit 3 FLAKY, got exit=%d verdict=%s", vFail.ExitCode, vFail.OverallVerdict)
+	}
+}
+
+func TestHardConstraintProcessesAllScenarios(t *testing.T) {
+	eng := NewEngine()
+	results := []*api.ReliabilityResult{
+		{
+			ScenarioID:           "sc_hard",
+			Samples:              20,
+			Passes:               19,
+			Verdict:              api.VerdictFlaky,
+			HardConstraintFailed: true,
+			PerRunEvidence: []api.EvaluationResult{{
+				EvaluatorName: "forbidden_tool",
+				Passed:        false,
+			}},
+		},
+		{
+			ScenarioID:       "sc_pass",
+			Samples:          100,
+			Passes:           100,
+			ObservedPassRate: 1.0,
+			Verdict:          api.VerdictPass,
+		},
+		{
+			ScenarioID:       "sc_fail",
+			Samples:          20,
+			Passes:           0,
+			ObservedPassRate: 0,
+			Verdict:          api.VerdictFail,
+		},
+	}
+	pol := api.Policy{
+		Name: "prod",
+		Reliability: api.PolicyReliability{
+			DefaultMinimumPassRate: 0.95,
+			OnFlaky:                "warn",
+		},
+	}
+	v := eng.Evaluate(pol, results)
+	if v.ExitCode != api.ExitFailure || v.OverallVerdict != api.VerdictFail {
+		t.Fatalf("expected hard FAIL exit 1, got exit=%d verdict=%s", v.ExitCode, v.OverallVerdict)
+	}
+	if len(v.ScenarioResults) != 3 {
+		t.Fatalf("expected all 3 scenario results, got %d", len(v.ScenarioResults))
+	}
+	for _, id := range []string{"sc_hard", "sc_pass", "sc_fail"} {
+		if _, ok := v.ScenarioResults[id]; !ok {
+			t.Errorf("missing scenario result %s", id)
+		}
 	}
 }
 
@@ -85,5 +143,21 @@ func TestRegressionSignificant(t *testing.T) {
 	rBad := CompareRegression(base, bad, pol)
 	if !rBad.Regressed || !rBad.Significant {
 		t.Fatalf("large drop should regress: %+v", rBad)
+	}
+}
+
+func TestRegressionZeroBaselineLatency(t *testing.T) {
+	base := ExperimentStats{Name: "base", Passes: 95, Samples: 100, PassRate: 0.95, LatencyNs: 0}
+	cand := ExperimentStats{Name: "cand", Passes: 95, Samples: 100, PassRate: 0.95, LatencyNs: 1e9}
+	pol := api.PolicyRegression{MaxPassRateDrop: 0.02, MaxLatencyIncreaseRatio: 0.15}
+	r := CompareRegression(base, cand, pol)
+	if r.LatencyComparable {
+		t.Fatalf("zero baseline latency should not be comparable")
+	}
+	if r.Regressed {
+		t.Fatalf("should not regress on unmeasurable latency: %+v", r)
+	}
+	if r.Message == "no significant regression" {
+		t.Fatalf("message should note latency was not measurable, got %q", r.Message)
 	}
 }

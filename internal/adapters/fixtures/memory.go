@@ -167,7 +167,7 @@ func (p *MemoryFixtureProvider) Reset() error {
 // Clone copies fixtures into a new provider with reset sequence counters.
 // Concurrent Mode 3 samples should each get their own clone so ordered
 // fixtures do not share counters.
-func (p *MemoryFixtureProvider) Clone() *MemoryFixtureProvider {
+func (p *MemoryFixtureProvider) Clone() ports.FixtureProvider {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	out := NewMemoryFixtureProvider()
