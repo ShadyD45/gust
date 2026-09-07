@@ -44,9 +44,11 @@ Typed checks (`tool_call`, `forbidden_tool_call`, `max_steps`, …) with optiona
 
 CI acceptance gate:
 
-- Hard constraints (e.g. forbidden tools = 0)
-- Reliability defaults and `on_flaky` (`warn` | `fail` | `ignore`)
-- Regression thresholds (pass-rate drop, latency increase)
+- Hard constraints: max allowed failed `forbidden_tool` / `schema_validation` evaluations (`0` = zero tolerance). Assertions with `criticality: hard` also fail CI immediately; `criticality: soft` is recorded but does not fail the sample.
+- Reliability defaults (`default_minimum_pass_rate` applied when a scenario omits `minimum_pass_rate`), `on_flaky`, optional `max_execution_error_rate` (omit → 0.20; `0` → zero tolerance), optional `retry`
+- Regression thresholds (pass-rate drop, latency increase). Unmeasurable baseline latency omits `latency_increase_ratio` rather than reporting `0.0`.
+
+Project-level execution knobs (`concurrency`, timeouts, retry) live in `gust.yaml`. `internal/adapters/storage/filesystem` is a **mutable local cache** (overwrite by ID is expected) and is not the immutability contract of `gust dataset bundle`.
 
 ## ReliabilityResult
 
@@ -59,4 +61,6 @@ Mode 3 aggregate:
 ## Content addressing
 
 `pkg/jcs` implements RFC 8785 JSON Canonicalization Scheme. Content hashes (SHA-256 over canonical bytes) identify fixtures and dataset manifests so comparisons are bit-for-bit stable across languages and formatters.
+
+`gust dataset bundle <dir> --id <name>` writes scenario JSON plus `dataset.json`. Re-bundling the same ID with **different** content is a hard error unless `--force`; orphans are pruned only with `--force`. `gust dataset verify <dir>` checks hashes.
 

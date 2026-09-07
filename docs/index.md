@@ -24,7 +24,7 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 |------|--------|
 | Wire gust into an agent you already run | [Integrate your app]({% link usage/integrate-your-app.md %}) |
 | Learn Analyze / Replay / Test / Compare | [Modes cookbook]({% link usage/modes-cookbook.md %}) |
-| See self-benchmark proof (AEE) | [Benchmarks]({% link benchmarks/index.md %}) |
+| See self-benchmark (AEE + Validation Suite) | [Benchmarks]({% link benchmarks/index.md %}) |
 | Convert OpenTelemetry traces | [OTel ingestion]({% link usage/otel-ingest.md %}) |
 | Put a gate in GitHub Actions (gust on CI; agent in the job or QA) | [CI integration]({% link usage/ci-github-actions.md %}) |
 | Add a custom evaluator or runner | [Extending gust]({% link extending/index.md %}) |

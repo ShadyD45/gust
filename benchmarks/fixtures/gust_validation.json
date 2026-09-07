@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-09-07T04:13:08.3193542Z",
-  "suite_version": "1.0.0",
-  "total": 78,
-  "passed": 78,
+  "generated_at": "2026-09-07T09:19:35.600669Z",
+  "suite_version": "1.1.0",
+  "total": 83,
+  "passed": 83,
   "failed": 0,
   "pass_rate": 1,
   "gate_passed": true,
@@ -25,6 +25,11 @@
     "infra": {
       "total": 4,
       "passed": 4,
+      "rate": 1
+    },
+    "mode3": {
+      "total": 5,
+      "passed": 5,
       "rate": 1
     },
     "mutation": {
@@ -667,6 +672,46 @@
       "kind": "analyze",
       "passed": true,
       "detail": "analyze.passed=false want=false"
+    },
+    {
+      "id": "mode3_ordered_fixture_concurrent",
+      "category": "mode3",
+      "question": "Does each concurrent sample see the same ordered fixture sequence?",
+      "kind": "mode3",
+      "passed": true,
+      "detail": "passes=20 want=20 exec_err=0"
+    },
+    {
+      "id": "mode3_exact_fixture_concurrent",
+      "category": "mode3",
+      "question": "Do exact-hash fixtures stay isolated under concurrency?",
+      "kind": "mode3",
+      "passed": true,
+      "detail": "passes=12 want=12 exec_err=0"
+    },
+    {
+      "id": "mode3_sample_isolation",
+      "category": "mode3",
+      "question": "Does one sample's consumption starve another?",
+      "kind": "mode3",
+      "passed": true,
+      "detail": "passes=8 want=8 exec_err=0"
+    },
+    {
+      "id": "mode3_fixture_exhaustion",
+      "category": "mode3",
+      "question": "Does over-calling a sequence fail only that sample?",
+      "kind": "mode3",
+      "passed": true,
+      "detail": "passes=0 want=0 exec_err=0"
+    },
+    {
+      "id": "mode3_retry_does_not_corrupt_fixture_state",
+      "category": "mode3",
+      "question": "Does retry reset per-sample fixture counters?",
+      "kind": "mode3",
+      "passed": true,
+      "detail": "passes=8 want=8 exec_err=0"
     }
   ]
 }

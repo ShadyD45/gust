@@ -4,7 +4,7 @@
 
 gust is **test infrastructure for autonomous software** — the equivalent of JUnit, Mockito, and CI regression gating for LLM-driven agents. Because LLMs are non-deterministic, gust treats correctness as a **statistical pass rate** measured across repeated samples with confidence intervals, rather than a brittle single-run boolean.
 
-This master roadmap outlines the progression of the project from inception (Phase 0) through the production-ready MVP (Phases 1–9) and forward into advanced ecosystem capabilities (Phases 10–18).
+This master roadmap outlines the progression of the project from inception (Phase 0) through the production-ready MVP (Phases 1–9) and forward into advanced ecosystem capabilities (Phases 10–20).
 
 ---
 
@@ -36,7 +36,7 @@ This master roadmap outlines the progression of the project from inception (Phas
                                             |
                                             v
 +---------------------------------------------------------------------------------------+
-| POST-MVP & ECOSYSTEM SCALE (Phases 10 - 18)                                           |
+| POST-MVP & ECOSYSTEM SCALE (Phases 10 - 20)                                           |
 | - Phase 10: OpenTelemetry / OpenInference Ingestion & Semantic Conventions            |
 | - Phase 11: Framework Adapters (LangChain, AutoGen, CrewAI, Python/TypeScript SDKs)   |
 | - Phase 12: Optional Calibrated LLM Judge (Deferred until Spearman rho >= 0.7)        |
@@ -47,6 +47,7 @@ This master roadmap outlines the progression of the project from inception (Phas
 | - Phase 17: Semantic Hardening & Adoption Front Door (evaluators, init, mutation UX)  |
 | - Phase 18: Real-Agent End-to-End Example (deferred; builds on LangChain demo)        |
 | - Phase 19: Public Releases (publish gust only; gust-aee remains internal)           |
+| - Phase 20: Trust Hardening (fixture isolation, retry/policy semantics, gust.yaml, dataset CLI, honest claims) |
 +---------------------------------------------------------------------------------------+
 ```
 
@@ -96,7 +97,7 @@ This master roadmap outlines the progression of the project from inception (Phas
 
 ---
 
-## 4. Post-MVP Roadmap (Phases 10 - 18)
+## 4. Post-MVP Roadmap (Phases 10 - 20)
 
 Detailed engineering plans: **[`docs/plans/framework/`](framework/README.md)**.
 
@@ -110,5 +111,6 @@ Detailed engineering plans: **[`docs/plans/framework/`](framework/README.md)**.
 | **15** | Failure Mining & Clustering | Group similar production failures using semantic clustering to eliminate duplicate test scenario proposals. | Vector/DBSCAN clustering, deduplication |
 | **16** | Multi-Agent & Self-AEE | Multi-agent handoff/coordination evaluators; AEE remains a gust self-benchmark (no peer-framework leaderboard). | Multi-agent suite, CI self-score |
 | **17** | Semantic Hardening & Adoption | Correct evaluator/validation semantics; `gust init`; mutation score prominence; README front door. | Match/occurrence/recovery/latency/Validate; init CLI |
-| **18** | Real-Agent E2E Example | Realistic demo with real LLM + tools + intentional failure Gust detects (extends LangChain demo). | Deferred until after Phase 17 |
+| **18** | Real-Agent E2E Example | Realistic demo with real LLM + tools + intentional failure Gust detects (extends LangChain demo). | Deferred; depends on Phase 20 isolation/retry |
 | **19** | Public Releases | Publish end-user **`gust`** only (GitHub Releases / package managers); keep **`gust-aee`** as internal CI/maintainer binary. | Tag releases, Homebrew/`go install`; no public `gust-aee` |
+| **20** | Trust Hardening | Per-sample fixture isolation, Mode 3 synthetic concurrency validation, configurable retry, policy/criticality alignment, dataset CLI, honest AEE/Validation claims. | Shipped; not a live-LLM E2E |

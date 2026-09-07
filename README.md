@@ -52,6 +52,10 @@ Or invoke commands directly:
 
 # Extract a scenario from a production trace (assertions left empty by design)
 ./gust scenario from-run testdata/runs/buggy_cancel.json --output out/scenario.yaml
+
+# Content-addressed scenario dataset (refuses silent overwrite)
+./gust dataset bundle out/dataset --id demo --from testdata/scenarios
+./gust dataset verify out/dataset
 ```
 
 
@@ -100,7 +104,7 @@ gust reads a JSON document describing what your agent did, so integration is a r
 | [Modes cookbook](docs/usage/modes-cookbook.md)         | Every command, all nine assertion types, fixtures, failure injection, policies                                                                 |
 | [OTel ingestion](docs/usage/otel-ingest.md)            | Point an existing OTLP exporter at gust (HTTP/gRPC), or pull a Langfuse trace                                                                  |
 | [CI integration](docs/usage/ci-github-actions.md)      | Exit codes; gust on the runner, agent in the job or QA — not production                                                                        |
-| [AEE methodology](docs/usage/aee-methodology.md)       | How the self-benchmark is measured                                                                                                             |
+| [AEE methodology](docs/usage/aee-methodology.md)       | How the self-benchmark is measured (golden suite / deterministic evaluators, not live agents) |
 | [Benchmarks (site)](docs/benchmarks/)                  | Metrics explained, latest numbers, more proof                                                                                                  |
 | [AEE latest results](benchmarks/RESULTS.md)            | Self-report (detection rate, FPR, throughput, H7); see also [benchmark runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml) |
 
@@ -149,11 +153,11 @@ benchmarks/               AEE + Validation Suite reports (updated locally as nee
 
 MVP Phases 1–9 complete (library, Mode 3, policy, scenario extraction, CLI, demo, CI).
 
-Phase 10–12 have landed (OTel ingest, SDKs, optional LLM judge, AEE self-benchmark). Phase 17 (semantic hardening + adoption front door) has landed. Remaining post-MVP work — stats v2, continuous eval, clustering, multi-agent, real-agent E2E — is tracked in internal engineering plans (maintainers only).
+Phase 10–12, 17, and 20 have landed (OTel ingest, SDKs, optional LLM judge, AEE self-benchmark, semantic hardening, Mode 3 fixture isolation / retry / project config). Phase 18 (real-agent E2E with a live LLM) remains deferred. Remaining post-MVP feature work — stats v2, continuous eval, clustering, multi-agent — is tracked in internal engineering plans (maintainers only).
 
 ## Self-benchmark (AEE)
 
-gust continuously measures its own evaluation suite (mutation detection / FPR, throughput, reproducibility, Wilson H7) plus an adversarial **Validation Suite**. Latest numbers:
+gust maintains an adversarial validation suite and mutation benchmark that continuously regression-tests its own evaluation machinery (golden-suite detection / FPR, deterministic evaluator throughput, reproducibility, Wilson H7). Latest numbers:
 
 **→ [benchmarks/RESULTS.md](benchmarks/RESULTS.md)** · **[benchmarks/VALIDATION.md](benchmarks/VALIDATION.md)** · **[benchmark workflow](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)**
 

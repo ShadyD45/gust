@@ -118,7 +118,7 @@ func startPlugin(ctx context.Context, env []string, command string, args ...stri
 		client: client,
 	}
 
-	handshakeCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	handshakeCtx, cancel := context.WithTimeout(ctx, handshakeTimeout)
 	defer cancel()
 
 	var manifest PluginManifest
@@ -166,8 +166,24 @@ func (we *WireEvaluator) Name() string    { return we.proc.manifest.Name }
 func (we *WireEvaluator) Version() string { return we.proc.manifest.Version }
 
 const (
-	defaultEvaluateTimeout = 60 * time.Second
+	defaultEvaluateTimeout  = 60 * time.Second
+	defaultHandshakeTimeout = 5 * time.Second
 )
+
+var (
+	evaluateTimeout  = defaultEvaluateTimeout
+	handshakeTimeout = defaultHandshakeTimeout
+)
+
+// SetTimeouts overrides plugin handshake and evaluate timeouts. Zero keeps the current value.
+func SetTimeouts(handshake, evaluate time.Duration) {
+	if handshake > 0 {
+		handshakeTimeout = handshake
+	}
+	if evaluate > 0 {
+		evaluateTimeout = evaluate
+	}
+}
 
 func (we *WireEvaluator) Evaluate(ctx context.Context, run api.AgentRun, expected *api.Assertion, evalCtx ports.EvaluationContext) (ports.EvaluationResult, error) {
 	params := map[string]any{
@@ -179,7 +195,7 @@ func (we *WireEvaluator) Evaluate(ctx context.Context, run api.AgentRun, expecte
 	callCtx := ctx
 	cancel := func() {}
 	if _, hasDeadline := ctx.Deadline(); !hasDeadline {
-		callCtx, cancel = context.WithTimeout(ctx, defaultEvaluateTimeout)
+		callCtx, cancel = context.WithTimeout(ctx, evaluateTimeout)
 	}
 	defer cancel()
 

@@ -242,9 +242,66 @@ type PolicyReliability struct {
 	MinSamplesForVerdict   int     `json:"min_samples_for_verdict" yaml:"min_samples_for_verdict"`
 	OnFlaky                string  `json:"on_flaky" yaml:"on_flaky"`
 	// MaxExecutionErrorRate is the fraction of samples that may fail as infrastructure
-	// errors before the run is aborted as runner-unstable (default 0.20 when unset/≤0).
-	MaxExecutionErrorRate float64 `json:"max_execution_error_rate,omitempty" yaml:"max_execution_error_rate,omitempty"`
+	// errors before the run is aborted as runner-unstable. Nil (omitted) uses 0.20;
+	// explicit 0 is zero tolerance.
+	MaxExecutionErrorRate *float64 `json:"max_execution_error_rate,omitempty" yaml:"max_execution_error_rate,omitempty"`
+	// Retry controls Mode 3 runner-error retries. Zero values use reliability-first defaults
+	// (2 attempts, 50ms backoff, transient errors only).
+	Retry RetryPolicy `json:"retry,omitempty" yaml:"retry,omitempty"`
 }
+
+// RetryOn selects which runner errors are retried.
+type RetryOn string
+
+const (
+	RetryOnNone      RetryOn = "none"
+	RetryOnTransient RetryOn = "transient"
+	RetryOnAll       RetryOn = "all"
+)
+
+// RetryPolicy bounds Mode 3 retries of runner.Run errors (not assertion failures).
+type RetryPolicy struct {
+	// MaxAttempts is the total tries including the first. 1 = no retry. 0 = default 2.
+	MaxAttempts int `json:"max_attempts,omitempty" yaml:"max_attempts,omitempty"`
+	// BackoffMs is the wait before a retry. 0 = default 50.
+	BackoffMs int `json:"backoff_ms,omitempty" yaml:"backoff_ms,omitempty"`
+	// On is none | transient | all. Empty = transient.
+	On RetryOn `json:"on,omitempty" yaml:"on,omitempty"`
+}
+
+const (
+	DefaultMaxExecutionErrorRate = 0.20
+	DefaultRetryMaxAttempts      = 2
+	DefaultRetryBackoffMs        = 50
+)
+
+// EffectiveMaxExecutionErrorRate returns 0.20 when rate is omitted.
+func EffectiveMaxExecutionErrorRate(rate *float64) float64 {
+	if rate == nil {
+		return DefaultMaxExecutionErrorRate
+	}
+	return *rate
+}
+
+// Effective returns retry settings with defaults filled in.
+func (p RetryPolicy) Effective() RetryPolicy {
+	if p.MaxAttempts <= 0 {
+		p.MaxAttempts = DefaultRetryMaxAttempts
+	}
+	if p.BackoffMs <= 0 {
+		p.BackoffMs = DefaultRetryBackoffMs
+	}
+	switch RetryOn(strings.ToLower(string(p.On))) {
+	case RetryOnNone, RetryOnAll, RetryOnTransient:
+		p.On = RetryOn(strings.ToLower(string(p.On)))
+	default:
+		p.On = RetryOnTransient
+	}
+	return p
+}
+
+// Float64Ptr is a convenience for tests and CLI overlays.
+func Float64Ptr(v float64) *float64 { return &v }
 
 type PolicyRegression struct {
 	MaxPassRateDrop         float64 `json:"max_pass_rate_drop" yaml:"max_pass_rate_drop"`
@@ -353,5 +410,95 @@ func (p *Policy) Validate() error {
 	if onFlaky != "warn" && onFlaky != "fail" && onFlaky != "ignore" {
 		return fmt.Errorf("%w: on_flaky must be 'warn', 'fail', or 'ignore'", ErrInvalidFieldValue)
 	}
+	if p.Reliability.MaxExecutionErrorRate != nil {
+		v := *p.Reliability.MaxExecutionErrorRate
+		if v < 0.0 || v > 1.0 {
+			return fmt.Errorf("%w: max_execution_error_rate must be between 0.0 and 1.0", ErrInvalidFieldValue)
+		}
+	}
+	if p.Reliability.Retry.MaxAttempts < 0 {
+		return fmt.Errorf("%w: retry.max_attempts must be >= 0", ErrInvalidFieldValue)
+	}
+	if p.Reliability.Retry.BackoffMs < 0 {
+		return fmt.Errorf("%w: retry.backoff_ms must be >= 0", ErrInvalidFieldValue)
+	}
+	if p.Reliability.Retry.On != "" {
+		on := strings.ToLower(string(p.Reliability.Retry.On))
+		if on != string(RetryOnNone) && on != string(RetryOnTransient) && on != string(RetryOnAll) {
+			return fmt.Errorf("%w: retry.on must be 'none', 'transient', or 'all'", ErrInvalidFieldValue)
+		}
+	}
+	if p.HardConstraints.ForbiddenTools < 0 || p.HardConstraints.SchemaViolations < 0 {
+		return fmt.Errorf("%w: hard_constraints counts must be >= 0", ErrInvalidFieldValue)
+	}
 	return nil
+}
+
+// AssertionFailsSample reports whether a failed assertion should fail the sample/report.
+func AssertionFailsSample(a Assertion) bool {
+	return effectiveSampleCriticality(a) != CriticalitySoft
+}
+
+// AssertionPolicyHard reports whether a failed assertion counts toward hard constraints.
+func AssertionPolicyHard(a Assertion) bool {
+	if a.Criticality == CriticalitySoft {
+		return false
+	}
+	if a.Criticality == CriticalityHard {
+		return true
+	}
+	switch a.Type {
+	case AssertForbiddenToolCall, AssertSchemaValid:
+		return true
+	default:
+		return false
+	}
+}
+
+func effectiveSampleCriticality(a Assertion) CriticalityLevel {
+	if a.Criticality != "" {
+		return a.Criticality
+	}
+	if a.Type == AssertLLMJudge {
+		return CriticalitySoft
+	}
+	return CriticalityHard
+}
+
+// EffectiveSampleCriticality is the criticality used for sample pass/fail.
+func EffectiveSampleCriticality(a Assertion) CriticalityLevel {
+	return effectiveSampleCriticality(a)
+}
+
+// CountPolicyHardFailures tallies failed hard-constraint evaluations.
+func CountPolicyHardFailures(evs []EvaluationResult) (forbidden, schema, other int) {
+	for _, ev := range evs {
+		if ev.Passed {
+			continue
+		}
+		hard := false
+		if ev.Evidence != nil {
+			hard, _ = ev.Evidence["policy_hard"].(bool)
+		}
+		switch ev.EvaluatorName {
+		case "forbidden_tool":
+			if hard || ev.Criticality != CriticalitySoft {
+				forbidden++
+			}
+		case "schema_validation":
+			if hard || ev.Criticality != CriticalitySoft {
+				schema++
+			}
+		default:
+			if hard || ev.Criticality == CriticalityHard {
+				other++
+			}
+		}
+	}
+	return
+}
+
+// HardConstraintsExceeded reports whether counted failures breach policy maxima.
+func HardConstraintsExceeded(hc HardConstraints, forbidden, schema, other int) bool {
+	return other > 0 || forbidden > hc.ForbiddenTools || schema > hc.SchemaViolations
 }

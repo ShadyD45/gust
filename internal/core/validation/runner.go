@@ -52,6 +52,8 @@ func Run(ctx context.Context) (*Report, error) {
 			cr.Passed, cr.Detail, err = runMutation(ctx, analyzeEng, goldens, mutByName, c)
 		case KindFixture:
 			cr.Passed, cr.Detail, err = runFixture(ctx, c)
+		case KindMode3:
+			cr.Passed, cr.Detail, err = runMode3(ctx, detEvals, c)
 		default:
 			err = fmt.Errorf("unknown kind %q", c.Kind)
 		}
@@ -132,9 +134,8 @@ func (r *errOnceRunner) Name() string { return "validation_err_once" }
 
 func (r *errOnceRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
 	n := int(r.calls.Add(1))
-	sampleIdx := (n - 1) / 2
-	if sampleIdx < r.failFirstN {
-		return api.AgentRun{}, fmt.Errorf("transient sample %d", sampleIdx)
+	if n <= r.failFirstN {
+		return api.AgentRun{}, fmt.Errorf("transient sample %d", n)
 	}
 	return r.inner.Run(ctx, scenario, fixtureEndpoint)
 }
@@ -159,8 +160,9 @@ func runInfra(ctx context.Context, evals []ports.Evaluator, c Case) (bool, strin
 		Scenario:              sc,
 		Runner:                runner,
 		Concurrency:           1,
-		MaxExecutionErrorRate: c.MaxExecRate,
+		MaxExecutionErrorRate: api.Float64Ptr(c.MaxExecRate),
 		MinSamples:            1,
+		Retry:                 api.RetryPolicy{MaxAttempts: 1, On: api.RetryOnNone},
 	})
 	if c.WantUnstable {
 		if err == nil || !errors.Is(err, coretest.ErrRunnerUnstable) {
@@ -256,4 +258,58 @@ func runFixture(ctx context.Context, c Case) (bool, string, error) {
 		return false, fmt.Sprintf("status=%q want=%q", lastStatus, c.WantStatus), nil
 	}
 	return true, fmt.Sprintf("found=%v status=%s", lastFound, lastStatus), nil
+}
+
+func runMode3(ctx context.Context, evals []ports.Evaluator, c Case) (bool, string, error) {
+	provider := fixtures.NewMemoryFixtureProvider()
+	if err := provider.LoadFixtures(c.Fixtures); err != nil {
+		return false, "", err
+	}
+	runner := &testrunner.FixtureProbeRunner{
+		Calls:           c.Mode3Calls,
+		ExtraCalls:      c.Mode3ExtraCalls,
+		FailFirst:       c.Mode3FailFirst,
+		ConsumeThenFail: c.Mode3FailFirst,
+	}
+	samples := c.Mode3Samples
+	if samples <= 0 {
+		samples = 8
+	}
+	conc := c.Mode3Concurrency
+	if conc <= 0 {
+		conc = 4
+	}
+	sc := api.TestScenario{
+		ID:   "mode3_" + c.ID,
+		Task: api.TaskInfo{ID: "t", Input: "x"},
+		Assertions: []api.Assertion{{
+			ID: "a1", Type: api.AssertTaskSuccess,
+		}},
+		Reliability: api.ReliabilityConfig{
+			Samples:         samples,
+			MinimumPassRate: 0.5,
+			Confidence:      0.95,
+		},
+	}
+	retry := api.RetryPolicy{MaxAttempts: 1, On: api.RetryOnNone}
+	if c.Mode3FailFirst {
+		retry = api.RetryPolicy{MaxAttempts: 2, On: api.RetryOnTransient, BackoffMs: 1}
+	}
+	sampler := coretest.NewSampler(evals)
+	res, err := sampler.RunScenario(ctx, coretest.SamplingConfig{
+		Scenario:              sc,
+		Runner:                runner,
+		Concurrency:           conc,
+		FixtureProvider:       provider,
+		HasOrderedFixtures:    fixtures.HasOrderedFixtures(c.Fixtures),
+		ProxyFactory:          fixtures.StartProxy,
+		MinSamples:            1,
+		MaxExecutionErrorRate: api.Float64Ptr(1),
+		Retry:                 retry,
+	})
+	if err != nil {
+		return false, "", err
+	}
+	ok := res.Passes == c.WantMode3Passes && res.ExecutionErrors == c.WantMode3ExecErrs
+	return ok, fmt.Sprintf("passes=%d want=%d exec_err=%d", res.Passes, c.WantMode3Passes, res.ExecutionErrors), nil
 }

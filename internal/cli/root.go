@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -32,6 +33,14 @@ func NewRoot() *cobra.Command {
 		Short:         "Test infrastructure for autonomous agents",
 		SilenceErrors: true,
 		SilenceUsage:  true,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			cfg, _, err := loadProjectConfig("")
+			if err != nil {
+				return err
+			}
+			applyWireTimeouts(cfg)
+			return nil
+		},
 	}
 	root.AddCommand(
 		newInitCmd(),
@@ -43,6 +52,7 @@ func NewRoot() *cobra.Command {
 		newScenarioCmd(),
 		newIngestCmd(),
 		newJudgeCmd(),
+		newDatasetCmd(),
 	)
 	return root
 }
@@ -60,6 +70,18 @@ func loadJSON[T any](path string) (T, error) {
 }
 
 func loadPolicy(path string) (api.Policy, error) {
+	if path == "" {
+		cfg, cfgPath, err := loadProjectConfig("")
+		if err != nil {
+			return api.Policy{}, err
+		}
+		if cfg.Policy != "" {
+			path = cfg.Policy
+			if !filepath.IsAbs(path) && cfgPath != "" {
+				path = filepath.Join(filepath.Dir(cfgPath), path)
+			}
+		}
+	}
 	if path == "" {
 		return api.Policy{
 			Version: "1.0",

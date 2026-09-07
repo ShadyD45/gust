@@ -9,8 +9,18 @@ import (
 )
 
 const gustYAML = `# gust project config
-# Policy defaults used when --policy is omitted from analyze/test/compare.
+# Merge order for Mode 3: CLI flags > policy.yaml > this file > code defaults.
 policy: tests/policy.yaml
+test:
+  concurrency: 4
+  timeout: 60s
+retry:
+  max_attempts: 2
+  backoff_ms: 50
+  on: transient
+wire:
+  evaluate_timeout: 60s
+  handshake_timeout: 5s
 `
 
 const defaultPolicyYAML = `version: "1.0"
@@ -23,6 +33,10 @@ reliability:
   min_samples_for_verdict: 5
   on_flaky: warn
   max_execution_error_rate: 0.20
+  retry:
+    max_attempts: 2
+    backoff_ms: 50
+    on: transient
 `
 
 const exampleScenarioYAML = `id: example_synthetic
@@ -78,11 +92,11 @@ func scaffoldProject(root string) error {
 	}
 
 	files := map[string]string{
-		"gust.yaml":                         gustYAML,
-		"tests/policy.yaml":                 defaultPolicyYAML,
-		"tests/scenarios/example.yaml":      exampleScenarioYAML,
-		"tests/fixtures/.gitkeep":           fixturesGitkeep,
-		"tests/assertions/.gitkeep":         assertionsGitkeep,
+		"gust.yaml":                    gustYAML,
+		"tests/policy.yaml":            defaultPolicyYAML,
+		"tests/scenarios/example.yaml": exampleScenarioYAML,
+		"tests/fixtures/.gitkeep":      fixturesGitkeep,
+		"tests/assertions/.gitkeep":    assertionsGitkeep,
 	}
 
 	created := make([]string, 0, len(files))

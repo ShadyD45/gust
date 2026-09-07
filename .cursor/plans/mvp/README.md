@@ -92,7 +92,7 @@ Click on any phase below for its full engineering specification, interface contr
 | Phase | Plan Document | Scope & Deliverables |
 |---|---|---|
 | **Phase 1** | [`phase-01-core-types-and-schema.md`](file:///d:/Projects/gust/docs/plans/mvp/phase-01-core-types-and-schema.md) | Domain types, JSON Schema validation (Draft 2020-12), and RFC 8785 Canonical JCS hashing. |
-| **Phase 2** | [`phase-02-interfaces-and-wire-protocol.md`](file:///d:/Projects/gust/docs/plans/mvp/phase-02-interfaces-and-wire-protocol.md) | Tier 1 Go contracts, Tier 2 JSON-RPC 2.0 stdio wire protocol, plugin supervisor, sandboxing. |
+| **Phase 2** | [`phase-02-interfaces-and-wire-protocol.md`](file:///d:/Projects/gust/docs/plans/mvp/phase-02-interfaces-and-wire-protocol.md) | Tier 1 Go contracts, Tier 2 JSON-RPC 2.0 stdio wire protocol, plugin supervisor (env scrub + timeouts; not OS sandboxing). |
 | **Phase 3** | [`phase-03-deterministic-evaluators.md`](file:///d:/Projects/gust/docs/plans/mvp/phase-03-deterministic-evaluators.md) | The 10 MVP deterministic evaluators, structured evidence generation, $\ge 1,000$ cases/sec throughput. |
 | **Phase 4** | [`phase-04-fixture-store-replay-analyze.md`](file:///d:/Projects/gust/docs/plans/mvp/phase-04-fixture-store-replay-analyze.md) | Content-addressed Fixture Store, stateful sequential queues, Tool Mock Proxy Server, Mode 1 & 2. |
 | **Phase 5** | [`phase-05-mutation-testing-engine.md`](file:///d:/Projects/gust/docs/plans/mvp/phase-05-mutation-testing-engine.md) | 9 mutation classes, Replay-mode mutation runner, Detection Rate ($\ge 90\%$) and FPR ($\le 5\%$). |

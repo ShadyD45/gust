@@ -6,8 +6,10 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -99,7 +101,7 @@ func (r *HTTPRunner) Run(ctx context.Context, scenario api.TestScenario, fixture
 
 	resp, err := r.Client.Do(req)
 	if err != nil {
-		return api.AgentRun{}, fmt.Errorf("invoke agent: %w", err)
+		return api.AgentRun{}, classifyInvokeErr(err)
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
@@ -129,4 +131,18 @@ func truncate(b []byte, n int) string {
 		return string(b)
 	}
 	return string(b[:n]) + "…"
+}
+
+func classifyInvokeErr(err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return fmt.Errorf("invoke agent: %w", err)
+	}
+	var ne net.Error
+	if errors.As(err, &ne) {
+		return fmt.Errorf("invoke agent: %w: %v", ports.ErrTransient, err)
+	}
+	return fmt.Errorf("invoke agent: %w", err)
 }

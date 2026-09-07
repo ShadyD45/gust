@@ -14,13 +14,14 @@ type EvaluationContext struct {
 
 // EvaluationResult contains the result of evaluating an assertion against an AgentRun.
 type EvaluationResult struct {
-	EvaluatorName    string         `json:"evaluator_name"`
-	EvaluatorVersion string         `json:"evaluator_version"`
-	Passed           bool           `json:"passed"`
-	Score            float64        `json:"score"` // 0.0 to 1.0
-	Message          string         `json:"message,omitempty"`
-	Evidence         map[string]any `json:"evidence,omitempty"`
-	ExecutionTimeNs  int64          `json:"execution_time_ns"`
+	EvaluatorName    string               `json:"evaluator_name"`
+	EvaluatorVersion string               `json:"evaluator_version"`
+	Passed           bool                 `json:"passed"`
+	Score            float64              `json:"score"` // 0.0 to 1.0
+	Message          string               `json:"message,omitempty"`
+	Evidence         map[string]any       `json:"evidence,omitempty"`
+	ExecutionTimeNs  int64                `json:"execution_time_ns"`
+	Criticality      api.CriticalityLevel `json:"criticality,omitempty"`
 }
 
 // Evaluator defines the interface for evaluating an AgentRun.

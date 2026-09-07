@@ -10,13 +10,14 @@ const (
 
 // EvaluationResult is the public shape of a single assertion evaluation.
 type EvaluationResult struct {
-	EvaluatorName    string         `json:"evaluator_name"`
-	EvaluatorVersion string         `json:"evaluator_version"`
-	Passed           bool           `json:"passed"`
-	Score            float64        `json:"score"`
-	Message          string         `json:"message,omitempty"`
-	Evidence         map[string]any `json:"evidence,omitempty"`
-	ExecutionTimeNs  int64          `json:"execution_time_ns"`
+	EvaluatorName    string           `json:"evaluator_name"`
+	EvaluatorVersion string           `json:"evaluator_version"`
+	Passed           bool             `json:"passed"`
+	Score            float64          `json:"score"`
+	Message          string           `json:"message,omitempty"`
+	Evidence         map[string]any   `json:"evidence,omitempty"`
+	ExecutionTimeNs  int64            `json:"execution_time_ns"`
+	Criticality      CriticalityLevel `json:"criticality,omitempty"`
 }
 
 // ReliabilityResult is the Mode 3 aggregate for a scenario across repeated samples.

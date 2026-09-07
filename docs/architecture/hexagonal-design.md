@@ -69,5 +69,5 @@ gust/
 
 ## Concurrency
 
-Mode 3 sampling and mutation batches use bounded worker pools (`sync.WaitGroup` + semaphore channel). All blocking APIs take `context.Context` for cancellation.
+Mode 3 sampling uses a bounded worker pool. When the fixture provider is clonable (the built-in memory provider is), each sample gets a cloned provider and an ephemeral mock-tool proxy so ordered fixture sequences cannot interleave. Non-clonable providers with ordered fixtures fall back to `concurrency=1`. All blocking APIs take `context.Context` for cancellation.
 

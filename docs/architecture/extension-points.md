@@ -47,7 +47,7 @@ Go embedders:
 
 ## Tier-2 wire plugins
 
-`internal/adapters/wire` hosts JSON-RPC 2.0 over stdio for cross-language plugins (Python/TypeScript evaluators). The supervisor manages process lifecycle with a **scrubbed environment**, a **bounded handshake** (5s), a **default per-call evaluate timeout** (60s when the caller has no deadline), and a **16 MiB line-size cap** on protocol messages. Plugin stderr is forwarded so failures are debuggable.
+`internal/adapters/wire` hosts JSON-RPC 2.0 over stdio for cross-language plugins (Python/TypeScript evaluators). The supervisor manages process lifecycle with a **scrubbed environment**, a **bounded handshake** (default 5s, `gust.yaml` `wire.handshake_timeout`), a **default per-call evaluate timeout** (default 60s when the caller has no deadline, `gust.yaml` `wire.evaluate_timeout`), and a **16 MiB line-size cap** on protocol messages. Plugin stderr is forwarded so failures are debuggable.
 
 **Trust boundary today (honest):** env scrubbing + timeouts + line bounds. CPU/memory/network sandboxing (cgroups, Job Objects, network namespaces) is **not yet implemented** — treat that as Phase 8.5 before advertising untrusted community plugins as fully sandboxed.
 
@@ -62,7 +62,7 @@ Extend by implementing the wire methods expected by the client and wrapping them
 ## Fixture / store adapters
 
 - In-memory fixture provider + HTTP mock proxy: `internal/adapters/fixtures`
-- Filesystem JSON store: `internal/adapters/storage/filesystem` implementing `ScenarioStore`, `FixtureStore`, `RunStore`
+- Filesystem JSON store: `internal/adapters/storage/filesystem` implementing `ScenarioStore`, `FixtureStore`, `RunStore`. This is a **mutable local cache** (same ID overwrites). Content-addressed immutability is `gust dataset bundle` / `verify`.
 
 `ports.RunStore` is the hook for a later eval-history database (user-owned SQLite/Postgres). It stores `AgentRun` documents and will store verdicts — not a span explorer. `gust ingest otel serve --output-dir` is the file-shaped stand-in today. Do not add a dashboard here; live ingest already calls `OnRun`, which a store adapter can implement as `SaveRun`.
 

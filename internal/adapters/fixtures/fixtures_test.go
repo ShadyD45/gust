@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -14,9 +15,9 @@ import (
 func TestMemoryFixtureProviderClone(t *testing.T) {
 	provider := NewMemoryFixtureProvider()
 	if err := provider.LoadFixtures([]api.Fixture{{
-		FixtureID:     "fx_seq",
-		Tool:          "poll",
-		MatchStrategy: api.MatchStrategyOrderedSequence,
+		FixtureID:        "fx_seq",
+		Tool:             "poll",
+		MatchStrategy:    api.MatchStrategyOrderedSequence,
 		RecordedResponse: api.RecordedResponse{Status: "success", Body: "A"},
 		Provenance:       api.ProvenanceRecorded,
 	}}); err != nil {
@@ -171,4 +172,73 @@ func TestMockToolProxyServer(t *testing.T) {
 	if resMap["reply"] != "world" {
 		t.Errorf("expected world reply, got %v", callResp.Body)
 	}
+}
+
+func TestConcurrentProxiesIsolateSequence(t *testing.T) {
+	root := NewMemoryFixtureProvider()
+	if err := root.LoadFixtures([]api.Fixture{
+		{
+			FixtureID:        "a",
+			Tool:             "poll",
+			MatchStrategy:    api.MatchStrategyOrderedSequence,
+			RecordedResponse: api.RecordedResponse{Status: "success", Body: "PENDING"},
+			Provenance:       api.ProvenanceRecorded,
+		},
+		{
+			FixtureID:        "b",
+			Tool:             "poll",
+			MatchStrategy:    api.MatchStrategyOrderedSequence,
+			RecordedResponse: api.RecordedResponse{Status: "success", Body: "DONE"},
+			Provenance:       api.ProvenanceRecorded,
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	const n = 8
+	errCh := make(chan error, n)
+	for i := 0; i < n; i++ {
+		go func() {
+			ep, closer, err := StartProxy(root.Clone())
+			if err != nil {
+				errCh <- err
+				return
+			}
+			defer closer()
+			call := ports.ToolCall{Name: "poll"}
+			r1, ok1, err := postLookup(ep, call)
+			if err != nil || !ok1 || fmt.Sprint(r1) != "PENDING" {
+				errCh <- fmt.Errorf("first: body=%v found=%v err=%v", r1, ok1, err)
+				return
+			}
+			r2, ok2, err := postLookup(ep, call)
+			if err != nil || !ok2 || fmt.Sprint(r2) != "DONE" {
+				errCh <- fmt.Errorf("second: body=%v found=%v err=%v", r2, ok2, err)
+				return
+			}
+			errCh <- nil
+		}()
+	}
+	for i := 0; i < n; i++ {
+		if err := <-errCh; err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func postLookup(endpoint string, call ports.ToolCall) (any, bool, error) {
+	reqBody, _ := json.Marshal(ToolCallRequest{Tool: call.Name, Arguments: call.Arguments})
+	postResp, err := http.Post(endpoint+"/v1/tools/call", "application/json", bytes.NewReader(reqBody))
+	if err != nil {
+		return nil, false, err
+	}
+	defer postResp.Body.Close()
+	if postResp.StatusCode == http.StatusNotFound {
+		return nil, false, nil
+	}
+	var callResp ToolCallResponse
+	if err := json.NewDecoder(postResp.Body).Decode(&callResp); err != nil {
+		return nil, false, err
+	}
+	return callResp.Body, true, nil
 }

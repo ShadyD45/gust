@@ -65,6 +65,15 @@ func NewMockToolProxyServer(provider ports.FixtureProvider) (*MockToolProxyServe
 	return proxy, nil
 }
 
+// StartProxy binds a loopback mock-tool server to provider and starts it.
+func StartProxy(provider ports.FixtureProvider) (endpoint string, closeFn func() error, err error) {
+	proxy, err := NewMockToolProxyServer(provider)
+	if err != nil {
+		return "", nil, err
+	}
+	return proxy.Start(), proxy.Close, nil
+}
+
 // Start launches the server in a background goroutine and returns the endpoint URL.
 func (s *MockToolProxyServer) Start() string {
 	s.mu.Lock()

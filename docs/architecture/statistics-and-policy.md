@@ -42,8 +42,8 @@ Synthetic H7 proofs must use rates and *N* that land in these buckets under the 
 
 ## Hard vs soft constraints
 
-- **Hard:** zero-tolerance (forbidden tools, schema violations). Any violation fails the policy immediately (exit code 1), regardless of pass rate.
-- **Soft:** probabilistic reliability thresholds evaluated via Wilson verdicts.
+- **Hard:** `hard_constraints.forbidden_tools` / `schema_violations` are **max allowed** failed evaluations of those evaluators (default `0` = any failure fails CI, exit 1). Assertions marked `criticality: hard` also fail immediately. `criticality: soft` is recorded and does not fail the sample.
+- **Soft:** probabilistic reliability thresholds evaluated via Wilson verdicts. Unset criticality on `llm_judge` is soft; other unset types still fail the sample but only forbidden-tool / schema-valid count toward the named hard-constraint tallies.
 
 ## `on_flaky`
 

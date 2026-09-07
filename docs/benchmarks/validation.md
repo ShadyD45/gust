@@ -5,13 +5,13 @@ parent: Benchmarks
 ---
 # Gust Validation Suite
 
-Published 2026-09-07 · suite `1.0.0`
+Published 2026-09-07 · suite `1.1.0`
 
 A catalog of adversarial scenarios ("Should this pass/fail/be flaky/…?") that Gust must classify correctly.
 
 | | |
 |---|---|
-| Cases | **78 / 78** passed |
+| Cases | **83 / 83** passed |
 | Gate | **PASS** |
 
 ## Category breakdown
@@ -25,6 +25,7 @@ A catalog of adversarial scenarios ("Should this pass/fail/be flaky/…?") that 
 | `mutation` | Mutation detected? | 18 | 18 |
 | `fixture` | Fixture match? | 9 | 9 |
 | `recovery` | Considered recovery? | 6 | 6 |
+| `mode3` | Mode 3 sample isolation? | 5 | 5 |
 
 Machine-readable: [`benchmarks/fixtures/gust_validation.json`](https://github.com/ShadyD45/gust/blob/main/benchmarks/fixtures/gust_validation.json).
 

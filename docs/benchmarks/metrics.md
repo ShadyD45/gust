@@ -17,25 +17,25 @@ Composite `aee_score` is a documented weighted blend in `internal/core/aee/repor
 
 **Gate:** ≥ 90%
 
-**What it provides:** Trust that your evaluator suite is not a rubber stamp. High DR is the mutation-testing analogue of “these unit tests would fail if the code were wrong.”
+**What it provides:** Evidence that this evaluator suite is not a rubber stamp on the golden cases. High DR is the mutation-testing analogue of “these unit tests would fail if the code were wrong.” It is not a field false-negative rate.
 
 ## False positive rate (FPR)
 
 **Question:** Do clean (unmutated) golden runs still pass?
 
-**Method:** Same golden suite, no mutants. Any failure on a known-good run is a false positive.
+**Method:** Same golden suite, no mutants. Any failure on a known-good run is a false positive **on that suite**.
 
 **Gate:** ≤ 5%
 
-**What it provides:** CI signal quality. A suite that fails on good behavior trains teams to ignore the gate.
+**What it provides:** CI signal quality on the golden suite. This is not a general estimate of Gust’s false-positive rate in the wild.
 
-## Eval throughput
+## Deterministic evaluator throughput
 
-**Question:** Is the deterministic path fast enough for every PR?
+**Question:** Is the deterministic Analyze/Replay path fast enough for every PR?
 
-**Method:** Repeated evaluation of built-in deterministic evaluators only (`llm_judge` excluded). Reported as cases per second over a minimum wall-clock window.
+**Method:** Repeated evaluation of built-in deterministic evaluators only (`llm_judge` excluded). Reported as **evaluator calls per second** over a minimum wall-clock window — not end-to-end `gust test` throughput and not agent tests per second.
 
-**Gate:** ≥ 1,000 cases/sec
+**Gate:** ≥ 1,000 evaluator calls/sec
 
 **What it provides:** Evidence that Analyze/Replay can sit in CI without burning minutes or dollars on LLM calls. Mode 3 agent sampling is a separate budget owned by the job that runs your agent.
 
@@ -47,7 +47,7 @@ Composite `aee_score` is a documented weighted blend in `internal/core/aee/repor
 
 **Gate:** 100% identical
 
-**What it provides:** Proof that offline modes are bit-stable — a prerequisite for mutation scores, regression compare, and trusting a red CI log.
+**What it provides:** Evidence that offline modes are bit-stable — a prerequisite for mutation scores, regression compare, and treating a red CI log as a real change.
 
 ## H7 — reliability engine
 

@@ -53,8 +53,15 @@ func (e *Engine) AnalyzeRun(ctx context.Context, run api.AgentRun, assertions []
 			return nil, fmt.Errorf("evaluation failed for assertion %q: %w", assert.ID, err)
 		}
 
+		res.Criticality = api.EffectiveSampleCriticality(assert)
+		if !res.Passed && api.AssertionPolicyHard(assert) {
+			if res.Evidence == nil {
+				res.Evidence = map[string]any{}
+			}
+			res.Evidence["policy_hard"] = true
+		}
 		report.Results = append(report.Results, res)
-		if !res.Passed {
+		if !res.Passed && api.AssertionFailsSample(assert) {
 			report.Passed = false
 		}
 	}

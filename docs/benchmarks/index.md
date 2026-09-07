@@ -6,7 +6,7 @@ has_toc: false
 ---
 # Benchmarks
 
-gust publishes a **self-benchmark** of its own evaluation suite — Agent Evaluation Effectiveness (AEE). These numbers prove the *test infrastructure* works: it catches injected faults, stays quiet on clean runs, finishes fast enough for CI, and reproduces bit-identically.
+gust publishes a **self-benchmark** of its own evaluation suite — Agent Evaluation Effectiveness (AEE). These numbers are regression evidence that the *deterministic evaluation machinery* behaves as encoded in the golden suite: it catches injected faults on that suite, stays quiet on those clean runs, finishes fast enough for CI, and reproduces bit-identically. They are not a field estimate of Gust on arbitrary real agents.
 
 {: .important }
 AEE scores **gust**, not your agent. Agent pass rates belong to Mode 3 and your scenarios. AEE measures behavior gates, fixtures, mutation detection, and Wilson verdicts — the effectiveness of gust as test infrastructure.
@@ -17,14 +17,14 @@ A captured **trace** or a **final-answer score** alone cannot tell you whether y
 
 gust separates the jobs and measures each with the right instrument:
 
-| Claim | How we prove it |
+| Claim | How we measure it |
 |-------|-----------------|
-| Assertions catch real failures | **Mutation detection rate** on a golden suite |
-| Assertions do not cry wolf | **False positive rate** on unmutated runs |
-| Offline gates fit CI budgets | **Evaluator throughput** (deterministic path only) |
-| Analyze/Replay are trustworthy | **Reproducibility** (JCS hash stability) |
+| Assertions catch injected faults on the golden suite | **Mutation detection rate** |
+| Assertions do not fail those clean golden runs | **Golden-suite false positive rate** |
+| Offline gates fit CI budgets | **Deterministic evaluator throughput** |
+| Analyze/Replay are bit-stable on that path | **Reproducibility** (JCS hash stability) |
 | Stochastic agents get honest verdicts | **H7** Wilson vectors (`PASS` / `FLAKY` / `FAIL`) |
-| Gust cannot be easily fooled | **[Validation Suite]({% link benchmarks/validation.md %})** — adversarial pass/fail/flaky/infra/mutation/fixture/recovery cases |
+| Curated adversarial catalog is classified correctly | **[Validation Suite]({% link benchmarks/validation.md %})** — pass/fail/flaky/infra/mutation/fixture/recovery/mode3 |
 
 That is gust’s job: **test infrastructure for agents**. See [Metrics explained]({% link benchmarks/metrics.md %}) for definitions, and [Latest results]({% link benchmarks/results.md %}) for the published numbers (also [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)).
 
@@ -32,9 +32,9 @@ That is gust’s job: **test infrastructure for agents**. See [Metrics explained
 
 | Metric | Gate | What a pass means |
 |--------|------|-------------------|
-| Detection rate | ≥ 90% | Mutated bad behavior is caught |
-| False positive rate | ≤ 5% | Clean runs stay green |
-| Eval throughput | ≥ 1,000 cases/sec | Deterministic suite is CI-cheap |
+| Detection rate | ≥ 90% | Mutated golden-suite cases are caught |
+| False positive rate | ≤ 5% | Unmutated golden runs stay green |
+| Deterministic evaluator throughput | ≥ 1,000 evaluator calls/sec | Analyze/Replay path is CI-cheap |
 | Reproducibility | 100% identical | Same inputs → same analyze hash |
 | H7 reliability | all correct | Wilson classification matches theory |
 

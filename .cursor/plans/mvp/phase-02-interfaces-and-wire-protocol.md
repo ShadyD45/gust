@@ -4,7 +4,7 @@
 1. Define clean, decoupled Go interfaces (Tier 1) for the five core extension points: `Evaluator`, `Mutator`, `FixtureProvider`, `TestRunner`, and `PolicyEngine`.
 2. Implement a thread-safe **Plugin Registry** allowing in-process registration and dynamic lookup.
 3. Design and implement the **Tier 2 Wire Protocol** using JSON-RPC 2.0 over standard I/O (`stdio`), enabling plugins written in Python, TypeScript, Rust, or any language.
-4. Build a robust **Subprocess Supervisor** with execution timeouts, resource limits, and sandboxing for untrusted plugins.
+4. Build a **Subprocess Supervisor** with scrubbed environment, handshake/evaluate timeouts, and a protocol line-size cap. CPU/memory/network sandboxing is **not** in this phase (documented honesty; still unimplemented).
 
 ---
 
@@ -25,8 +25,7 @@ gust/
 │   └── adapters/
 │       └── wire/                # Tier 2 Cross-Language Protocol Host
 │           ├── client.go        # JSON-RPC 2.0 client over stdio
-│           ├── supervisor.go    # Process lifecycle, timeouts, health checks
-│           ├── sandbox.go       # Environment scrubbing and isolation
+│           ├── supervisor.go    # Process lifecycle, timeouts, env scrub
 │           └── wire_test.go
 ```
 

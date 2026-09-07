@@ -21,6 +21,8 @@ var (
 )
 
 // FileStore implements ScenarioStore, FixtureStore, and RunStore using local filesystem JSON files.
+// Writes are intentionally mutable: re-saving the same ID overwrites. This is a local
+// results/run cache, not the content-addressed immutability contract of dataset.Bundle.
 type FileStore struct {
 	baseDir      string
 	scenariosDir string

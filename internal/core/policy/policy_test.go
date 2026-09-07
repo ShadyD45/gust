@@ -154,10 +154,41 @@ func TestRegressionZeroBaselineLatency(t *testing.T) {
 	if r.LatencyComparable {
 		t.Fatalf("zero baseline latency should not be comparable")
 	}
+	if r.LatencyIncreaseRatio != nil {
+		t.Fatalf("unmeasurable latency ratio should be omitted, got %v", *r.LatencyIncreaseRatio)
+	}
 	if r.Regressed {
 		t.Fatalf("should not regress on unmeasurable latency: %+v", r)
 	}
 	if r.Message == "no significant regression" {
 		t.Fatalf("message should note latency was not measurable, got %q", r.Message)
+	}
+}
+
+func TestHardConstraintThresholdAllowsSomeFailures(t *testing.T) {
+	eng := NewEngine()
+	res := &api.ReliabilityResult{
+		ScenarioID: "sc_tol",
+		Samples:    10,
+		Passes:     9,
+		Verdict:    api.VerdictPass,
+		PerRunEvidence: []api.EvaluationResult{
+			{EvaluatorName: "forbidden_tool", Passed: false},
+		},
+	}
+	pol := api.Policy{
+		Name:            "tol",
+		HardConstraints: api.HardConstraints{ForbiddenTools: 1, SchemaViolations: 0},
+		Reliability:     api.PolicyReliability{DefaultMinimumPassRate: 0.95, OnFlaky: "warn"},
+	}
+	v := eng.Evaluate(pol, []*api.ReliabilityResult{res})
+	if v.ExitCode != api.ExitSuccess {
+		t.Fatalf("one forbidden failure should be allowed when max is 1, got exit=%d", v.ExitCode)
+	}
+
+	res.PerRunEvidence = append(res.PerRunEvidence, api.EvaluationResult{EvaluatorName: "forbidden_tool", Passed: false})
+	v = eng.Evaluate(pol, []*api.ReliabilityResult{res})
+	if v.ExitCode != api.ExitFailure {
+		t.Fatalf("two forbidden failures should exceed max 1, got exit=%d", v.ExitCode)
 	}
 }

@@ -83,8 +83,12 @@ func PrintRegressionTerminal(reg *policy.RegressionResult) {
 		status = "REGRESSION"
 	}
 	fmt.Printf("Compare → %s\n", status)
-	fmt.Printf("  pass_rate_drop=%.4f  latency_increase_ratio=%.4f  p=%.4f significant=%v\n",
-		reg.PassRateDrop, reg.LatencyIncreaseRatio, reg.PValue, reg.Significant)
+	lat := "n/a"
+	if reg.LatencyIncreaseRatio != nil {
+		lat = fmt.Sprintf("%.4f", *reg.LatencyIncreaseRatio)
+	}
+	fmt.Printf("  pass_rate_drop=%.4f  latency_increase_ratio=%s  p=%.4f significant=%v\n",
+		reg.PassRateDrop, lat, reg.PValue, reg.Significant)
 	fmt.Printf("  %s\n", reg.Message)
 }
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"gust/pkg/api"
@@ -22,7 +23,10 @@ type Manifest struct {
 }
 
 // Bundle writes scenarios as JSON files and a dataset.json manifest with JCS hashes.
-func Bundle(dir, datasetID string, scenarios []api.TestScenario) (*Manifest, error) {
+// If an on-disk scenario hashes differently, Bundle refuses unless force is set.
+// Orphan *.json files (not in the new manifest, excluding dataset.json) are an error
+// unless force is set, in which case they are deleted.
+func Bundle(dir, datasetID string, scenarios []api.TestScenario, force bool) (*Manifest, error) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, err
 	}
@@ -40,6 +44,15 @@ func Bundle(dir, datasetID string, scenarios []api.TestScenario) (*Manifest, err
 		m.ScenarioHash[sc.ID] = hash
 
 		path := filepath.Join(dir, sc.ID+".json")
+		if existing, err := os.ReadFile(path); err == nil {
+			var old api.TestScenario
+			if json.Unmarshal(existing, &old) == nil {
+				oldHash, herr := jcs.ContentHash(old)
+				if herr == nil && oldHash != hash && !force {
+					return nil, fmt.Errorf("scenario %s already exists with different content (use --force to overwrite)", sc.ID)
+				}
+			}
+		}
 		data, err := json.MarshalIndent(sc, "", "  ")
 		if err != nil {
 			return nil, err
@@ -57,6 +70,37 @@ func Bundle(dir, datasetID string, scenarios []api.TestScenario) (*Manifest, err
 		return nil, err
 	}
 	m.ContentHash = contentHash
+
+	want := map[string]struct{}{"dataset.json": {}}
+	for _, id := range m.ScenarioIDs {
+		want[id+".json"] = struct{}{}
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var orphans []string
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		name := e.Name()
+		if !strings.HasSuffix(strings.ToLower(name), ".json") {
+			continue
+		}
+		if _, ok := want[name]; ok {
+			continue
+		}
+		orphans = append(orphans, name)
+	}
+	if len(orphans) > 0 && !force {
+		return nil, fmt.Errorf("orphan scenario files %s (use --force to prune)", strings.Join(orphans, ", "))
+	}
+	for _, name := range orphans {
+		if err := os.Remove(filepath.Join(dir, name)); err != nil {
+			return nil, err
+		}
+	}
 
 	raw, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {

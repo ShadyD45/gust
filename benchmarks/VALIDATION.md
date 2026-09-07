@@ -1,13 +1,13 @@
 # Gust Validation Suite results
 
-_Generated 2026-09-07T04:13:08.3193542Z (suite 1.0.0). Regenerated via `gust-aee validate --doc …`._
+_Generated 2026-09-07T09:19:35.600669Z (suite 1.1.0). Regenerated via `gust-aee validate --doc …`._
 
-Adversarial cases that try to fool Gust — expected pass/fail/flaky/infra/mutation/fixture/recovery outcomes.
+Adversarial cases that try to fool Gust — expected pass/fail/flaky/infra/mutation/fixture/recovery/mode3 outcomes.
 
 | Metric | Value |
 |---|---|
-| Total cases | 78 |
-| Passed | 78 |
+| Total cases | 83 |
+| Passed | 83 |
 | Failed | 0 |
 | Pass rate | 100.0% |
 | Gate | PASS |
@@ -23,7 +23,8 @@ Adversarial cases that try to fool Gust — expected pass/fail/flaky/infra/mutat
 | mutation | 18 | 18 | 100% |
 | fixture | 9 | 9 | 100% |
 | recovery | 6 | 6 | 100% |
+| mode3 | 5 | 5 | 100% |
 
 ## Trust claim
 
-When this gate is green, Gust correctly classifies the adversarial scenarios in this suite — evidence that the evaluator/statistics/fixture/mutation machinery can be trusted to judge agent behavior.
+When this gate is green, Gust correctly classifies the adversarial scenarios in this curated catalog — regression evidence for evaluator, statistics, fixture, mutation, and Mode 3 isolation machinery. It does not prove correctness on arbitrary real-world agents.

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Deferred / planned stub.** Not part of the Phase 17 hardening implementation.
+**Deferred / planned stub.** Not part of Phase 17 or Phase 20. Mode 3 synthetic fixture-isolation tests live in Phase 20; this phase is the live-LLM path.
 
 ## Objective
 
@@ -32,6 +32,7 @@ Build on the existing LangChain demo scaffold:
 ## Dependencies
 
 - Phase 17 semantic hardening complete (evaluator trust).
+- Phase 20 fixture isolation and retry semantics complete.
 - Prefer local Ollama or recorded fixtures so CI stays offline-capable where possible.
 
 ## Non-goals

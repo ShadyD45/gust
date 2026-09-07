@@ -159,7 +159,7 @@ Run the agent *N* times and gate on the confidence interval, not a single outcom
 | Flag | Default | Purpose |
 |---|---|---|
 | `--samples` | scenario value | Override `reliability.samples` |
-| `--concurrency` | `4` | Parallel workers |
+| `--concurrency` | `4` | Parallel workers (`gust.yaml` `test.concurrency` if flag omitted) |
 | `--runner` | `synthetic` | `synthetic`, `ollama`, `http`, `exec` |
 | `--endpoint` | (empty) | Agent URL for `http`; Ollama URL for `ollama` |
 | `--command` | | Exec argv (or pass args after `--`) |
@@ -169,7 +169,16 @@ Run the agent *N* times and gate on the confidence interval, not a single outcom
 | `--fixtures` | | Extra fixture JSON directory |
 | `--model` | `llama3.1:8b` | Ollama model |
 | `--pass-probability` | `1.0` | Synthetic runner pass rate — useful for testing your own gates |
-| `--policy` | built-in defaults | Policy file |
+| `--policy` | `gust.yaml` `policy:` or built-in defaults | Policy file |
+| `--timeout` | `gust.yaml` `test.timeout` or runner default | Per-sample runner timeout (seconds) |
+| `--retry-on` | `transient` | `none` / `transient` / `all` — which runner errors retry |
+| `--retry-max-attempts` | `2` | Total `Run` tries including the first (`1` = no retry) |
+| `--retry-backoff-ms` | `50` | Wait before a retry |
+| `--max-execution-error-rate` | `0.20` | Abort as runner-unstable above this fraction; explicit `0` is zero tolerance |
+
+Defaults merge **CLI flags > `policy.yaml` > `gust.yaml` > code defaults**. `gust init` writes a `gust.yaml` that is actually loaded (search cwd, then parents).
+
+Retry defaults are reliability-first: only **transient** infrastructure errors retry (network/`ErrTransient`). Agent process crashes and timeouts are not retried unless you set `--retry-on all`. Each sample gets its own cloned fixtures and ephemeral mock-tool proxy so concurrent ordered fixtures do not share sequence counters.
 
 The `synthetic` runner is seeded and needs no GPU or API key, which makes it the right choice for verifying that your policy and assertions behave before you spend tokens. `--pass-probability 0.85` lets you prove your CI actually goes red on a flaky agent.
 

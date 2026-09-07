@@ -12,7 +12,7 @@ go build -o gust-aee ./cmd/gust-aee   # internal self-benchmarks (not for end us
 ./demo/run.sh            # Linux/macOS; ./demo/run.ps1 on Windows
 ```
 
-Self-trust checks (maintainers/CI):
+Self-benchmark checks (maintainers/CI) — golden-suite / validation-catalog regression, not a field proof of Gust on arbitrary agents:
 
 ```bash
 ./gust-aee report

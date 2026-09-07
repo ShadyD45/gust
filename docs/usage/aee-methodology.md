@@ -34,7 +34,7 @@ go test ./internal/core/aee/ -count=1
 
 ## Gust Validation Suite
 
-Complementary adversarial catalog (`gust-aee validate`) — ~80 crafted cases answering “should this pass / fail / be flaky / be infra / mutation / fixture / recovery?”. Gate requires **100%** case agreement.
+Complementary adversarial catalog (`gust-aee validate`) — crafted cases answering “should this pass / fail / be flaky / be infra / mutation / fixture / recovery / Mode 3 isolation?”. Gate requires every case in **this catalog** to match its authored expectation. That is regression evidence for Gust’s evaluation machinery, not a proof that Gust correctly evaluates arbitrary real-world agents.
 
 ```bash
 ./gust-aee validate
@@ -52,8 +52,8 @@ See [Validation Suite]({% link benchmarks/validation.md %}).
 | Input | Measurement | Gate |
 |-------|-------------|------|
 | Detection rate | Mutation engine on `mutate.BuildGoldenSuite()` | >= 90% |
-| False positive rate | Same suite, unmutated | <= 5% |
-| Throughput | Deterministic evaluators only (no `llm_judge`) | >= 1,000 cases/sec |
+| False positive rate | Same golden suite, unmutated | <= 5% |
+| Deterministic evaluator throughput | In-process evaluator calls only (no `llm_judge`, not `gust test`) | >= 1,000 evaluator calls/sec |
 | Reproducibility | JCS hash of analyze results (timing excluded) over 20 trials | 100% identical |
 | H7 (reliability engine) | Wilson vectors 100/100->PASS, 20/20->FLAKY, 17/20->FAIL | all correct |
 

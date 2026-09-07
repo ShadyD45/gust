@@ -30,9 +30,9 @@ func formatMarkdown(rep *Report, footer string) string {
 	b.WriteString("| --- | --- | --- |\n")
 	fmt.Fprintf(&b, "| Detection rate | **%.1f%%** (%d/%d mutants) | >= %.0f%% |\n",
 		rep.DetectionRate*100, rep.MutantsDetected, rep.MutantsApplied, MinDetectionRate*100)
-	fmt.Fprintf(&b, "| False positive rate | **%.1f%%** | <= %.0f%% |\n",
+	fmt.Fprintf(&b, "| False positive rate (golden suite) | **%.1f%%** | <= %.0f%% |\n",
 		rep.FalsePositiveRate*100, MaxFalsePositive*100)
-	fmt.Fprintf(&b, "| Eval throughput | **%s** cases/sec | >= %.0f |\n",
+	fmt.Fprintf(&b, "| Deterministic evaluator throughput | **%s** evaluator calls/sec | >= %.0f |\n",
 		FormatThroughput(rep.EvalThroughputCPS), MinEvalThroughput)
 	fmt.Fprintf(&b, "| Reproducibility | **%.0f%%** identical (%d trials) | 100%% |\n",
 		rep.Reproducibility*100, ReproTrials)
@@ -105,7 +105,7 @@ func FormatSiteResultsMarkdown(rep *Report) string {
 	return b.String()
 }
 
-// FormatThroughput renders large cases/sec values readably.
+// FormatThroughput renders large evaluator-calls/sec values readably.
 func FormatThroughput(cps float64) string {
 	switch {
 	case cps >= 1e9:

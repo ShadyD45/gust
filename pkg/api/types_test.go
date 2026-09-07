@@ -155,6 +155,26 @@ func TestPolicyValidation(t *testing.T) {
 	if err := badPolicy.Validate(); err == nil {
 		t.Errorf("expected error for on_flaky 'explode', got nil")
 	}
+
+	badRate := policy
+	v := 5.0
+	badRate.Reliability.MaxExecutionErrorRate = &v
+	if err := badRate.Validate(); err == nil {
+		t.Errorf("expected error for max_execution_error_rate 5")
+	}
+
+	zero := 0.0
+	okZero := policy
+	okZero.Reliability.MaxExecutionErrorRate = &zero
+	if err := okZero.Validate(); err != nil {
+		t.Errorf("explicit 0 max_execution_error_rate should be valid: %v", err)
+	}
+
+	badRetry := policy
+	badRetry.Reliability.Retry.On = "sometimes"
+	if err := badRetry.Validate(); err == nil {
+		t.Errorf("expected error for retry.on 'sometimes'")
+	}
 }
 
 func TestJSONRoundTrip(t *testing.T) {

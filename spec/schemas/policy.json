@@ -16,6 +16,16 @@
       },
       "additionalProperties": false
     },
+    "allow_llm_judge": { "type": "boolean" },
+    "llm_judge": {
+      "type": "object",
+      "properties": {
+        "calibrated": { "type": "boolean" },
+        "min_spearman": { "type": "number" },
+        "spearman_rho": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
     "reliability": {
       "type": "object",
       "required": ["default_minimum_pass_rate", "min_samples_for_verdict", "on_flaky"],
@@ -23,7 +33,16 @@
         "default_minimum_pass_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
         "min_samples_for_verdict": { "type": "integer", "minimum": 1 },
         "on_flaky": { "type": "string", "enum": ["warn", "fail", "ignore"] },
-        "max_execution_error_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+        "max_execution_error_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "retry": {
+          "type": "object",
+          "properties": {
+            "max_attempts": { "type": "integer", "minimum": 1 },
+            "backoff_ms": { "type": "integer", "minimum": 0 },
+            "on": { "type": "string", "enum": ["none", "transient", "all"] }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },

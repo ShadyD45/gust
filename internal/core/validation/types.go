@@ -14,6 +14,7 @@ const (
 	KindInfra    Kind = "infra"
 	KindMutation Kind = "mutation"
 	KindFixture  Kind = "fixture"
+	KindMode3    Kind = "mode3"
 )
 
 // Category groups cases by the review's trust questions.
@@ -27,6 +28,7 @@ const (
 	CatMutation Category = "mutation"
 	CatFixture  Category = "fixture"
 	CatRecovery Category = "recovery"
+	CatMode3    Category = "mode3"
 )
 
 // Case is one adversarial scenario with a known expected outcome.
@@ -43,24 +45,24 @@ type Case struct {
 	WantPassed bool            `json:"want_passed,omitempty"`
 
 	// KindWilson
-	Passes     int     `json:"passes,omitempty"`
-	Total      int     `json:"total,omitempty"`
-	MinPass    float64 `json:"min_pass,omitempty"`
-	Confidence float64 `json:"confidence,omitempty"`
-	MinSamples int     `json:"min_samples,omitempty"`
+	Passes      int             `json:"passes,omitempty"`
+	Total       int             `json:"total,omitempty"`
+	MinPass     float64         `json:"min_pass,omitempty"`
+	Confidence  float64         `json:"confidence,omitempty"`
+	MinSamples  int             `json:"min_samples,omitempty"`
 	WantVerdict api.VerdictType `json:"want_verdict,omitempty"`
 
 	// KindInfra
-	FailFirstN  int     `json:"fail_first_n,omitempty"`
-	Samples     int     `json:"samples,omitempty"`
-	MaxExecRate float64 `json:"max_exec_rate,omitempty"`
-	WantUnstable bool   `json:"want_unstable,omitempty"`
-	WantExecErrs int    `json:"want_exec_errs,omitempty"`
+	FailFirstN   int     `json:"fail_first_n,omitempty"`
+	Samples      int     `json:"samples,omitempty"`
+	MaxExecRate  float64 `json:"max_exec_rate,omitempty"`
+	WantUnstable bool    `json:"want_unstable,omitempty"`
+	WantExecErrs int     `json:"want_exec_errs,omitempty"`
 
 	// KindMutation
-	MutatorName string `json:"mutator,omitempty"`
-	GoldenIdx   int    `json:"golden_idx,omitempty"`
-	WantDetected bool  `json:"want_detected,omitempty"`
+	MutatorName  string `json:"mutator,omitempty"`
+	GoldenIdx    int    `json:"golden_idx,omitempty"`
+	WantDetected bool   `json:"want_detected,omitempty"`
 
 	// KindFixture
 	Fixtures     []api.Fixture    `json:"-"`
@@ -69,6 +71,16 @@ type Case struct {
 	WantStatus   string           `json:"want_status,omitempty"`
 	CallSequence []ports.ToolCall `json:"-"` // ordered lookups; last result checked if set
 	WantBodies   []string         `json:"-"` // expected Body string for each sequential call
+
+	// KindMode3
+	Mode3Calls        []ports.ToolCall `json:"-"`
+	Mode3ExtraCalls   int              `json:"mode3_extra_calls,omitempty"`
+	Mode3FailFirst    bool             `json:"mode3_fail_first,omitempty"`
+	Mode3Samples      int              `json:"mode3_samples,omitempty"`
+	Mode3Concurrency  int              `json:"mode3_concurrency,omitempty"`
+	WantMode3Passes   int              `json:"want_mode3_passes,omitempty"`
+	WantMode3ExecErrs int              `json:"want_mode3_exec_errs,omitempty"`
+	WantAllFound      bool             `json:"want_all_found,omitempty"`
 }
 
 // CaseResult is the outcome of running one case.
@@ -83,16 +95,16 @@ type CaseResult struct {
 
 // Report summarizes the Gust Validation Suite run.
 type Report struct {
-	GeneratedAt   string                `json:"generated_at"`
-	SuiteVersion  string                `json:"suite_version"`
-	Total         int                   `json:"total"`
-	Passed        int                   `json:"passed"`
-	Failed        int                   `json:"failed"`
-	PassRate      float64               `json:"pass_rate"`
-	GatePassed    bool                  `json:"gate_passed"`
-	ByCategory    map[string]CatStats   `json:"by_category"`
-	Failures      []CaseResult          `json:"failures,omitempty"`
-	Results       []CaseResult          `json:"results"`
+	GeneratedAt  string              `json:"generated_at"`
+	SuiteVersion string              `json:"suite_version"`
+	Total        int                 `json:"total"`
+	Passed       int                 `json:"passed"`
+	Failed       int                 `json:"failed"`
+	PassRate     float64             `json:"pass_rate"`
+	GatePassed   bool                `json:"gate_passed"`
+	ByCategory   map[string]CatStats `json:"by_category"`
+	Failures     []CaseResult        `json:"failures,omitempty"`
+	Results      []CaseResult        `json:"results"`
 }
 
 // CatStats is per-category counts.
@@ -103,7 +115,7 @@ type CatStats struct {
 }
 
 // SuiteVersion bumps when case semantics change in a breaking way.
-const SuiteVersion = "1.0.0"
+const SuiteVersion = "1.1.0"
 
 // MinPassRate is the gate for publishing trust: every case must pass.
 const MinPassRate = 1.0

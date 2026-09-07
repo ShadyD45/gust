@@ -27,8 +27,8 @@ func ExecuteAEE() int {
 // Not published to end users via package managers — see Phase 19 releases plan.
 func NewAEERoot() *cobra.Command {
 	root := &cobra.Command{
-		Use:           "gust-aee",
-		Short:         "Internal self-benchmarks for gust (maintainer/CI)",
+		Use:   "gust-aee",
+		Short: "Internal self-benchmarks for gust (maintainer/CI)",
 		Long: `Agent Evaluation Effectiveness and the Gust Validation Suite.
 
 These commands measure gust itself — mutation DR/FPR, Wilson vectors, adversarial
@@ -105,7 +105,7 @@ Self-benchmark only; see docs/benchmarks/ and docs/usage/aee-methodology.md.
 				fmt.Printf("gust-aee report\n")
 				fmt.Printf("  detection_rate:      %.2f%%  (min %.0f%%)\n", rep.DetectionRate*100, aee.MinDetectionRate*100)
 				fmt.Printf("  false_positive_rate: %.2f%%  (max %.0f%%)\n", rep.FalsePositiveRate*100, aee.MaxFalsePositive*100)
-				fmt.Printf("  eval_throughput:     %s cases/sec  (min %.0f)\n", aee.FormatThroughput(rep.EvalThroughputCPS), aee.MinEvalThroughput)
+				fmt.Printf("  eval_throughput:     %s evaluator calls/sec  (min %.0f)\n", aee.FormatThroughput(rep.EvalThroughputCPS), aee.MinEvalThroughput)
 				fmt.Printf("  reproducibility:     %.0f%% identical hashes over %d trials\n", rep.Reproducibility*100, aee.ReproTrials)
 				fmt.Printf("  H7 pass:             %s\n", rep.H7.PassCase)
 				fmt.Printf("  H7 flaky:            %s\n", rep.H7.FlakyCase)
@@ -195,7 +195,7 @@ Offline only. Exit 1 if any case mismatches its expected outcome.
 				fmt.Printf("gust-aee validate\n")
 				fmt.Printf("  suite_version: %s\n", rep.SuiteVersion)
 				fmt.Printf("  cases:         %d/%d passed (%.1f%%)\n", rep.Passed, rep.Total, rep.PassRate*100)
-				for _, cat := range []string{"pass", "fail", "flaky", "infra", "mutation", "fixture", "recovery"} {
+				for _, cat := range []string{"pass", "fail", "flaky", "infra", "mutation", "fixture", "recovery", "mode3"} {
 					st, ok := rep.ByCategory[cat]
 					if !ok {
 						continue

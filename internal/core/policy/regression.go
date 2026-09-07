@@ -17,13 +17,13 @@ type ExperimentStats struct {
 
 // RegressionResult describes baseline vs candidate comparison.
 type RegressionResult struct {
-	Regressed            bool    `json:"regressed"`
-	PassRateDrop         float64 `json:"pass_rate_drop"`
-	LatencyIncreaseRatio float64 `json:"latency_increase_ratio"`
-	LatencyComparable    bool    `json:"latency_comparable"`
-	Significant          bool    `json:"significant"`
-	PValue               float64 `json:"p_value"`
-	Message              string  `json:"message"`
+	Regressed            bool     `json:"regressed"`
+	PassRateDrop         float64  `json:"pass_rate_drop"`
+	LatencyIncreaseRatio *float64 `json:"latency_increase_ratio,omitempty"`
+	LatencyComparable    bool     `json:"latency_comparable"`
+	Significant          bool     `json:"significant"`
+	PValue               float64  `json:"p_value"`
+	Message              string   `json:"message"`
 }
 
 // CompareRegression detects statistically meaningful regressions.
@@ -40,9 +40,10 @@ func CompareRegression(baseline, candidate ExperimentStats, policy api.PolicyReg
 
 	drop := baseline.PassRate - candidate.PassRate
 	latComparable := baseline.LatencyNs > 0
-	latRatio := 0.0
+	var latRatio *float64
 	if latComparable {
-		latRatio = (candidate.LatencyNs - baseline.LatencyNs) / baseline.LatencyNs
+		r := (candidate.LatencyNs - baseline.LatencyNs) / baseline.LatencyNs
+		latRatio = &r
 	}
 
 	pValue := twoProportionPValue(baseline.Passes, baseline.Samples, candidate.Passes, candidate.Samples)
@@ -70,7 +71,7 @@ func CompareRegression(baseline, candidate ExperimentStats, policy api.PolicyReg
 		res.Message = "statistically significant pass-rate regression"
 		return res
 	}
-	if latComparable && latRatio > maxLat && candidate.LatencyNs > baseline.LatencyNs {
+	if latComparable && latRatio != nil && *latRatio > maxLat && candidate.LatencyNs > baseline.LatencyNs {
 		res.Regressed = true
 		res.Message = "latency increase exceeds policy threshold"
 		return res

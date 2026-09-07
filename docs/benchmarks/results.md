@@ -11,15 +11,15 @@ hand — re-run `gust-aee report --site-doc` instead.
 
 ## gust AEE self-report
 
-**Gate:** **PASS** | **Score:** `1.000` | **Generated:** `2026-09-07T04:13:08Z`
+**Gate:** **PASS** | **Score:** `1.000` | **Generated:** `2026-09-07T09:19:36Z`
 
 ### Metrics
 
 | Metric | Value | Gate |
 | --- | --- | --- |
 | Detection rate | **100.0%** (16/16 mutants) | >= 90% |
-| False positive rate | **0.0%** | <= 5% |
-| Eval throughput | **8.4M** cases/sec | >= 1000 |
+| False positive rate (golden suite) | **0.0%** | <= 5% |
+| Deterministic evaluator throughput | **11.7M** evaluator calls/sec | >= 1000 |
 | Reproducibility | **100%** identical (20 trials) | 100% |
 
 ### Reliability engine (H7)

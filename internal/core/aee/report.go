@@ -17,12 +17,12 @@ import (
 
 // Thresholds match spec §23 / §24 and MVP DoD.
 const (
-	MinDetectionRate   = 0.90
-	MaxFalsePositive   = 0.05
-	MinEvalThroughput  = 1000.0 // cases/sec
-	MinReproIdentical  = 1.0    // fraction of identical hashes
-	ReproTrials        = 20
-	ThroughputTrials   = 5000
+	MinDetectionRate  = 0.90
+	MaxFalsePositive  = 0.05
+	MinEvalThroughput = 1000.0 // deterministic evaluator calls/sec
+	MinReproIdentical = 1.0    // fraction of identical hashes
+	ReproTrials       = 20
+	ThroughputTrials  = 5000
 )
 
 // Report is the Agent Evaluation Effectiveness self-score for gust.

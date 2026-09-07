@@ -34,6 +34,10 @@ func newTestCmd() *cobra.Command {
 	var otelGRPCListen string
 	var timeoutSec int
 	var judgePlugin string
+	var retryOn string
+	var retryMaxAttempts int
+	var retryBackoffMs int
+	var maxExecRate float64
 
 	cmd := &cobra.Command{
 		Use:   "test <scenario.yaml|dir> [-- command...]",
@@ -56,9 +60,45 @@ func newTestCmd() *cobra.Command {
 				return fmt.Errorf("discover scenarios in %s: %w", args[0], err)
 			}
 
+			proj, _, err := loadProjectConfig("")
+			if err != nil {
+				return err
+			}
+
 			pol, err := loadPolicy(policyPath)
 			if err != nil {
 				return err
+			}
+
+			conc := concurrency
+			if conc <= 0 {
+				conc = proj.Test.Concurrency
+			}
+			if conc <= 0 {
+				conc = 4
+			}
+			sampleOverride := samples
+			if sampleOverride <= 0 {
+				sampleOverride = proj.Test.Samples
+			}
+
+			retry := overlayRetry(proj.Retry, pol.Reliability.Retry)
+			if cmd.Flags().Changed("retry-on") {
+				retry.On = api.RetryOn(retryOn)
+			}
+			if cmd.Flags().Changed("retry-max-attempts") {
+				retry.MaxAttempts = retryMaxAttempts
+			}
+			if cmd.Flags().Changed("retry-backoff-ms") {
+				retry.BackoffMs = retryBackoffMs
+			}
+
+			var maxExec *float64
+			if cmd.Flags().Changed("max-execution-error-rate") {
+				v := maxExecRate
+				maxExec = &v
+			} else {
+				maxExec = pol.Reliability.MaxExecutionErrorRate
 			}
 
 			base := runnerFlags{
@@ -75,6 +115,8 @@ func newTestCmd() *cobra.Command {
 			}
 			if timeoutSec > 0 {
 				base.Timeout = time.Duration(timeoutSec) * time.Second
+			} else if d, err := parseOptionalDuration(proj.Test.Timeout); err == nil && d > 0 {
+				base.Timeout = d
 			}
 			if command != "" {
 				base.Command = strings.Fields(command)
@@ -131,7 +173,7 @@ func newTestCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				applyScenarioDefaults(&sc, samples)
+				applyScenarioDefaults(&sc, sampleOverride, pol)
 
 				flags := mergeRunnerFlags(base, sc)
 				if err := ensureReceiver(flags); err != nil {
@@ -158,14 +200,17 @@ func newTestCmd() *cobra.Command {
 				result, err := sampler.RunScenario(context.Background(), coretest.SamplingConfig{
 					Scenario:              sc,
 					Runner:                runner,
-					Concurrency:           concurrency,
+					Concurrency:           conc,
 					Endpoint:              flags.Endpoint,
 					FixtureEndpoint:       fixtureEndpoint,
 					FixtureProvider:       provider,
+					ProxyFactory:          fixtures.StartProxy,
 					MinSamples:            pol.Reliability.MinSamplesForVerdict,
-					MaxExecutionErrorRate: pol.Reliability.MaxExecutionErrorRate,
+					MaxExecutionErrorRate: maxExec,
 					HasOrderedFixtures:    ordered,
 					EvalContext:           evalContextFromPolicy(pol, sc.ID),
+					Retry:                 retry,
+					HardConstraints:       pol.HardConstraints,
 				})
 				if err != nil {
 					return fmt.Errorf("%s: %w", sc.ID, err)
@@ -205,7 +250,7 @@ func newTestCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().IntVar(&samples, "samples", 0, "override scenario sample count")
-	cmd.Flags().IntVar(&concurrency, "concurrency", 4, "parallel workers")
+	cmd.Flags().IntVar(&concurrency, "concurrency", 0, "parallel workers (default: gust.yaml or 4)")
 	cmd.Flags().StringVar(&runnerName, "runner", "synthetic", "test runner: synthetic|ollama|http|exec")
 	cmd.Flags().StringVar(&endpoint, "endpoint", "", "agent URL (http) or Ollama URL (ollama)")
 	cmd.Flags().StringVar(&model, "model", "llama3.1:8b", "ollama model")
@@ -220,10 +265,14 @@ func newTestCmd() *cobra.Command {
 	cmd.Flags().StringVar(&otelGRPCListen, "otel-grpc-listen", "", "in-process OTLP/gRPC bind (default derived from --otel-listen)")
 	cmd.Flags().IntVar(&timeoutSec, "timeout", 0, "per-sample timeout in seconds")
 	cmd.Flags().StringVar(&judgePlugin, "judge-plugin", "", "Tier-2 LLM judge plugin (official SDK wrappers)")
+	cmd.Flags().StringVar(&retryOn, "retry-on", "", "retry runner errors: none|transient|all (default: transient)")
+	cmd.Flags().IntVar(&retryMaxAttempts, "retry-max-attempts", 0, "total Run attempts including the first (default: 2)")
+	cmd.Flags().IntVar(&retryBackoffMs, "retry-backoff-ms", 0, "backoff before a retry in milliseconds (default: 50)")
+	cmd.Flags().Float64Var(&maxExecRate, "max-execution-error-rate", 0, "abort when exec-error fraction exceeds this (default: 0.20; 0 = zero tolerance when flag set)")
 	return cmd
 }
 
-func applyScenarioDefaults(sc *api.TestScenario, samples int) {
+func applyScenarioDefaults(sc *api.TestScenario, samples int, pol api.Policy) {
 	if samples > 0 {
 		sc.Reliability.Samples = samples
 	}
@@ -231,7 +280,11 @@ func applyScenarioDefaults(sc *api.TestScenario, samples int) {
 		sc.Reliability.Confidence = 0.95
 	}
 	if sc.Reliability.MinimumPassRate == 0 {
-		sc.Reliability.MinimumPassRate = 0.95
+		min := pol.Reliability.DefaultMinimumPassRate
+		if min <= 0 {
+			min = 0.95
+		}
+		sc.Reliability.MinimumPassRate = min
 	}
 	if len(sc.Assertions) == 0 {
 		sc.Assertions = []api.Assertion{{ID: "default_success", Type: api.AssertTaskSuccess}}

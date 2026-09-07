@@ -18,7 +18,7 @@ func FormatMarkdown(rep *Report) string {
 		fmt.Fprintf(&b, "- Gate: **FAIL**\n\n")
 	}
 	fmt.Fprintf(&b, "| Category | Passed | Total | Rate |\n|---|---:|---:|---:|\n")
-	for _, cat := range []string{"pass", "fail", "flaky", "infra", "mutation", "fixture", "recovery"} {
+	for _, cat := range []string{"pass", "fail", "flaky", "infra", "mutation", "fixture", "recovery", "mode3"} {
 		st, ok := rep.ByCategory[cat]
 		if !ok {
 			continue
@@ -40,7 +40,7 @@ func FormatDocMarkdown(rep *Report) string {
 	fmt.Fprintf(&b, "# Gust Validation Suite results\n\n")
 	fmt.Fprintf(&b, "_Generated %s (suite %s). Regenerated via `gust-aee validate --doc …`._\n\n",
 		rep.GeneratedAt, rep.SuiteVersion)
-	fmt.Fprintf(&b, "Adversarial cases that try to fool Gust — expected pass/fail/flaky/infra/mutation/fixture/recovery outcomes.\n\n")
+	fmt.Fprintf(&b, "Adversarial cases that try to fool Gust — expected pass/fail/flaky/infra/mutation/fixture/recovery/mode3 outcomes.\n\n")
 	fmt.Fprintf(&b, "| Metric | Value |\n|---|---|\n")
 	fmt.Fprintf(&b, "| Total cases | %d |\n", rep.Total)
 	fmt.Fprintf(&b, "| Passed | %d |\n", rep.Passed)
@@ -49,7 +49,7 @@ func FormatDocMarkdown(rep *Report) string {
 	fmt.Fprintf(&b, "| Gate | %s |\n\n", map[bool]string{true: "PASS", false: "FAIL"}[rep.GatePassed])
 	fmt.Fprintf(&b, "## By category\n\n")
 	fmt.Fprintf(&b, "| Category | Passed | Total | Rate |\n|---|---:|---:|---:|\n")
-	for _, cat := range []string{"pass", "fail", "flaky", "infra", "mutation", "fixture", "recovery"} {
+	for _, cat := range []string{"pass", "fail", "flaky", "infra", "mutation", "fixture", "recovery", "mode3"} {
 		st, ok := rep.ByCategory[cat]
 		if !ok {
 			continue
@@ -57,8 +57,7 @@ func FormatDocMarkdown(rep *Report) string {
 		fmt.Fprintf(&b, "| %s | %d | %d | %.0f%% |\n", cat, st.Passed, st.Total, st.Rate*100)
 	}
 	fmt.Fprintf(&b, "\n## Trust claim\n\n")
-	fmt.Fprintf(&b, "When this gate is green, Gust correctly classifies the adversarial scenarios in this suite — ")
-	fmt.Fprintf(&b, "evidence that the evaluator/statistics/fixture/mutation machinery can be trusted to judge agent behavior.\n")
+	fmt.Fprintf(&b, "When this gate is green, Gust correctly classifies the adversarial scenarios in this curated catalog — regression evidence for evaluator, statistics, fixture, mutation, and Mode 3 isolation machinery. It does not prove correctness on arbitrary real-world agents.\n")
 	return b.String()
 }
 
@@ -82,8 +81,9 @@ func FormatSiteResultsMarkdown(rep *Report) string {
 		"pass": "Should this pass?", "fail": "Should this fail?", "flaky": "Should this be flaky?",
 		"infra": "Infrastructure error?", "mutation": "Mutation detected?",
 		"fixture": "Fixture match?", "recovery": "Considered recovery?",
+		"mode3": "Mode 3 sample isolation?",
 	}
-	for _, cat := range []string{"pass", "fail", "flaky", "infra", "mutation", "fixture", "recovery"} {
+	for _, cat := range []string{"pass", "fail", "flaky", "infra", "mutation", "fixture", "recovery", "mode3"} {
 		st, ok := rep.ByCategory[cat]
 		if !ok {
 			continue

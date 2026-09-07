@@ -16,6 +16,10 @@ import (
 // ErrRunnerUnstable is returned when execution errors alone exceed the configured rate.
 var ErrRunnerUnstable = errors.New("runner unstable: execution error rate exceeds max_execution_error_rate")
 
+// FixtureProxyFactory starts an isolated mock-tool HTTP proxy for one sample's provider.
+// Core stays adapter-free: CLI and the validation suite supply the fixtures adapter.
+type FixtureProxyFactory func(provider ports.FixtureProvider) (endpoint string, closeFn func() error, err error)
+
 // SamplingConfig configures a Mode 3 probabilistic test run.
 type SamplingConfig struct {
 	Scenario        api.TestScenario
@@ -23,15 +27,19 @@ type SamplingConfig struct {
 	Evaluators      []ports.Evaluator
 	Concurrency     int
 	Endpoint        string                // runner-specific (ollama / http agent URL)
-	FixtureEndpoint string                // mock tool proxy; passed to Runner.Run
+	FixtureEndpoint string                // shared mock proxy fallback when samples cannot be isolated
 	FixtureProvider ports.FixtureProvider // optional; cloned per sample when possible
 	MinSamples      int                   // override for INSUFFICIENT_SAMPLES; 0 → use policy default 5
 	EvalContext     ports.EvaluationContext
 	// MaxExecutionErrorRate aborts the scenario when exec errors / samples exceeds this.
-	// Zero or negative uses default 0.20.
-	MaxExecutionErrorRate float64
+	// Nil uses default 0.20; explicit 0 is zero tolerance.
+	MaxExecutionErrorRate *float64
 	// HasOrderedFixtures forces concurrency=1 when the provider cannot be cloned.
 	HasOrderedFixtures bool
+	// ProxyFactory, when set, starts a per-sample proxy bound to the cloned provider.
+	ProxyFactory    FixtureProxyFactory
+	Retry           api.RetryPolicy
+	HardConstraints api.HardConstraints
 }
 
 // ClonableFixtureProvider is a FixtureProvider that can isolate per-sample state.
@@ -78,10 +86,8 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 	if confidence <= 0 {
 		confidence = 0.95
 	}
-	maxExecRate := cfg.MaxExecutionErrorRate
-	if maxExecRate <= 0 {
-		maxExecRate = 0.20
-	}
+	maxExecRate := api.EffectiveMaxExecutionErrorRate(cfg.MaxExecutionErrorRate)
+	retry := cfg.Retry.Effective()
 
 	type slot struct {
 		passed  bool
@@ -109,18 +115,38 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 				fixtureEndpoint = cfg.Endpoint
 			}
 
-			provider := cfg.FixtureProvider
-			if c, ok := provider.(ClonableFixtureProvider); ok {
-				provider = c.Clone()
+			var sampleProvider ports.FixtureProvider
+			if c, ok := cfg.FixtureProvider.(ClonableFixtureProvider); ok {
+				sampleProvider = c.Clone()
+			} else {
+				sampleProvider = cfg.FixtureProvider
 			}
 
-			run, err := runWithRetry(ctx, cfg.Runner, cfg.Scenario, fixtureEndpoint)
+			if cfg.ProxyFactory != nil && sampleProvider != nil && canClone {
+				ep, closer, err := cfg.ProxyFactory(sampleProvider)
+				if err != nil {
+					results[idx].execErr = err
+					return
+				}
+				if closer != nil {
+					defer func() { _ = closer() }()
+				}
+				fixtureEndpoint = ep
+			}
+
+			reset := func() {
+				if sampleProvider != nil {
+					_ = sampleProvider.Reset()
+				}
+			}
+
+			run, err := runWithRetry(ctx, cfg.Runner, cfg.Scenario, fixtureEndpoint, retry, reset)
 			if err != nil {
 				results[idx].execErr = err
 				return
 			}
-			if provider != nil && concurrency == 1 {
-				_ = provider.Reset()
+			if sampleProvider != nil && concurrency == 1 && !canClone {
+				_ = sampleProvider.Reset()
 			}
 			report, err := s.analyzeEngine.AnalyzeRun(ctx, run, cfg.Scenario.Assertions, withScenarioID(cfg.EvalContext, cfg.Scenario.ID))
 			if err != nil {
@@ -137,6 +163,7 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 					Message:          r.Message,
 					Evidence:         r.Evidence,
 					ExecutionTimeNs:  r.ExecutionTimeNs,
+					Criticality:      r.Criticality,
 				}
 			}
 			results[idx].passed = report.Passed
@@ -148,7 +175,6 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 	passes := 0
 	execErrors := 0
 	perRun := make([]api.EvaluationResult, 0, n)
-	hardFail := false
 	for _, sl := range results {
 		if sl.execErr != nil {
 			execErrors++
@@ -157,13 +183,11 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 		if sl.passed {
 			passes++
 		}
-		for _, ev := range sl.evals {
-			perRun = append(perRun, ev)
-			if isHardConstraintFailure(ev) {
-				hardFail = true
-			}
-		}
+		perRun = append(perRun, sl.evals...)
 	}
+
+	forbidden, schema, other := api.CountPolicyHardFailures(perRun)
+	hardFail := api.HardConstraintsExceeded(cfg.HardConstraints, forbidden, schema, other)
 
 	if float64(execErrors)/float64(n) > maxExecRate {
 		return nil, fmt.Errorf("%w: %d/%d samples (max rate %.2f)", ErrRunnerUnstable, execErrors, n, maxExecRate)
@@ -188,30 +212,27 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 	}, nil
 }
 
-func runWithRetry(ctx context.Context, runner ports.TestRunner, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
-	run, err := runner.Run(ctx, scenario, fixtureEndpoint)
-	if err == nil {
-		return run, nil
+func runWithRetry(ctx context.Context, runner ports.TestRunner, scenario api.TestScenario, fixtureEndpoint string, retry api.RetryPolicy, reset func()) (api.AgentRun, error) {
+	var lastErr error
+	for attempt := 1; attempt <= retry.MaxAttempts; attempt++ {
+		if attempt > 1 && reset != nil {
+			reset()
+		}
+		run, err := runner.Run(ctx, scenario, fixtureEndpoint)
+		if err == nil {
+			return run, nil
+		}
+		lastErr = err
+		if attempt == retry.MaxAttempts || !ports.IsRetryable(err, retry.On) {
+			return api.AgentRun{}, err
+		}
+		select {
+		case <-ctx.Done():
+			return api.AgentRun{}, ctx.Err()
+		case <-time.After(time.Duration(retry.BackoffMs) * time.Millisecond):
+		}
 	}
-	// One bounded retry for transient provider/network blips.
-	select {
-	case <-ctx.Done():
-		return api.AgentRun{}, ctx.Err()
-	case <-time.After(50 * time.Millisecond):
-	}
-	return runner.Run(ctx, scenario, fixtureEndpoint)
-}
-
-func isHardConstraintFailure(ev api.EvaluationResult) bool {
-	if ev.Passed {
-		return false
-	}
-	switch ev.EvaluatorName {
-	case "forbidden_tool", "schema_validation":
-		return true
-	default:
-		return false
-	}
+	return api.AgentRun{}, lastErr
 }
 
 func withScenarioID(evalCtx ports.EvaluationContext, scenarioID string) ports.EvaluationContext {

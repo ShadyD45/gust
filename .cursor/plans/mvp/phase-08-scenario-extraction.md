@@ -149,10 +149,11 @@ provenance:
 
 ## 4. Content-Addressed Datasets (`internal/core/dataset/`)
 
-Bundles multiple `TestScenario` files and golden `AgentRun` traces into an immutable, versioned test suite:
-1. Calculates content hash of all included scenarios using RFC 8785 JCS.
+Bundles multiple `TestScenario` files into a content-addressed, versioned test suite via `gust dataset bundle` / `verify`:
+1. Calculates content hash of included scenarios using RFC 8785 JCS.
 2. Emits `dataset.json` with manifest and content checksums.
-3. Guarantees that regression experiments compare against identical immutable test sets.
+3. Refuses silent overwrite when an existing scenario ID hashes differently (use `--force`). Orphan `*.json` files are pruned only with `--force`.
+4. `Verify` fails immediately if a scenario file is modified after bundling.
 
 ---
 

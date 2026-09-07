@@ -179,7 +179,7 @@ discovers every `scenario.yaml` under the tree (skips `_shared`) and any top-lev
 
 `gust scenario from-run run.json --layout dir --output tests/new_case/` writes this folder shape with empty assertions.
 
-`gust test` always starts the fixture proxy from resolved fixtures and `--fixtures`. Ordered-sequence fixtures are isolated per sample via fixture-provider cloning so parallel sampling stays safe; if a provider cannot be cloned, the sampler caps concurrency to 1.
+`gust test` always starts fixture proxies from resolved fixtures and `--fixtures`. Each sample clones a clonable provider and gets an ephemeral mock-tool proxy so ordered sequences cannot interleave under concurrency. If a provider cannot be cloned, the sampler caps concurrency to 1.
 
 No gust process in production; the job is the listener. See [CI integration]({% link usage/ci-github-actions.md %}).
 

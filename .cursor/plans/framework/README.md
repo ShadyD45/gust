@@ -1,10 +1,10 @@
-# Framework Hardening Plans (Phases 10–18)
+# Framework Hardening Plans (Phases 10–20)
 
 Post-MVP work that turns gust from a Go-native MVP into production-ready **test infrastructure for autonomous software** across languages and frameworks.
 
 Read after the MVP index: [`../mvp/README.md`](../mvp/README.md) and the master [`../roadmap.md`](../roadmap.md).
 
-Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel`, docs in [`../../usage/otel-ingest.md`](../../usage/otel-ingest.md)), Phase 11 Python/TypeScript SDKs + LangChain adapter, and Phase 12 optional LLM judge (`gust_sdk.judge` official SDK wrappers + `gust judge calibrate`). Self-benchmarks use internal **`gust-aee`** (`report` / `validate`), not the end-user `gust` CLI. User-facing guides live in [`docs/usage/`](../../usage/) and [`docs/extending/`](../../extending/).
+Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel`, docs in [`../../usage/otel-ingest.md`](../../usage/otel-ingest.md)), Phase 11 Python/TypeScript SDKs + LangChain adapter, Phase 12 optional LLM judge (`gust_sdk.judge` official SDK wrappers + `gust judge calibrate`), Phase 17 semantic hardening, and Phase 20 trust hardening. Self-benchmarks use internal **`gust-aee`** (`report` / `validate`), not the end-user `gust` CLI. User-facing guides live in [`docs/usage/`](../../usage/) and [`docs/extending/`](../../extending/). Phase 18 real-agent E2E remains deferred.
 
 ## Goals
 
@@ -12,7 +12,7 @@ Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel
 2. **Adopt** via Python/TypeScript SDKs and popular agent frameworks.
 3. **Harden** statistical and policy machinery for production CI.
 4. **Scale** continuous evaluation, failure mining, and multi-agent coverage.
-5. **Consolidate** evaluator semantics and adoption UX before more breadth (Phase 17); defer real-agent E2E to Phase 18.
+5. **Consolidate** evaluator semantics and adoption UX (Phase 17) then Mode 3 contracts (Phase 20) before more breadth; defer real-agent E2E to Phase 18.
 
 ## Phase index
 
@@ -28,6 +28,7 @@ Shipped from this track so far: Phase 10 file-based ingestion (`gust ingest otel
 | **17** | [phase-17-semantic-hardening.md](phase-17-semantic-hardening.md) | Evaluator semantics, `gust init`, mutation UX |
 | **18** | [phase-18-real-agent-e2e.md](phase-18-real-agent-e2e.md) | Real LLM agent E2E example (deferred) |
 | **19** | [phase-19-releases.md](phase-19-releases.md) | Public `gust` releases; `gust-aee` stays internal |
+| **20** | [phase-20-trust-hardening.md](phase-20-trust-hardening.md) | Fixture isolation, retry/policy, gust.yaml, dataset CLI, honest claims |
 
 ## Suggested sequencing
 
@@ -38,11 +39,12 @@ Phase 10 (ingestion) ──► Phase 11 (SDKs/adapters) ──► Phase 14 (cont
          └──► Phase 13 (stats v2) ──► Phase 12 (judge, gated)
                                       Phase 16 (multi-agent + self-AEE)
 
-Phase 17 (semantic hardening + adoption) ──► Phase 18 (real-agent E2E)
-Phase 19 (public gust releases; gust-aee internal) can run in parallel with 17/18
+Phase 17 (semantic hardening + adoption) ──► Phase 20 (trust hardening)
+                                            ──► Phase 18 (real-agent E2E, deferred)
+Phase 19 (public gust releases; gust-aee internal) can run in parallel with 17/18/20
 once the binary split is stable.
          │
          └── prefer before further breadth (13–16 feature work)
 ```
 
-**Principle:** ship deterministic, offline-capable core first; add network/LLM-dependent features only behind explicit gates and calibration thresholds. Harden semantics and front-door UX (17) before expanding demos (18) or production-scale mining (14–15).
+**Principle:** ship deterministic, offline-capable core first; add network/LLM-dependent features only behind explicit gates and calibration thresholds. Harden semantics (17) and Mode 3 contracts (20) before expanding live-LLM demos (18) or production-scale mining (14–15). Mode 3 synthetic isolation tests are Phase 20, not Phase 18.
