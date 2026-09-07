@@ -428,6 +428,32 @@ func (r *capturingRunner) Run(ctx context.Context, scenario api.TestScenario, fi
 	return run, nil
 }
 
+func TestConcurrencyOneMapsFixedOutcomesBySampleIndex(t *testing.T) {
+	outcomes := []bool{true, true, false, true, true}
+	runner := testrunner.NewSyntheticRunner(1.0, 99).WithFixedOutcomes(outcomes)
+	sampler := NewSampler(builtinEvals())
+	res, err := sampler.RunScenario(context.Background(), SamplingConfig{
+		Scenario:    baseScenario("serial_order", len(outcomes)),
+		Runner:      runner,
+		Concurrency: 1,
+		MinSamples:  1,
+	})
+	if err != nil {
+		t.Fatalf("RunScenario: %v", err)
+	}
+	if len(res.PerRunEvidence) != len(outcomes) {
+		t.Fatalf("evidence=%d want %d", len(res.PerRunEvidence), len(outcomes))
+	}
+	for i, want := range outcomes {
+		if res.PerRunEvidence[i].Passed != want {
+			t.Fatalf("sample %d passed=%v want %v", i, res.PerRunEvidence[i].Passed, want)
+		}
+	}
+	if res.Passes != 4 {
+		t.Fatalf("passes=%d want 4", res.Passes)
+	}
+}
+
 func TestEachSampleHasExactlyOneTrace(t *testing.T) {
 	inner := testrunner.NewSyntheticRunner(1.0, 11)
 	runner := &capturingRunner{inner: inner}

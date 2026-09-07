@@ -98,78 +98,94 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 		execErr error
 	}
 	results := make([]slot, n)
-	sem := make(chan struct{}, concurrency)
-	var wg sync.WaitGroup
 
-	for i := 0; i < n; i++ {
-		wg.Add(1)
-		go func(idx int) {
-			defer wg.Done()
-			select {
-			case <-ctx.Done():
-				results[idx].execErr = ctx.Err()
-				return
-			case sem <- struct{}{}:
-			}
-			defer func() { <-sem }()
+	runOne := func(idx int) {
+		fixtureEndpoint := cfg.FixtureEndpoint
+		if fixtureEndpoint == "" {
+			fixtureEndpoint = cfg.Endpoint
+		}
 
-			fixtureEndpoint := cfg.FixtureEndpoint
-			if fixtureEndpoint == "" {
-				fixtureEndpoint = cfg.Endpoint
-			}
-
-			sampleProvider := cfg.FixtureProvider
-			if isolate {
-				c := cfg.FixtureProvider.(ClonableFixtureProvider)
-				sampleProvider = c.Clone()
-				ep, closer, err := cfg.ProxyFactory(sampleProvider)
-				if err != nil {
-					results[idx].execErr = err
-					return
-				}
-				if closer != nil {
-					defer func() { _ = closer() }()
-				}
-				fixtureEndpoint = ep
-			}
-
-			reset := func() {
-				if sampleProvider != nil {
-					_ = sampleProvider.Reset()
-				}
-			}
-
-			run, err := runWithRetry(ctx, cfg.Runner, cfg.Scenario, fixtureEndpoint, retry, reset)
+		sampleProvider := cfg.FixtureProvider
+		if isolate {
+			c := cfg.FixtureProvider.(ClonableFixtureProvider)
+			sampleProvider = c.Clone()
+			ep, closer, err := cfg.ProxyFactory(sampleProvider)
 			if err != nil {
 				results[idx].execErr = err
 				return
 			}
-			if !isolate && sampleProvider != nil {
+			if closer != nil {
+				defer func() { _ = closer() }()
+			}
+			fixtureEndpoint = ep
+		}
+
+		reset := func() {
+			if sampleProvider != nil {
 				_ = sampleProvider.Reset()
 			}
-			report, err := s.analyzeEngine.AnalyzeRun(ctx, run, cfg.Scenario.Assertions, withScenarioID(cfg.EvalContext, cfg.Scenario.ID))
-			if err != nil {
-				results[idx].execErr = err
-				return
+		}
+
+		run, err := runWithRetry(ctx, cfg.Runner, cfg.Scenario, fixtureEndpoint, retry, reset)
+		if err != nil {
+			results[idx].execErr = err
+			return
+		}
+		if !isolate && sampleProvider != nil {
+			_ = sampleProvider.Reset()
+		}
+		report, err := s.analyzeEngine.AnalyzeRun(ctx, run, cfg.Scenario.Assertions, withScenarioID(cfg.EvalContext, cfg.Scenario.ID))
+		if err != nil {
+			results[idx].execErr = err
+			return
+		}
+		evals := make([]api.EvaluationResult, len(report.Results))
+		for j, r := range report.Results {
+			evals[j] = api.EvaluationResult{
+				EvaluatorName:    r.EvaluatorName,
+				EvaluatorVersion: r.EvaluatorVersion,
+				Passed:           r.Passed,
+				Score:            r.Score,
+				Message:          r.Message,
+				Evidence:         r.Evidence,
+				ExecutionTimeNs:  r.ExecutionTimeNs,
+				Criticality:      r.Criticality,
 			}
-			evals := make([]api.EvaluationResult, len(report.Results))
-			for j, r := range report.Results {
-				evals[j] = api.EvaluationResult{
-					EvaluatorName:    r.EvaluatorName,
-					EvaluatorVersion: r.EvaluatorVersion,
-					Passed:           r.Passed,
-					Score:            r.Score,
-					Message:          r.Message,
-					Evidence:         r.Evidence,
-					ExecutionTimeNs:  r.ExecutionTimeNs,
-					Criticality:      r.Criticality,
-				}
-			}
-			results[idx].passed = report.Passed
-			results[idx].evals = evals
-		}(i)
+		}
+		results[idx].passed = report.Passed
+		results[idx].evals = evals
 	}
-	wg.Wait()
+
+	// Concurrency 1 must run samples in index order. A size-1 semaphore still
+	// launches all goroutines at once, so call-order runners (and ordered
+	// fixtures without isolation) map outcomes to sample indexes by scheduler.
+	if concurrency <= 1 {
+		for i := 0; i < n; i++ {
+			if err := ctx.Err(); err != nil {
+				results[i].execErr = err
+				continue
+			}
+			runOne(i)
+		}
+	} else {
+		sem := make(chan struct{}, concurrency)
+		var wg sync.WaitGroup
+		for i := 0; i < n; i++ {
+			wg.Add(1)
+			go func(idx int) {
+				defer wg.Done()
+				select {
+				case <-ctx.Done():
+					results[idx].execErr = ctx.Err()
+					return
+				case sem <- struct{}{}:
+				}
+				defer func() { <-sem }()
+				runOne(idx)
+			}(i)
+		}
+		wg.Wait()
+	}
 
 	passes := 0
 	execErrors := 0
