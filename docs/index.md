@@ -26,7 +26,7 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 | Run the live-agent Mode 3 demo (N=20 Wilson) | [Live-agent demo]({% link usage/live-agent-demo.md %}) |
 | Learn Analyze / Replay / Test / Compare | [Modes cookbook]({% link usage/modes-cookbook.md %}) |
 | Tune policy, criticality, and CI knobs | [Tuning the gate]({% link usage/tuning.md %}) |
-| Copy multi-step scenario YAML | [Scenario examples]({% link usage/examples.md %}) |
+| Copy YAML for retail, RAG, SRE, PR review, clinic, SQL | [Scenario examples]({% link usage/examples.md %}) |
 | See self-benchmark (AEE + Validation Suite) | [Benchmarks]({% link benchmarks/index.md %}) |
 | Convert OpenTelemetry traces | [OTel ingestion]({% link usage/otel-ingest.md %}) |
 | Put a gate in GitHub Actions (gust on CI; agent in the job or QA) | [CI integration]({% link usage/ci-github-actions.md %}) |

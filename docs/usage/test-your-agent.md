@@ -50,10 +50,10 @@ from gust_sdk import FixtureClient, RunRecorder
 
 fixtures = FixtureClient()  # AGENTEVAL_FIXTURE_ENDPOINT
 
-def lookup(key):
+def get_orders(customer_id):
     if fixtures.enabled:
-        return fixtures.call("lookup", {"key": key})
-    return production_api.get(key)
+        return fixtures.call("get_orders", {"customer_id": customer_id})
+    return orders_api.list(customer_id)
 ```
 
 ## 2. Expose one sample
@@ -95,10 +95,10 @@ POST `/invoke` body:
 
 ```json
 {
-  "input": "Complete the assigned item",
+  "input": "Cancel my latest order",
   "context": {},
   "tool_endpoint": "http://127.0.0.1:49152",
-  "sample_id": "task-001-…",
+  "sample_id": "cancel_latest_order-…",
   "otel_endpoint": "http://127.0.0.1:4318",
   "ingest_url": "http://127.0.0.1:4318/v1/runs"
 }
@@ -132,31 +132,31 @@ Keep the **document** (a reviewed `TestScenario`). Do not put fixture bodies and
 ```text
 tests/
   _shared/
-    assertions/core.yaml
+    assertions/cancel.yaml
     policy.yaml
-  case_a/
+  cancel_latest/
     scenario.yaml          # task, refs, reliability, optional runner
     fixtures/
-      fx_lookup_001.json
-      fx_apply_001.json
+      fx_get_orders_001.json
+      fx_cancel_order_001.json
 ```
 
 `scenario.yaml` stays thin:
 
-### Example
+### Example (retail support)
 
 ```yaml
-id: case_a
+id: cancel_latest
 version: "1.0"
-description: "Apply the open item, not a closed one"
+description: "Cancel the latest PROCESSING order"
 task:
-  id: task-001
-  input: "Complete the assigned item"
+  id: refund-001
+  input: "Cancel my latest order"
 environment:
   fixtures: []
   fixtures_dir: fixtures          # or omit; a sibling fixtures/ is loaded automatically
 assertion_files:
-  - ../_shared/assertions/core.yaml
+  - ../_shared/assertions/cancel.yaml
 assertions:
   - $ref: ../_shared/assertions/extra.yaml   # spliced in place
   - id: max_8
@@ -189,7 +189,7 @@ Policy counts, criticality, sample size, and `on_flaky` are documented in [Tunin
 
 No gust process in production; the job is the listener. See [CI integration]({% link usage/ci-github-actions.md %}).
 
-The [live-agent demo]({% link usage/live-agent-demo.md %}) is this layout in-tree (`healthy/`, `recovery/`, `buggy/`, `unsafe/`) with `run.sh` / `run.ps1` wrapping `gust test`. More YAML compositions: [Scenario examples]({% link usage/examples.md %}).
+The [live-agent demo]({% link usage/live-agent-demo.md %}) is this layout in-tree (`healthy/`, `recovery/`, `buggy/`, `unsafe/`) with `run.sh` / `run.ps1` wrapping `gust test`. More YAML compositions across domains: [Scenario examples]({% link usage/examples.md %}).
 
 ## Agent failures vs infrastructure errors
 

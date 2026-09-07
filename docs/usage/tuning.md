@@ -100,7 +100,7 @@ Named hard-constraint breaches skip `on_flaky` and exit `1`. Details: [CI integr
 
 ## Examples
 
-These snippets only illustrate the knobs above. They are not a domain scenario.
+Policy YAML below is domain-agnostic. Agent trajectories for retail, RAG, SRE, and more: [Scenario examples]({% link usage/examples.md %}).
 
 ### Adopting: visibility without blocking
 
@@ -147,9 +147,9 @@ assertions:
     type: tool_sequence
     criticality: soft
     parameters:
-      sequence: ["lookup", "apply", "confirm"]
+      sequence: ["retrieve", "read_chunk", "draft_answer"]
 ```
 
 A miss is recorded in `per_run_evidence` with a score. It does not fail the sample or move Wilson.
 
-Multi-step agents (retrieve/apply/verify, ordered polling, schema output, judges + forbidden tools): [Scenario examples]({% link usage/examples.md %}).
+Full scenarios by domain: [Scenario examples]({% link usage/examples.md %}).
