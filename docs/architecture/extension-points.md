@@ -26,7 +26,7 @@ Task-oriented walkthroughs live in [Extending]({% link extending/index.md %}); t
 
 ## Optional LLM judge
 
-`ports.JudgeProvider` backs the built-in `llm_judge` evaluator. Major providers use **official Python SDKs** (`gust_sdk.judge`: OpenAI, Anthropic, Google GenAI, Ollama) loaded with `--judge-plugin` (registry overrides the Go builtin). Go ships only `mock` and a thin `generic` OpenAI-compatible HTTP adapter for custom endpoints. See [LLM judge]({% link usage/llm-judge.md %}). Policy flag `allow_llm_judge` defaults to false.
+`ports.JudgeProvider` backs the built-in `llm_judge` evaluator. `judge_panel` aggregates several registered judge evaluators. Major providers use **official Python SDKs** (`gust_sdk.judge`) loaded with `--plugin` / `--judge-plugin`. Go ships only `mock` and a thin `generic` OpenAI-compatible HTTP adapter. See [LLM judge]({% link usage/llm-judge.md %}). Policy flag `allow_llm_judge` defaults to false.
 
 ## Adding a mutator
 
@@ -36,7 +36,7 @@ Task-oriented walkthroughs live in [Extending]({% link extending/index.md %}); t
 
 ## Adding a test runner
 
-End users invoke their agent with `gust test --runner http|exec` — see [Test your agent]({% link usage/test-your-agent.md %}). Built-ins: `synthetic`, `ollama`, `http`, `exec`.
+End users invoke their agent with `gust test --runner http|exec` — see [Test your agent]({% link usage/test-your-agent.md %}). Built-ins: `synthetic`, `ollama`, `http`, `exec`. The [live-agent demo]({% link usage/live-agent-demo.md %}) uses `exec` plus an optional Ollama-driven Python hook.
 
 Go embedders:
 

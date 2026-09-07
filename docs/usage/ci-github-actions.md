@@ -211,7 +211,7 @@ This repository splits CI into three workflows (Linux-only, free-tier friendly):
 | Workflow | What it runs | Summary |
 | --- | --- | --- |
 | [`test`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/test.yml) | `go test ./...`, Python pytest, TypeScript `npm test` | Per-language pass + log tail |
-| [`smoke`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/smoke.yml) | Demo, SDK record→analyze, Mode 3 exec e2e | Checklist of e2e gates |
+| [`smoke`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/smoke.yml) | Synthetic demo, SDK record→analyze, Mode 3 exec e2e | Checklist of e2e gates. The [live-agent demo]({% link usage/live-agent-demo.md %}) is a local N=20 proof, not this job. |
 | [`benchmark`](https://github.com/ShadyD45/gust/blob/main/.github/workflows/benchmark.yml) | `gust-aee report` + mock judge calibrate | Job summary + artifacts; [workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml). Checked-in [`benchmarks/RESULTS.md`](https://github.com/ShadyD45/gust/blob/main/benchmarks/RESULTS.md) is updated locally when needed (no auto PR/push) |
 
 Shared habits:

@@ -7,7 +7,7 @@ parent: Architecture
 
 ## Vision
 
-gust is **test infrastructure for autonomous software**. Agent systems plan, call tools, retrieve context, retry, and execute multi-step workflows. Traditional unit tests assume deterministic execution; LLM agents do not. gust provides:
+gust is **test infrastructure for autonomous software** — reproducible testing for probabilistic agents. Agent systems plan, call tools, retrieve context, retry, and execute multi-step workflows. Traditional unit tests assume deterministic execution; LLM agents do not. gust provides:
 
 - Capture and analysis of execution traces (`AgentRun`)
 - Controlled environments via fixtures and a tool mock proxy
@@ -27,12 +27,13 @@ An agent may pick the wrong tool, pass invalid arguments, loop, violate safety c
 3. **Reliability is statistical.** Test mode reports rates and intervals, not one-shot booleans.
 4. **Deterministic stack first.** Evaluators, fixtures, Replay, and mutation testing run offline at zero model cost.
 
-## Non-goals (MVP)
+## Non-goals
 
 - Replacing product analytics or online monitoring platforms
-- Calibrated LLM-as-judge scoring (deferred until correlation gates are met)
-- Full multi-framework SDKs (LangChain, CrewAI, etc.) — post-MVP
+- Claiming Gust is “proven correct” — the self-benchmark continuously validates evaluation machinery against adversarial and mutation-based suites
 - Runtime Draft 2020-12 JSON Schema library validation (schemas are contracts; Go uses hand validation)
+- Hosted dashboards or span explorers (use Phoenix/Langfuse; Gust stores eval artifacts)
+- Session-based remote fixture backends (`FixtureProvider.NewSession`) — per-sample proxies isolate Mode 3 today; a session protocol is future work for SQLite/Redis/container fixtures
 
 ## MVP boundary
 
@@ -40,7 +41,8 @@ An agent may pick the wrong tool, pass invalid arguments, loop, violate safety c
 |--------|--------|
 | **1–5** | Types, ports/wire, evaluators, fixtures, Analyze/Replay, mutation |
 | **6–9** | Mode 3 + Wilson, policy/regression, scenario extraction, CLI/CI demo |
-| **10–16** | OTel, SDKs, LLM judge, clustering, leaderboard — see roadmap |
+| **10–12, 17, 20** | OTel ingest, SDKs, optional LLM judge + `judge_panel`, AEE, semantic hardening, fixture isolation / classified retry |
+| **18** | Real-agent E2E — [live-agent demo]({% link usage/live-agent-demo.md %}) (scripted fallback + Ollama) |
 
 ## Implementation principles
 

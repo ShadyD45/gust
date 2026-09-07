@@ -1,0 +1,13 @@
+{
+  "fixture_id": "fx_get_orders_fail",
+  "tool": "get_orders",
+  "match_strategy": "ordered_sequence",
+  "sequence_order": 1,
+  "mode": "partial_failure",
+  "recorded_response": {
+    "status": "error",
+    "status_code": 500,
+    "error": "injected simulated server error (partial_failure)"
+  },
+  "provenance": "authored"
+}

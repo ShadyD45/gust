@@ -63,6 +63,35 @@ Replay is also the substrate for **mutation testing**: mutators alter traces; An
 - Output: `ReliabilityResult` with `PASS` / `FAIL` / `FLAKY` / `INSUFFICIENT_SAMPLES`
 - Side effects: Invokes real agent/LLM (or a synthetic runner for statistical proofs)
 
+Replay rewrites a **recorded** trajectory against fixtures. It does not start your agent. Injecting a timeout into Replay shows what the *trace* would look like with that response — to see whether the *agent* recovers, you re-run it under Test with the same fixtures (Mode 3).
+
+## Testing pyramid (Replay → Simulated → Live)
+
+```text
+                    TEST
+                      │
+          ┌───────────┼────────────┐
+          │           │            │
+          ▼           ▼            ▼
+       Replay      Simulated     Live
+          │           │            │
+       ~free        cheap        realistic
+          │           │            │
+      deterministic controlled   stochastic
+```
+
+A practical split:
+
+| When | What | Why |
+|------|------|-----|
+| PR | Analyze + Replay + a small synthetic or fixture-backed Test | Fast, no paid tokens required |
+| Nightly | Live `gust test` against a QA/Ollama agent, more samples | Measures real trajectories |
+| Production | Sampled traces → `scenario from-run` → human assertions → CI | A behavioral bug becomes a regression test |
+
+This is **reproducible testing for probabilistic agents**: the environment, fixtures, failure injection, assertions, and statistics are controlled; the agent is allowed to wander.
+
+In-tree proof of that split: the [live-agent demo]({% link usage/live-agent-demo.md %}) (`llama3.2:3b` N=20 Wilson gate, scripted fallback). Replay/synthetic stay on `./demo/run.sh`.
+
 ## Policy layer
 
 Policy sits **above** raw evaluation. It combines hard constraints (zero-tolerance), soft reliability thresholds, `on_flaky` behavior, and optional baseline-vs-candidate regression into CI exit codes.

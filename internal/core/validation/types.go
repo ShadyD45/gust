@@ -9,26 +9,28 @@ import (
 type Kind string
 
 const (
-	KindAnalyze  Kind = "analyze"
-	KindWilson   Kind = "wilson"
-	KindInfra    Kind = "infra"
-	KindMutation Kind = "mutation"
-	KindFixture  Kind = "fixture"
-	KindMode3    Kind = "mode3"
+	KindAnalyze   Kind = "analyze"
+	KindWilson    Kind = "wilson"
+	KindInfra     Kind = "infra"
+	KindMutation  Kind = "mutation"
+	KindFixture   Kind = "fixture"
+	KindMode3     Kind = "mode3"
+	KindInvariant Kind = "invariant"
 )
 
 // Category groups cases by the review's trust questions.
 type Category string
 
 const (
-	CatPass     Category = "pass"
-	CatFail     Category = "fail"
-	CatFlaky    Category = "flaky"
-	CatInfra    Category = "infra"
-	CatMutation Category = "mutation"
-	CatFixture  Category = "fixture"
-	CatRecovery Category = "recovery"
-	CatMode3    Category = "mode3"
+	CatPass      Category = "pass"
+	CatFail      Category = "fail"
+	CatFlaky     Category = "flaky"
+	CatInfra     Category = "infra"
+	CatMutation  Category = "mutation"
+	CatFixture   Category = "fixture"
+	CatRecovery  Category = "recovery"
+	CatMode3     Category = "mode3"
+	CatInvariant Category = "invariant"
 )
 
 // Case is one adversarial scenario with a known expected outcome.
@@ -81,6 +83,9 @@ type Case struct {
 	WantMode3Passes   int              `json:"want_mode3_passes,omitempty"`
 	WantMode3ExecErrs int              `json:"want_mode3_exec_errs,omitempty"`
 	WantAllFound      bool             `json:"want_all_found,omitempty"`
+
+	// KindInvariant uses ID to select a named system invariant (S1–S10).
+	InvariantID string `json:"invariant_id,omitempty"`
 }
 
 // CaseResult is the outcome of running one case.
@@ -115,7 +120,7 @@ type CatStats struct {
 }
 
 // SuiteVersion bumps when case semantics change in a breaking way.
-const SuiteVersion = "1.1.0"
+const SuiteVersion = "1.2.0"
 
 // MinPassRate is the gate for publishing trust: every case must pass.
 const MinPassRate = 1.0

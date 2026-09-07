@@ -193,6 +193,7 @@ const (
 	AssertSchemaValid       AssertionType = "schema_valid"
 	AssertErrorRecovery     AssertionType = "error_recovery"
 	AssertLLMJudge          AssertionType = "llm_judge"
+	AssertJudgePanel        AssertionType = "judge_panel"
 )
 
 type ReliabilityConfig struct {
@@ -434,14 +435,38 @@ func (p *Policy) Validate() error {
 	return nil
 }
 
+// IsJudgeAssertionType reports whether the assertion is an opt-in LLM judge signal.
+func IsJudgeAssertionType(t AssertionType) bool {
+	return t == AssertLLMJudge || t == AssertJudgePanel
+}
+
+// SampleCriticality is the criticality used for sample pass/fail.
+// Uncalibrated judges stay soft even when YAML sets criticality: hard.
+func SampleCriticality(a Assertion, judgeCalibrated bool) CriticalityLevel {
+	if IsJudgeAssertionType(a.Type) && !judgeCalibrated {
+		return CriticalitySoft
+	}
+	if a.Criticality != "" {
+		return a.Criticality
+	}
+	if IsJudgeAssertionType(a.Type) {
+		return CriticalitySoft
+	}
+	return CriticalityHard
+}
+
 // AssertionFailsSample reports whether a failed assertion should fail the sample/report.
+// Judges are treated as uncalibrated (soft) unless SampleCriticality is used with the policy flag.
 func AssertionFailsSample(a Assertion) bool {
-	return effectiveSampleCriticality(a) != CriticalitySoft
+	return SampleCriticality(a, false) != CriticalitySoft
 }
 
 // AssertionPolicyHard reports whether a failed assertion counts toward hard constraints.
 func AssertionPolicyHard(a Assertion) bool {
 	if a.Criticality == CriticalitySoft {
+		return false
+	}
+	if IsJudgeAssertionType(a.Type) {
 		return false
 	}
 	if a.Criticality == CriticalityHard {
@@ -456,18 +481,12 @@ func AssertionPolicyHard(a Assertion) bool {
 }
 
 func effectiveSampleCriticality(a Assertion) CriticalityLevel {
-	if a.Criticality != "" {
-		return a.Criticality
-	}
-	if a.Type == AssertLLMJudge {
-		return CriticalitySoft
-	}
-	return CriticalityHard
+	return SampleCriticality(a, false)
 }
 
-// EffectiveSampleCriticality is the criticality used for sample pass/fail.
+// EffectiveSampleCriticality is the conservative sample criticality (judges soft).
 func EffectiveSampleCriticality(a Assertion) CriticalityLevel {
-	return effectiveSampleCriticality(a)
+	return SampleCriticality(a, false)
 }
 
 // CountPolicyHardFailures tallies failed hard-constraint evaluations.

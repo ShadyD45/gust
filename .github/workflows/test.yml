@@ -64,6 +64,43 @@ jobs:
             echo "</details>"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  go-race:
+    name: Go race
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Race tests
+        run: go test -race ./... -count=1
+
+  go-fuzz-smoke:
+    name: Go fuzz smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Bounded fuzz
+        run: |
+          set -euo pipefail
+          go test ./pkg/api -fuzz=FuzzAgentRunJSON -fuzztime=8s
+          go test ./pkg/api -fuzz=FuzzAssertionJSON -fuzztime=5s
+          go test ./internal/domain/evidence -fuzz=FuzzCompareMaps -fuzztime=8s
+          go test ./internal/adapters/fixtures -fuzz=FuzzFixtureLookup -fuzztime=8s
+          go test ./internal/adapters/evaluators -fuzz=FuzzTaskSuccessEvaluate -fuzztime=8s
+          go test ./internal/cli -fuzz=FuzzPolicyYAML -fuzztime=5s
+
   python:
     name: Python SDK
     runs-on: ubuntu-latest

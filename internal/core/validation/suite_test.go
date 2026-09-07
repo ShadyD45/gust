@@ -10,7 +10,7 @@ func TestSuiteSize(t *testing.T) {
 	if n < 50 {
 		t.Fatalf("suite too small: %d cases (want ≥ 50)", n)
 	}
-	if n > 120 {
+	if n > 150 {
 		t.Fatalf("suite unexpectedly large: %d", n)
 	}
 	t.Logf("Gust Validation Suite size: %d", n)

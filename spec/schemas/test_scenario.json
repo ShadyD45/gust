@@ -60,18 +60,8 @@
           "id": { "type": "string", "minLength": 1 },
           "type": {
             "type": "string",
-            "enum": [
-              "task_success",
-              "tool_call",
-              "forbidden_tool_call",
-              "required_tool",
-              "tool_sequence",
-              "max_steps",
-              "max_latency_ms",
-              "schema_valid",
-              "error_recovery",
-              "llm_judge"
-            ]
+            "minLength": 1,
+            "description": "Evaluator name. Built-in types include task_success, tool_call, forbidden_tool_call, required_tool, tool_sequence, max_steps, max_latency_ms, schema_valid, error_recovery, llm_judge, and judge_panel. Custom plugin names are also valid."
           },
           "criticality": {
             "type": "string",

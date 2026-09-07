@@ -1,0 +1,13 @@
+{
+  "fixture_id": "fx_issue_refund_001",
+  "tool": "issue_refund",
+  "match_strategy": "exact_hash",
+  "recorded_input": {
+    "order_id": 123
+  },
+  "recorded_response": {
+    "status": "success",
+    "body": { "ok": true, "refunded": true }
+  },
+  "provenance": "authored"
+}

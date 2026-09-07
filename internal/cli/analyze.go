@@ -17,13 +17,14 @@ func newAnalyzeCmd() *cobra.Command {
 	var asJSON bool
 	var assertionsPath string
 	var judgePlugin string
+	var plugins []string
 
 	cmd := &cobra.Command{
 		Use:   "analyze <run.json>",
 		Short: "Mode 1: evaluate assertions against a captured AgentRun",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cleanup, err := loadJudgePlugin(judgePlugin)
+			cleanup, err := loadPluginsForCommand(plugins, judgePlugin)
 			if err != nil {
 				return err
 			}
@@ -68,7 +69,8 @@ func newAnalyzeCmd() *cobra.Command {
 	cmd.Flags().StringVar(&policyPath, "policy", "", "policy YAML/JSON")
 	cmd.Flags().StringVar(&assertionsPath, "assertions", "", "optional assertions JSON file")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "machine-readable JSON output")
-	cmd.Flags().StringVar(&judgePlugin, "judge-plugin", "", "Tier-2 LLM judge plugin (e.g. sdk/python/examples/llm_judge_plugin.py)")
+	cmd.Flags().StringVar(&judgePlugin, "judge-plugin", "", "Tier-2 LLM judge plugin (deprecated alias of --plugin with role judge)")
+	cmd.Flags().StringArrayVar(&plugins, "plugin", nil, "Tier-2 evaluator plugin (`python path.py` or `alias=python path.py`); repeatable")
 	return cmd
 }
 

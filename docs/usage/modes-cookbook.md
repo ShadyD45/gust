@@ -1,6 +1,6 @@
 ---
 title: Modes cookbook
-nav_order: 2
+nav_order: 3
 parent: Usage
 ---
 # Modes cookbook
@@ -38,7 +38,7 @@ Assertion resolution order: `--assertions <file>` wins; otherwise `metadata.asse
 
 ### Assertion catalogue
 
-All nine assertion types, the evaluator each one resolves to, and the fields that matter:
+Built-in assertion types, the evaluator each one resolves to, and the fields that matter. Custom `--plugin` names are also valid `type` values.
 
 | `type` | Evaluator | Fields | Passes when |
 |---|---|---|---|
@@ -52,7 +52,8 @@ All nine assertion types, the evaluator each one resolves to, and the fields tha
 | `max_latency_ms` | `max_latency` | `limit` ms (default 5000), optional `parameters.latency_source: wall_clock` | `max(end) - min(start)` across the trace is within the limit (order-independent) |
 | `error_recovery` | `error_recovery` | optional `parameters.after_error_tool`, `parameters.recovery_tools` | No matching error spans, or a later successful span retries the same op (or a listed recovery tool) |
 | `schema_valid` | `schema_validation` | `parameters.schema` (JSON Schema for `outcome.output`) | Output must be JSON matching the declared schema; if no schema is given, only the AgentRun envelope is checked (explicitly reported) |
-| `llm_judge` | `llm_judge` | `parameters.rubric`, optional threshold; requires `allow_llm_judge` | Soft, opt-in calibrated judge signal |
+| `llm_judge` | `llm_judge` | `parameters.rubric`, optional threshold; requires `allow_llm_judge` | Soft, opt-in judge signal until calibrated |
+| `judge_panel` | `judge_panel` | `parameters.judges`, `aggregation`, optional `threshold` / `rubric` | Aggregated votes from named judge evaluators; see [LLM judge]({% link usage/llm-judge.md %}) |
 
 Two of these are **hard constraints**: a failing `forbidden_tool` or `schema_validation` fails the build immediately in Mode 3, regardless of pass rate or `on_flaky`. Set `"criticality": "hard"` to document that intent in the assertion.
 
@@ -167,7 +168,8 @@ Run the agent *N* times and gate on the confidence interval, not a single outcom
 | `--trace-path` | | Per-sample file; may contain `{sample_id}` |
 | `--otel-listen` | ephemeral | In-process OTLP/HTTP bind; gRPC is derived (`:4318` → `:4317`) |
 | `--fixtures` | | Extra fixture JSON directory |
-| `--model` | `llama3.1:8b` | Ollama model |
+| `--plugin` | | Repeatable wire evaluator: `path.py` or `alias=python path.py` (also `gust.yaml` `plugins:`) |
+| `--model` | `llama3.1:8b` | Ollama model (`--runner ollama`). The live-agent demo defaults to `llama3.2:3b` via `GUST_OLLAMA_MODEL`. |
 | `--pass-probability` | `1.0` | Synthetic runner pass rate — useful for testing your own gates |
 | `--policy` | `gust.yaml` `policy:` or built-in defaults | Policy file |
 | `--timeout` | `gust.yaml` `test.timeout` or runner default | Per-sample runner timeout (seconds) |
@@ -236,6 +238,8 @@ Wilson lower bounds for a **perfect** run at 95% confidence:
 | 100 | 96.3% | `PASS` |
 
 The trap: at a 95% floor, **no number of samples below ~73 can ever produce `PASS`**, even with zero failures. If your gate is stuck at `FLAKY`, check your sample count before you blame the agent. Lower the floor or raise *N*.
+
+The [live-agent demo]({% link usage/live-agent-demo.md %}) uses **N=20** at an **80%** floor so a perfect run is a real `PASS` (lower bound ~83.9%). Same *N* at 95% would still be `FLAKY`.
 
 ### Policy files
 
@@ -332,6 +336,10 @@ gust ingest otel serve --analyze --assertions tests/assertions.json
 ```
 
 In CI, prefer `gust test --runner exec --trace-source otel` so the listener dies with the job. Offline: `--file`, `--file -`, or `--url`. Details: [OTel ingestion]({% link usage/otel-ingest.md %}) and [CI integration]({% link usage/ci-github-actions.md %}).
+
+## Worked example (Mode 3)
+
+[`demo/live-agent/`](https://github.com/ShadyD45/gust/tree/main/demo/live-agent) is a fixture-backed support agent. `./demo/live-agent/run.sh` (or `run.ps1`) runs healthy + recovery (must PASS) and buggy + unsafe (must FAIL) at N=20. Recorded numbers and how each assertion fires: [Live-agent demo]({% link usage/live-agent-demo.md %}).
 
 ## Embedding gust as a Go library
 

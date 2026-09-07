@@ -10,6 +10,8 @@ You do not write Go and you do not fork gust. You keep a one-sample hook in **yo
 
 If you only need to gate one captured run, use [`analyze`]({% link usage/integrate-your-app.md %}) instead. This page is for reliability sampling: *is today's live agent reliable on this scenario?*
 
+A complete worked example — scripts, fixtures, assertions, and recorded N=20 results — is the [live-agent demo]({% link usage/live-agent-demo.md %}). Copy that folder shape; swap in your hook.
+
 ## Where this runs (not production)
 
 Mode 3 is a **CI (or laptop) session**. gust is the evaluator; the agent under test is a **dev/QA** build. Production does not run gust and does not export to it.
@@ -182,6 +184,8 @@ discovers every `scenario.yaml` under the tree (skips `_shared`) and any top-lev
 `gust test` always starts fixture proxies from resolved fixtures and `--fixtures`. Each sample clones a clonable provider and gets an ephemeral mock-tool proxy so ordered sequences cannot interleave under concurrency. If a provider cannot be cloned, the sampler caps concurrency to 1.
 
 No gust process in production; the job is the listener. See [CI integration]({% link usage/ci-github-actions.md %}).
+
+The [live-agent demo]({% link usage/live-agent-demo.md %}) is this layout in-tree (`healthy/`, `recovery/`, `buggy/`, `unsafe/`) with `run.sh` / `run.ps1` wrapping `gust test`.
 
 ## Agent failures vs infrastructure errors
 

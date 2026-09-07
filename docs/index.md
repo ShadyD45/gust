@@ -8,7 +8,7 @@ layout: default
 
 <div class="home-hero" markdown="0">
   <img src="{{ '/assets/images/gust-logo.png' | relative_url }}" alt="gust — Test what happens when your agent meets a world that doesn’t behave." width="420" height="183">
-  <p class="home-kicker">Test infrastructure for autonomous software</p>
+  <p class="home-kicker">Reproducible testing for probabilistic agents</p>
 </div>
 
 gust is test infrastructure for LLM-driven agents that do not give the same answer twice — offline analysis, fixture replay, and statistical CI gates over agent behavior.
@@ -23,6 +23,7 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 | Goal | Guide |
 |------|--------|
 | Wire gust into an agent you already run | [Integrate your app]({% link usage/integrate-your-app.md %}) |
+| Run the live-agent Mode 3 demo (N=20 Wilson) | [Live-agent demo]({% link usage/live-agent-demo.md %}) |
 | Learn Analyze / Replay / Test / Compare | [Modes cookbook]({% link usage/modes-cookbook.md %}) |
 | See self-benchmark (AEE + Validation Suite) | [Benchmarks]({% link benchmarks/index.md %}) |
 | Convert OpenTelemetry traces | [OTel ingestion]({% link usage/otel-ingest.md %}) |
@@ -41,7 +42,8 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 ```bash
 go build -o gust ./cmd/gust
 ./gust analyze testdata/runs/golden_cancel.json --policy testdata/policy.yaml
-./demo/run.sh   # or ./demo/run.ps1 on Windows
+./demo/run.sh                 # synthetic MVP CLI demo
+./demo/live-agent/run.sh      # Mode 3 against a support agent (N=20)
 ```
 
 ## Source & contributing

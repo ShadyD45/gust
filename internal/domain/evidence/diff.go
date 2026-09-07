@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strings"
 )
 
 // DiffItem represents a single property discrepancy.
@@ -63,6 +64,18 @@ func CompareMaps(expected, actual map[string]any, prefix string) []DiffItem {
 	})
 
 	return diffs
+}
+
+// FormatDiffs renders structured diffs for terminal output.
+func FormatDiffs(diffs []DiffItem) string {
+	if len(diffs) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	for _, d := range diffs {
+		fmt.Fprintf(&b, "    %s: expected %v, actual %v\n", d.Path, d.Expected, d.Actual)
+	}
+	return b.String()
 }
 
 func valuesEqual(expected, actual any) bool {

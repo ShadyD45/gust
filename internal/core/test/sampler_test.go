@@ -301,6 +301,195 @@ func TestOrderedFixturesConcurrentIsolation(t *testing.T) {
 	}
 }
 
+type sharedSeqProvider struct {
+	seq []string
+	idx int
+}
+
+func (p *sharedSeqProvider) Lookup(_ context.Context, call ports.ToolCall) (api.RecordedResponse, bool, error) {
+	if call.Name != "poll" {
+		return api.RecordedResponse{}, false, nil
+	}
+	if p.idx >= len(p.seq) {
+		return api.RecordedResponse{}, false, nil
+	}
+	body := p.seq[p.idx]
+	p.idx++
+	return api.RecordedResponse{Status: "success", Body: body}, true, nil
+}
+
+func (p *sharedSeqProvider) Record(context.Context, ports.ToolCall, api.RecordedResponse) error {
+	return nil
+}
+
+func (p *sharedSeqProvider) Reset() error {
+	p.idx = 0
+	return nil
+}
+
+func TestOrderedFixturesForceSerialWithoutClone(t *testing.T) {
+	provider := &sharedSeqProvider{seq: []string{"PENDING", "DONE"}}
+	proxy, err := fixtures.NewMockToolProxyServer(provider)
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoint := proxy.Start()
+	t.Cleanup(func() { _ = proxy.Close() })
+
+	runner := &testrunner.FixtureProbeRunner{
+		Calls: []ports.ToolCall{{Name: "poll"}, {Name: "poll"}},
+	}
+	sc := baseScenario("ordered_noclone", 8)
+	sampler := NewSampler(builtinEvals())
+	res, err := sampler.RunScenario(context.Background(), SamplingConfig{
+		Scenario:           sc,
+		Runner:             runner,
+		Concurrency:        4, // must be forced serial
+		FixtureProvider:    provider,
+		FixtureEndpoint:    endpoint,
+		HasOrderedFixtures: true,
+		MinSamples:         1,
+	})
+	if err != nil {
+		t.Fatalf("RunScenario: %v", err)
+	}
+	if res.Passes != 8 || res.ExecutionErrors != 0 {
+		t.Fatalf("serial fallback should isolate via Reset: passes=%d errors=%d", res.Passes, res.ExecutionErrors)
+	}
+}
+
+func TestOrderedFixturesForceSerialWithoutProxyFactory(t *testing.T) {
+	provider := fixtures.NewMemoryFixtureProvider()
+	if err := provider.LoadFixtures(orderedPollFixtures()); err != nil {
+		t.Fatal(err)
+	}
+	proxy, err := fixtures.NewMockToolProxyServer(provider)
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoint := proxy.Start()
+	t.Cleanup(func() { _ = proxy.Close() })
+
+	runner := &testrunner.FixtureProbeRunner{
+		Calls: []ports.ToolCall{{Name: "poll"}, {Name: "poll"}},
+	}
+	sc := baseScenario("ordered_noproxy", 12)
+	sampler := NewSampler(builtinEvals())
+	res, err := sampler.RunScenario(context.Background(), SamplingConfig{
+		Scenario:           sc,
+		Runner:             runner,
+		Concurrency:        4,
+		FixtureProvider:    provider, // clonable, but no ProxyFactory
+		FixtureEndpoint:    endpoint,
+		HasOrderedFixtures: true,
+		MinSamples:         1,
+	})
+	if err != nil {
+		t.Fatalf("RunScenario: %v", err)
+	}
+	if res.Passes != 12 || res.ExecutionErrors != 0 {
+		t.Fatalf("missing ProxyFactory must not race: passes=%d errors=%d", res.Passes, res.ExecutionErrors)
+	}
+}
+
+func TestNonTransientAgentFailureNotRetried(t *testing.T) {
+	inner := testrunner.NewSyntheticRunner(1.0, 1)
+	runner := &errOnceRunner{inner: inner, failFirstN: 1}
+	sampler := NewSampler(builtinEvals())
+	res, err := sampler.RunScenario(context.Background(), SamplingConfig{
+		Scenario:              baseScenario("agent_crash", 1),
+		Runner:                runner,
+		Concurrency:           1,
+		MinSamples:            1,
+		MaxExecutionErrorRate: api.Float64Ptr(1),
+		Retry:                 api.RetryPolicy{MaxAttempts: 3, On: api.RetryOnTransient, BackoffMs: 1},
+	})
+	if err != nil {
+		t.Fatalf("RunScenario: %v", err)
+	}
+	if res.ExecutionErrors != 1 || res.Passes != 0 {
+		t.Fatalf("generic agent error must not retry: errors=%d passes=%d", res.ExecutionErrors, res.Passes)
+	}
+}
+
+type capturingRunner struct {
+	inner ports.TestRunner
+	runs  []api.AgentRun
+}
+
+func (r *capturingRunner) Name() string { return "capturing" }
+
+func (r *capturingRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
+	run, err := r.inner.Run(ctx, scenario, fixtureEndpoint)
+	if err != nil {
+		return api.AgentRun{}, err
+	}
+	r.runs = append(r.runs, run)
+	return run, nil
+}
+
+func TestEachSampleHasExactlyOneTrace(t *testing.T) {
+	inner := testrunner.NewSyntheticRunner(1.0, 11)
+	runner := &capturingRunner{inner: inner}
+	sampler := NewSampler(builtinEvals())
+	const n = 20
+	res, err := sampler.RunScenario(context.Background(), SamplingConfig{
+		Scenario:    baseScenario("one_trace", n),
+		Runner:      runner,
+		Concurrency: 1,
+		MinSamples:  1,
+	})
+	if err != nil {
+		t.Fatalf("RunScenario: %v", err)
+	}
+	if res.Passes != n {
+		t.Fatalf("passes=%d want %d", res.Passes, n)
+	}
+	if len(runner.runs) != n {
+		t.Fatalf("runs=%d want %d", len(runner.runs), n)
+	}
+	seen := map[string]struct{}{}
+	for i, run := range runner.runs {
+		if run.RunID == "" {
+			t.Fatalf("sample %d missing run_id", i)
+		}
+		if _, dup := seen[run.RunID]; dup {
+			t.Fatalf("duplicate run_id %q", run.RunID)
+		}
+		seen[run.RunID] = struct{}{}
+		if len(run.Trace) != 1 {
+			t.Fatalf("sample %d trace len=%d want 1", i, len(run.Trace))
+		}
+	}
+}
+
+func TestHTTPOrderedFixturesConcurrentIsolation(t *testing.T) {
+	provider := fixtures.NewMemoryFixtureProvider()
+	if err := provider.LoadFixtures(orderedPollFixtures()); err != nil {
+		t.Fatal(err)
+	}
+	runner := &testrunner.FixtureProbeRunner{
+		Calls: []ports.ToolCall{{Name: "poll"}, {Name: "poll"}},
+	}
+	sc := baseScenario("http_ordered_iso", 20)
+	sampler := NewSampler(builtinEvals())
+	res, err := sampler.RunScenario(context.Background(), SamplingConfig{
+		Scenario:           sc,
+		Runner:             runner,
+		Concurrency:        4,
+		FixtureProvider:    provider,
+		HasOrderedFixtures: true,
+		ProxyFactory:       fixtures.StartProxy,
+		MinSamples:         1,
+	})
+	if err != nil {
+		t.Fatalf("RunScenario: %v", err)
+	}
+	if res.ExecutionErrors != 0 || res.Passes != 20 {
+		t.Fatalf("HTTP isolation: passes=%d errors=%d", res.Passes, res.ExecutionErrors)
+	}
+}
+
 func TestRetryResetsFixtureSequence(t *testing.T) {
 	provider := fixtures.NewMemoryFixtureProvider()
 	if err := provider.LoadFixtures(orderedPollFixtures()); err != nil {

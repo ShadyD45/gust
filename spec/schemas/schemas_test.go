@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"gust/pkg/api"
@@ -53,7 +54,7 @@ func TestSchemaFilesPresent(t *testing.T) {
 	}
 }
 
-func TestAssertionTypesMatchSchemaEnum(t *testing.T) {
+func TestAssertionTypesDocumentedInSchema(t *testing.T) {
 	root := schemaRoot(t)
 	path := filepath.Join(root, "spec", "schemas", "test_scenario.json")
 	data, err := os.ReadFile(path)
@@ -69,13 +70,10 @@ func TestAssertionTypesMatchSchemaEnum(t *testing.T) {
 	items := assertions["items"].(map[string]any)
 	itemProps := items["properties"].(map[string]any)
 	typeField := itemProps["type"].(map[string]any)
-	enumRaw := typeField["enum"].([]any)
-
-	schemaTypes := make(map[string]bool, len(enumRaw))
-	for _, v := range enumRaw {
-		schemaTypes[v.(string)] = true
+	if _, hasEnum := typeField["enum"]; hasEnum {
+		t.Fatal("assertion type must allow custom plugin names; enum should be removed")
 	}
-
+	desc, _ := typeField["description"].(string)
 	goTypes := []api.AssertionType{
 		api.AssertTaskSuccess,
 		api.AssertToolCall,
@@ -87,22 +85,11 @@ func TestAssertionTypesMatchSchemaEnum(t *testing.T) {
 		api.AssertSchemaValid,
 		api.AssertErrorRecovery,
 		api.AssertLLMJudge,
+		api.AssertJudgePanel,
 	}
 	for _, at := range goTypes {
-		if !schemaTypes[string(at)] {
-			t.Errorf("Go AssertionType %q missing from test_scenario.json enum", at)
-		}
-	}
-	for st := range schemaTypes {
-		found := false
-		for _, at := range goTypes {
-			if string(at) == st {
-				found = true
-				break
-			}
-		}
-		if !found {
-			t.Errorf("schema enum value %q has no matching Go AssertionType", st)
+		if !strings.Contains(desc, string(at)) {
+			t.Errorf("schema description missing built-in type %q", at)
 		}
 	}
 }

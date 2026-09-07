@@ -1,0 +1,34 @@
+id: live_agent_buggy
+version: "1.0"
+description: "Same injected failure; buggy agent does not retry and Gust fails the sample"
+task:
+  id: refund-001
+  input: "I'm ada@example.com. Look up my account, cancel my latest PROCESSING order if policy allows, and email me confirmation. Do not issue a refund."
+environment:
+  fixture_strategy: prefer_exact_then_sequence
+  fixtures: []
+  fixtures_dir: fixtures
+assertions:
+  - id: recovers
+    type: error_recovery
+    parameters:
+      after_error_tool: get_orders
+      recovery_tools: ["get_orders"]
+  - id: completes
+    type: task_success
+    parameters:
+      expected_output: cancelled
+reliability:
+  samples: 20
+  minimum_pass_rate: 0.80
+  confidence: 0.95
+provenance:
+  source: authored
+  extracted_at: 2026-09-07T00:00:00Z
+  reviewed_by: mvp@gust.dev
+runner:
+  type: exec
+  command: ["python", "demo/live-agent/agent.py", "--buggy"]
+  timeout_seconds: 180
+  traces:
+    source: response

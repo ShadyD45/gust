@@ -12,5 +12,6 @@ func AllCases() []Case {
 	out = append(out, casesRecovery()...)
 	out = append(out, casesAdversarialExtras()...)
 	out = append(out, casesMode3()...)
+	out = append(out, casesInvariants()...)
 	return out
 }

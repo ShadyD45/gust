@@ -1,0 +1,15 @@
+{
+  "fixture_id": "fx_send_email_001",
+  "tool": "send_email",
+  "match_strategy": "exact_hash",
+  "recorded_input": {
+    "to": "ada@example.com",
+    "subject": "Order cancelled",
+    "body": "Order 123 has been cancelled."
+  },
+  "recorded_response": {
+    "status": "success",
+    "body": { "ok": true }
+  },
+  "provenance": "recorded"
+}

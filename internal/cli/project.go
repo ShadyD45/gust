@@ -14,10 +14,11 @@ import (
 
 // ProjectConfig is the gust.yaml project file.
 type ProjectConfig struct {
-	Policy string            `yaml:"policy"`
-	Test   ProjectTestConfig `yaml:"test"`
-	Retry  api.RetryPolicy   `yaml:"retry"`
-	Wire   ProjectWireConfig `yaml:"wire"`
+	Policy  string            `yaml:"policy"`
+	Test    ProjectTestConfig `yaml:"test"`
+	Retry   api.RetryPolicy   `yaml:"retry"`
+	Wire    ProjectWireConfig `yaml:"wire"`
+	Plugins []ProjectPlugin   `yaml:"plugins"`
 }
 
 // ProjectTestConfig holds Mode 3 execution defaults.
@@ -107,6 +108,9 @@ func mergeProject(base, over ProjectConfig) ProjectConfig {
 	}
 	if over.Wire.HandshakeTimeout != "" {
 		base.Wire.HandshakeTimeout = over.Wire.HandshakeTimeout
+	}
+	if len(over.Plugins) > 0 {
+		base.Plugins = over.Plugins
 	}
 	return base
 }

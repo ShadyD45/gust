@@ -1,0 +1,18 @@
+[
+  {
+    "id": "completes",
+    "type": "task_success",
+    "parameters": {
+      "expected_output": "cancelled"
+    }
+  },
+  {
+    "id": "helpful_cancel",
+    "type": "llm_judge",
+    "criticality": "soft",
+    "parameters": {
+      "rubric": "Confirm the order was cancelled in a clear, helpful tone.",
+      "threshold": 0.7
+    }
+  }
+]

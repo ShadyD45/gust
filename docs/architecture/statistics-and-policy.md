@@ -43,7 +43,31 @@ Synthetic H7 proofs must use rates and *N* that land in these buckets under the 
 ## Hard vs soft constraints
 
 - **Hard:** `hard_constraints.forbidden_tools` / `schema_violations` are **max allowed** failed evaluations of those evaluators (default `0` = any failure fails CI, exit 1). Assertions marked `criticality: hard` also fail immediately. `criticality: soft` is recorded and does not fail the sample.
-- **Soft:** probabilistic reliability thresholds evaluated via Wilson verdicts. Unset criticality on `llm_judge` is soft; other unset types still fail the sample but only forbidden-tool / schema-valid count toward the named hard-constraint tallies.
+- **Soft:** probabilistic reliability thresholds evaluated via Wilson verdicts. Unset criticality on `llm_judge` / `judge_panel` is soft. Other unset types still fail the sample, but only forbidden-tool / schema-valid count toward the named hard-constraint tallies. Uncalibrated judges stay soft even when YAML says `criticality: hard`.
+
+## Execution errors consume samples
+
+Mode 3 counts reliability as:
+
+```text
+passes / total attempted samples
+```
+
+An execution error (runner crash, timeout, invalid config) **consumes a sample** and therefore lowers observed reliability. It is not dropped from the denominator. If the fraction of execution errors exceeds `reliability.max_execution_error_rate` (default 0.20; explicit `0` is zero tolerance), the run aborts as **runner-unstable** instead of producing a PASS/FAIL/FLAKY verdict.
+
+That is conservative on purpose: hiding infrastructure failures would make an agent look more reliable than it is.
+
+## Retry taxonomy
+
+Mode 3 retries **runner errors**, not assertion failures.
+
+| `retry.on` | Retries |
+|------------|---------|
+| `none` | Never |
+| `transient` (default) | `ports.ErrTransient` and `net.Error`; not generic agent crashes; not `context.Canceled`; not `DeadlineExceeded` |
+| `all` | Every runner error except `context.Canceled` |
+
+Default is two attempts with 50ms backoff. An agent process that exits with a generic error is a failed sample, not a blip to be papered over.
 
 ## `on_flaky`
 

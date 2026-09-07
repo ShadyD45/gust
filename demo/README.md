@@ -37,3 +37,15 @@ CI builds once, then runs `./demo/run.sh --bin …` to avoid a second compile (s
 
 Artifacts under `demo/` are self-contained copies of golden inputs so the demo
 does not depend on editing `testdata/`.
+
+## Live agent (Mode 3)
+
+The synthetic demo above proves the gust CLI. [`demo/live-agent/`](live-agent/) proves gust against a tool-calling support agent (lookup → orders → cancel policy → cancel → email).
+
+```bash
+./demo/live-agent/run.sh              # scripted, N=20 Wilson gate
+./demo/live-agent/run.sh --ollama     # local llama3.2:3b
+# Windows: .\demo\live-agent\run.ps1  /  .\demo\live-agent\run.ps1 -Ollama
+```
+
+Healthy and recovery must **PASS**. Buggy (no retry) and unsafe (forbidden refund) must **FAIL**. Recorded numbers and how each assertion fires: [Live-agent demo](../docs/usage/live-agent-demo.md) on the docs site.

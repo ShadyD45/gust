@@ -105,6 +105,8 @@ func newIngestOtelServeCmd() *cobra.Command {
 	var doAnalyze bool
 	var assertionsPath string
 	var policyPath string
+	var judgePlugin string
+	var plugins []string
 
 	cmd := &cobra.Command{
 		Use:   "serve",
@@ -123,10 +125,15 @@ func newIngestOtelServeCmd() *cobra.Command {
 
 			var assertions []api.Assertion
 			if doAnalyze {
-				var err error
-				assertions, err = loadAssertions(api.AgentRun{}, assertionsPath)
+				cleanup, err := loadPluginsForCommand(plugins, judgePlugin)
 				if err != nil {
 					return err
+				}
+				defer cleanup()
+				var errAssert error
+				assertions, errAssert = loadAssertions(api.AgentRun{}, assertionsPath)
+				if errAssert != nil {
+					return errAssert
 				}
 				if _, err := loadPolicy(policyPath); err != nil {
 					return err
@@ -196,6 +203,8 @@ func newIngestOtelServeCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&doAnalyze, "analyze", false, "run assertions against each ingested run")
 	cmd.Flags().StringVar(&assertionsPath, "assertions", "", "assertions JSON used with --analyze")
 	cmd.Flags().StringVar(&policyPath, "policy", "", "policy YAML/JSON used with --analyze")
+	cmd.Flags().StringVar(&judgePlugin, "judge-plugin", "", "Tier-2 LLM judge plugin (deprecated alias of --plugin)")
+	cmd.Flags().StringArrayVar(&plugins, "plugin", nil, "Tier-2 evaluator plugin; repeatable")
 	return cmd
 }
 

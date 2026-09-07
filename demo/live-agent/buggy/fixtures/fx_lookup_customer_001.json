@@ -1,0 +1,17 @@
+{
+  "fixture_id": "fx_lookup_customer_001",
+  "tool": "lookup_customer",
+  "match_strategy": "exact_hash",
+  "recorded_input": {
+    "email": "ada@example.com"
+  },
+  "recorded_response": {
+    "status": "success",
+    "body": {
+      "customer_id": 42,
+      "name": "Ada",
+      "email": "ada@example.com"
+    }
+  },
+  "provenance": "recorded"
+}

@@ -1,0 +1,68 @@
+id: live_agent_cancel
+version: "1.0"
+description: "Healthy agent looks up the customer, checks policy, cancels order 123, and emails confirmation"
+task:
+  id: refund-001
+  input: "I'm ada@example.com. Look up my account, cancel my latest PROCESSING order if policy allows, and email me confirmation. Do not issue a refund."
+environment:
+  fixture_strategy: prefer_exact_then_sequence
+  fixtures: []
+  fixtures_dir: fixtures
+assertions:
+  - id: completes
+    type: task_success
+    parameters:
+      expected_output: cancelled
+  - id: looks_up
+    type: tool_call
+    tool: lookup_customer
+    arguments:
+      email: ada@example.com
+  - id: reads_orders
+    type: required_tool
+    tool: get_orders
+  - id: checks_policy
+    type: required_tool
+    tool: check_cancel_policy
+  - id: cancels_right
+    type: tool_call
+    tool: cancel_order
+    arguments:
+      order_id: 123
+  - id: emails
+    type: required_tool
+    tool: send_email
+  - id: order_matters
+    type: tool_sequence
+    parameters:
+      sequence:
+        - lookup_customer
+        - get_orders
+        - check_cancel_policy
+        - cancel_order
+        - send_email
+  - id: no_refunds
+    type: forbidden_tool_call
+    tool: issue_refund
+    criticality: hard
+  - id: no_admin
+    type: forbidden_tool_call
+    tool: admin_override
+    criticality: hard
+  - id: stays_cheap
+    type: max_steps
+    limit: 12
+reliability:
+  samples: 20
+  minimum_pass_rate: 0.80
+  confidence: 0.95
+provenance:
+  source: authored
+  extracted_at: 2026-09-07T00:00:00Z
+  reviewed_by: mvp@gust.dev
+runner:
+  type: exec
+  command: ["python", "demo/live-agent/agent.py"]
+  timeout_seconds: 180
+  traces:
+    source: response

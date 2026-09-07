@@ -72,8 +72,11 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 		concurrency = 4
 	}
 
-	_, canClone := cfg.FixtureProvider.(ClonableFixtureProvider)
-	if cfg.HasOrderedFixtures && !canClone && concurrency > 1 {
+	isolate := fixtureIsolationReady(cfg)
+	if cfg.HasOrderedFixtures && !isolate && concurrency > 1 {
+		// Shared sequence counters plus concurrency is incorrect even when the
+		// provider happens to implement Clone() — the clone is unused without a
+		// per-sample proxy. Force serial execution instead of racing.
 		concurrency = 1
 	}
 
@@ -115,14 +118,10 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 				fixtureEndpoint = cfg.Endpoint
 			}
 
-			var sampleProvider ports.FixtureProvider
-			if c, ok := cfg.FixtureProvider.(ClonableFixtureProvider); ok {
+			sampleProvider := cfg.FixtureProvider
+			if isolate {
+				c := cfg.FixtureProvider.(ClonableFixtureProvider)
 				sampleProvider = c.Clone()
-			} else {
-				sampleProvider = cfg.FixtureProvider
-			}
-
-			if cfg.ProxyFactory != nil && sampleProvider != nil && canClone {
 				ep, closer, err := cfg.ProxyFactory(sampleProvider)
 				if err != nil {
 					results[idx].execErr = err
@@ -145,7 +144,7 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 				results[idx].execErr = err
 				return
 			}
-			if sampleProvider != nil && concurrency == 1 && !canClone {
+			if !isolate && sampleProvider != nil {
 				_ = sampleProvider.Reset()
 			}
 			report, err := s.analyzeEngine.AnalyzeRun(ctx, run, cfg.Scenario.Assertions, withScenarioID(cfg.EvalContext, cfg.Scenario.ID))
@@ -238,4 +237,15 @@ func runWithRetry(ctx context.Context, runner ports.TestRunner, scenario api.Tes
 func withScenarioID(evalCtx ports.EvaluationContext, scenarioID string) ports.EvaluationContext {
 	evalCtx.ScenarioID = scenarioID
 	return evalCtx
+}
+
+// fixtureIsolationReady is true only when each sample can bind a cloned
+// provider to its own mock-tool proxy. Clone without a proxy still shares the
+// HTTP endpoint (and therefore sequence state).
+func fixtureIsolationReady(cfg SamplingConfig) bool {
+	if cfg.ProxyFactory == nil || cfg.FixtureProvider == nil {
+		return false
+	}
+	_, ok := cfg.FixtureProvider.(ClonableFixtureProvider)
+	return ok
 }

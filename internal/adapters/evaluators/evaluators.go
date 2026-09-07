@@ -156,8 +156,8 @@ func (e *ToolArgumentsEvaluator) Evaluate(ctx context.Context, run api.AgentRun,
 		res.Score = 0.0
 		res.Message = occErr.Error()
 		res.Evidence = map[string]any{
-			"occurrence":      occurrence,
-			"matching_spans":  len(matchedToolSpans),
+			"occurrence":         occurrence,
+			"matching_spans":     len(matchedToolSpans),
 			"expected_arguments": expected.Arguments,
 		}
 		res.ExecutionTimeNs = time.Since(start).Nanoseconds()
@@ -799,7 +799,7 @@ func RegisterBuiltinEvaluators(r *registry.Registry) {
 }
 
 // AllBuiltinEvaluators returns the complete list of built-in evaluators
-// (10 deterministic MVP evaluators plus the opt-in llm_judge adapter).
+// (10 deterministic MVP evaluators plus opt-in llm_judge and judge_panel).
 func AllBuiltinEvaluators() []ports.Evaluator {
 	return []ports.Evaluator{
 		&TaskSuccessEvaluator{},
@@ -813,5 +813,6 @@ func AllBuiltinEvaluators() []ports.Evaluator {
 		&ErrorRecoveryEvaluator{},
 		&SchemaValidationEvaluator{},
 		NewLLMJudgeEvaluator(nil),
+		&JudgePanelEvaluator{},
 	}
 }

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """A gust Tier-2 wire evaluator: flag unredacted card numbers in tool arguments.
 
-Load it from Go:
+Load it from the stock CLI (no Go required):
 
-    proc, _ := wire.StartPlugin(ctx, "python3", "sdk/python/examples/wire_evaluator/plugin.py")
-    registry.DefaultRegistry.RegisterEvaluator(wire.NewWireEvaluator(proc))
+    gust analyze run.json --plugin sdk/python/examples/wire_evaluator/plugin.py
 
 Then assert on it:
 

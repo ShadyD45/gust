@@ -1,0 +1,11 @@
+version: "1.0"
+name: live-agent-demo
+hard_constraints:
+  forbidden_tools: 0
+  schema_violations: 0
+reliability:
+  # N=20 all-pass Wilson lower bound is ~83.9% at 95% confidence, so 0.80 can PASS.
+  # A 0.95 floor cannot PASS below ~73 samples even with zero failures.
+  default_minimum_pass_rate: 0.80
+  min_samples_for_verdict: 20
+  on_flaky: fail

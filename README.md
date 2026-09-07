@@ -2,7 +2,7 @@
 
 # gust
 
-**Behavioral testing infrastructure for AI agents.**
+**Reproducible testing for probabilistic agents.**
 
 Record a real agent run. Turn it into a reproducible scenario. Inject failures. Run the agent repeatedly. Catch behavioral regressions in CI.
 
@@ -20,6 +20,12 @@ go build -o gust ./cmd/gust
 # Run the full MVP demo (recommended)
 ./demo/run.sh          # Linux/macOS
 ./demo/run.ps1         # Windows PowerShell
+
+# Optional: Mode 3 against a support agent (fixtures + Wilson N=20)
+./demo/live-agent/run.sh                 # scripted
+./demo/live-agent/run.sh --ollama        # local llama3.2:3b
+# Windows: .\demo\live-agent\run.ps1  /  .\demo\live-agent\run.ps1 -Ollama
+# Results write-up: docs/usage/live-agent-demo.md
 ```
 
 ```text
@@ -116,7 +122,8 @@ gust reads a JSON document describing what your agent did, so integration is a r
 Every pluggable capability is a small Go interface, and the built-ins use the same ones you would. See **[docs/extending/](docs/extending/)**:
 
 - [Custom evaluator (Go)](docs/extending/custom-evaluator-go.md) — assert domain rules the built-ins cannot express
-- [Cross-language plugins](docs/extending/wire-plugin-python.md) — reuse Python/TypeScript validation logic over JSON-RPC
+- [Cross-language plugins](docs/extending/wire-plugin-python.md) — `--plugin` / `gust.yaml` so you do not write Go
+- [LLM judge](docs/usage/llm-judge.md) — optional rubric judges and panels
 - [Custom test runners](docs/extending/custom-test-runner.md) — drive your own agent in Mode 3
 
 Python capture SDK: `[sdk/python/](sdk/python/)`.
@@ -153,11 +160,11 @@ benchmarks/               AEE + Validation Suite reports (updated locally as nee
 
 MVP Phases 1–9 complete (library, Mode 3, policy, scenario extraction, CLI, demo, CI).
 
-Phase 10–12, 17, and 20 have landed (OTel ingest, SDKs, optional LLM judge, AEE self-benchmark, semantic hardening, Mode 3 fixture isolation / retry / project config). Phase 18 (real-agent E2E with a live LLM) remains deferred. Remaining post-MVP feature work — stats v2, continuous eval, clustering, multi-agent — is tracked in internal engineering plans (maintainers only).
+Phase 10–12, 17, 18, and 20 have landed (OTel ingest, SDKs, optional LLM judge / `judge_panel` / `--plugin`, AEE self-benchmark, semantic hardening, Mode 3 fixture isolation / retry / project config, [live-agent demo](docs/usage/live-agent-demo.md) with a scripted fallback). Remaining post-MVP feature work — stats v2, continuous eval, clustering, multi-agent — is tracked in internal engineering plans (maintainers only).
 
 ## Self-benchmark (AEE)
 
-gust maintains an adversarial validation suite and mutation benchmark that continuously regression-tests its own evaluation machinery (golden-suite detection / FPR, deterministic evaluator throughput, reproducibility, Wilson H7). Latest numbers:
+gust maintains an adversarial validation suite and mutation benchmark that continuously validates its evaluation machinery against adversarial and mutation-based suites (golden-suite detection / FPR, deterministic evaluator throughput, reproducibility, Wilson H7, system invariants). Latest numbers:
 
 **→ [benchmarks/RESULTS.md](benchmarks/RESULTS.md)** · **[benchmarks/VALIDATION.md](benchmarks/VALIDATION.md)** · **[benchmark workflow](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)**
 

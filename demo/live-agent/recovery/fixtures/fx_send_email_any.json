@@ -1,0 +1,11 @@
+{
+  "fixture_id": "fx_send_email_any",
+  "tool": "send_email",
+  "match_strategy": "ordered_sequence",
+  "sequence_order": 1,
+  "recorded_response": {
+    "status": "success",
+    "body": { "ok": true }
+  },
+  "provenance": "authored"
+}

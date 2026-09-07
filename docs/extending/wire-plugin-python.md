@@ -10,6 +10,8 @@ Not every rule belongs in Go. If your validation logic already exists in Python 
 
 A plugin is a subprocess that speaks JSON-RPC 2.0 over stdin/stdout. gust starts it, handshakes, and wraps it in a Go adapter satisfying `ports.Evaluator`. Your process never needs to know Go exists.
 
+Load plugins on `analyze` / `test` with repeatable `--plugin` flags or `gust.yaml` `plugins:` (see below). The [live-agent demo]({% link usage/live-agent-demo.md %}) uses built-in evaluators only; add a plugin when you need a domain rule those evaluators cannot express.
+
 ## Protocol
 
 Newline-delimited JSON-RPC 2.0 on stdio. One JSON object per line, no framing headers.
@@ -202,29 +204,36 @@ A runnable copy of this plugin ships in [`sdk/python/examples/wire_evaluator/`](
 
 ## Loading the plugin
 
-Start the process and register the adapter — three lines in your Go entrypoint:
+Stock `gust` loads wire evaluators without writing Go. Repeat `--plugin` and/or list them in `gust.yaml`:
 
-```go
-import (
-    "gust/internal/adapters/wire"
-    "gust/internal/registry"
-)
-
-proc, err := wire.StartPlugin(ctx, "python3", "sdk/python/examples/wire_evaluator/plugin.py")
-if err != nil {
-    return fmt.Errorf("load pii plugin: %w", err)
-}
-defer proc.Close()
-
-if err := registry.DefaultRegistry.RegisterEvaluator(wire.NewWireEvaluator(proc)); err != nil {
-    return err
-}
+```bash
+./gust analyze run.json --plugin sdk/python/examples/wire_evaluator/plugin.py
+./gust test tests/scenarios --plugin pii_leak=python plugins/pii.py
 ```
 
-The CLI merges registry-registered evaluators with the built-in suite, so your assertions work immediately:
+```yaml
+# gust.yaml
+plugins:
+  - command: ["python", "plugins/pii.py"]
+    role: evaluator
+  - command: ["python", "plugins/judge.py"]
+    name: openai_judge
+    role: judge
+```
+
+`--judge-plugin` remains a deprecated alias that starts the process with judge credentials forwarded. Ordinary evaluator plugins still get a scrubbed environment.
+
+The assertion `type` is the plugin's manifest `name` (or the `name=` alias):
 
 ```json
 { "id": "no_card_leak", "type": "pii_leak", "tool": "send_email", "criticality": "hard" }
+```
+
+Embedders can still start a process from Go:
+
+```go
+proc, err := wire.StartPlugin(ctx, "python3", "sdk/python/examples/wire_evaluator/plugin.py")
+registry.DefaultRegistry.ReplaceEvaluator(wire.NewWireEvaluator(proc))
 ```
 
 ## Testing without gust

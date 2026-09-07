@@ -1,0 +1,12 @@
+version: "1.0"
+name: with-judge
+allow_llm_judge: true
+llm_judge:
+  calibrated: false
+hard_constraints:
+  forbidden_tools: 0
+  schema_violations: 0
+reliability:
+  default_minimum_pass_rate: 0.95
+  min_samples_for_verdict: 5
+  on_flaky: warn

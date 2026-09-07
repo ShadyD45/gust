@@ -34,6 +34,7 @@ func newTestCmd() *cobra.Command {
 	var otelGRPCListen string
 	var timeoutSec int
 	var judgePlugin string
+	var plugins []string
 	var retryOn string
 	var retryMaxAttempts int
 	var retryBackoffMs int
@@ -49,7 +50,7 @@ func newTestCmd() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cleanup, err := loadJudgePlugin(judgePlugin)
+			cleanup, err := loadPluginsForCommand(plugins, judgePlugin)
 			if err != nil {
 				return err
 			}
@@ -264,7 +265,8 @@ func newTestCmd() *cobra.Command {
 	cmd.Flags().StringVar(&otelListen, "otel-listen", "", "in-process OTLP/HTTP bind (default 127.0.0.1:0 when otel collection is on)")
 	cmd.Flags().StringVar(&otelGRPCListen, "otel-grpc-listen", "", "in-process OTLP/gRPC bind (default derived from --otel-listen)")
 	cmd.Flags().IntVar(&timeoutSec, "timeout", 0, "per-sample timeout in seconds")
-	cmd.Flags().StringVar(&judgePlugin, "judge-plugin", "", "Tier-2 LLM judge plugin (official SDK wrappers)")
+	cmd.Flags().StringVar(&judgePlugin, "judge-plugin", "", "Tier-2 LLM judge plugin (deprecated alias of --plugin with role judge)")
+	cmd.Flags().StringArrayVar(&plugins, "plugin", nil, "Tier-2 evaluator plugin (`python path.py` or `alias=python path.py`); repeatable")
 	cmd.Flags().StringVar(&retryOn, "retry-on", "", "retry runner errors: none|transient|all (default: transient)")
 	cmd.Flags().IntVar(&retryMaxAttempts, "retry-max-attempts", 0, "total Run attempts including the first (default: 2)")
 	cmd.Flags().IntVar(&retryBackoffMs, "retry-backoff-ms", 0, "backoff before a retry in milliseconds (default: 50)")

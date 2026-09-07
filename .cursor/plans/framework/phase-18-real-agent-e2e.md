@@ -2,7 +2,7 @@
 
 ## Status
 
-**Deferred / planned stub.** Not part of Phase 17 or Phase 20. Mode 3 synthetic fixture-isolation tests live in Phase 20; this phase is the live-LLM path.
+**Shipped** in `demo/live-agent/`: scripted CI fallback plus optional Ollama (`GUST_LIVE_AGENT=1`). See [`demo/live-agent/README.md`](../../../demo/live-agent/README.md).
 
 ## Objective
 

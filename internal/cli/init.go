@@ -21,6 +21,12 @@ retry:
 wire:
   evaluate_timeout: 60s
   handshake_timeout: 5s
+# plugins:
+#   - command: ["python", "plugins/pii_leak.py"]
+#     role: evaluator
+#   - command: ["python", "plugins/llm_judge.py"]
+#     name: llm_judge
+#     role: judge
 `
 
 const defaultPolicyYAML = `version: "1.0"

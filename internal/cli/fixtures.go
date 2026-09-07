@@ -3,6 +3,7 @@ package cli
 import (
 	"os"
 	"path/filepath"
+	"sort"
 
 	"gust/internal/adapters/fixtures"
 	"gust/pkg/api"
@@ -16,12 +17,17 @@ func loadFixturesDir(dir string) ([]api.Fixture, error) {
 	if err != nil {
 		return nil, err
 	}
-	var loaded []api.Fixture
+	var names []string
 	for _, e := range entries {
 		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
 			continue
 		}
-		fx, err := loadJSON[api.Fixture](filepath.Join(dir, e.Name()))
+		names = append(names, e.Name())
+	}
+	sort.Strings(names)
+	var loaded []api.Fixture
+	for _, name := range names {
+		fx, err := loadJSON[api.Fixture](filepath.Join(dir, name))
 		if err != nil {
 			return nil, err
 		}

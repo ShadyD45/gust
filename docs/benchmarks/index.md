@@ -26,7 +26,7 @@ gust separates the jobs and measures each with the right instrument:
 | Stochastic agents get honest verdicts | **H7** Wilson vectors (`PASS` / `FLAKY` / `FAIL`) |
 | Curated adversarial catalog is classified correctly | **[Validation Suite]({% link benchmarks/validation.md %})** — pass/fail/flaky/infra/mutation/fixture/recovery/mode3 |
 
-That is gust’s job: **test infrastructure for agents**. See [Metrics explained]({% link benchmarks/metrics.md %}) for definitions, and [Latest results]({% link benchmarks/results.md %}) for the published numbers (also [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)).
+That is gust’s job: **test infrastructure for agents**. See [Metrics explained]({% link benchmarks/metrics.md %}) for definitions, and [Latest results]({% link benchmarks/results.md %}) for the published numbers (also [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml)). Agent-side Mode 3 evidence (not AEE) is recorded in the [live-agent demo]({% link usage/live-agent-demo.md %}).
 
 ## Latest snapshot
 

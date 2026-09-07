@@ -54,6 +54,8 @@ func Run(ctx context.Context) (*Report, error) {
 			cr.Passed, cr.Detail, err = runFixture(ctx, c)
 		case KindMode3:
 			cr.Passed, cr.Detail, err = runMode3(ctx, detEvals, c)
+		case KindInvariant:
+			cr.Passed, cr.Detail, err = runInvariant(ctx, detEvals, analyzeEng, c)
 		default:
 			err = fmt.Errorf("unknown kind %q", c.Kind)
 		}

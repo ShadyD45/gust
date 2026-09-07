@@ -1,0 +1,17 @@
+{
+  "fixture_id": "fx_check_cancel_policy_001",
+  "tool": "check_cancel_policy",
+  "match_strategy": "exact_hash",
+  "recorded_input": {
+    "order_id": 123
+  },
+  "recorded_response": {
+    "status": "success",
+    "body": {
+      "order_id": 123,
+      "cancellable": true,
+      "reason": "PROCESSING orders may be cancelled before shipment"
+    }
+  },
+  "provenance": "recorded"
+}

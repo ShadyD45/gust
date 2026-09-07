@@ -53,12 +53,8 @@ func ValidateAssertion(a *Assertion, idx int) error {
 	if strings.TrimSpace(a.ID) == "" {
 		return fmt.Errorf("assertions[%d].id is required", idx)
 	}
-	switch a.Type {
-	case AssertTaskSuccess, AssertToolCall, AssertForbiddenToolCall, AssertRequiredTool,
-		AssertToolSequence, AssertMaxSteps, AssertMaxLatency, AssertSchemaValid, AssertErrorRecovery,
-		AssertLLMJudge:
-	default:
-		return fmt.Errorf("assertions[%d].type %q is invalid", idx, a.Type)
+	if strings.TrimSpace(string(a.Type)) == "" {
+		return fmt.Errorf("assertions[%d].type is required", idx)
 	}
 	if a.Criticality != "" && a.Criticality != CriticalityHard && a.Criticality != CriticalitySoft {
 		return fmt.Errorf("assertions[%d].criticality must be 'hard' or 'soft', got %q", idx, a.Criticality)

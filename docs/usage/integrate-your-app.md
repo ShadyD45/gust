@@ -23,6 +23,8 @@ flowchart LR
 
 You only need step one — recording an `AgentRun` — to get value. Everything else consumes that artifact.
 
+When you are ready for Mode 3 (N samples against fixtures), the [live-agent demo]({% link usage/live-agent-demo.md %}) is the in-tree template: `FixtureClient` + `run_sample` + scenario folders.
+
 ## Step 1: Record an AgentRun
 
 An `AgentRun` is a trace: who ran, what was asked, what steps happened, how it ended. The full type lives in [`pkg/api/types.go`](https://github.com/ShadyD45/gust/blob/main/pkg/api/types.go) and the JSON Schema in [`spec/schemas/`](https://github.com/ShadyD45/gust/tree/main/spec/schemas/).

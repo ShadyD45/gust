@@ -8,6 +8,7 @@ import (
 	"gust/internal/core/analyze"
 	"gust/internal/core/mutate"
 	"gust/internal/core/policy"
+	"gust/internal/domain/evidence"
 	"gust/pkg/api"
 )
 
@@ -24,6 +25,7 @@ func PrintAnalyzeTerminal(report *analyze.AnalysisReport) {
 			mark = "✗"
 		}
 		fmt.Printf("  %s %s: %s\n", mark, r.EvaluatorName, r.Message)
+		printEvidenceDiffs(r.Evidence)
 	}
 }
 
@@ -122,4 +124,40 @@ func WriteGitHubSummary(results []*api.ReliabilityResult) {
 	}
 	defer f.Close()
 	_, _ = f.WriteString(b.String())
+}
+
+func printEvidenceDiffs(ev map[string]any) {
+	if ev == nil {
+		return
+	}
+	if raw, ok := ev["diffs"]; ok {
+		printDiffValue("    ", raw)
+	}
+	if raw, ok := ev["discrepancies"]; ok {
+		printDiffValue("    ", raw)
+	}
+}
+
+func printDiffValue(indent string, raw any) {
+	switch v := raw.(type) {
+	case []evidence.DiffItem:
+		fmt.Print(evidence.FormatDiffs(v))
+	case evidence.DiffItem:
+		fmt.Printf("%s%s: expected %v, actual %v\n", indent, v.Path, v.Expected, v.Actual)
+	case []any:
+		for _, item := range v {
+			printDiffValue(indent, item)
+		}
+	case map[string]any:
+		if diffs, ok := v["diffs"]; ok {
+			if sid, ok := v["span_id"]; ok {
+				fmt.Printf("%sspan %v:\n", indent, sid)
+			}
+			printDiffValue(indent+"  ", diffs)
+			return
+		}
+		if path, ok := v["path"].(string); ok {
+			fmt.Printf("%s%s: expected %v, actual %v\n", indent, path, v["expected"], v["actual"])
+		}
+	}
 }
