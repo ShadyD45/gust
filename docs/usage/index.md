@@ -48,8 +48,10 @@ How to wire the job: [CI integration]({% link usage/ci-github-actions.md %}). Ho
 
 | Page | What it covers |
 |------|----------------|
-| [Integrate your app]({% link usage/integrate-your-app.md %}) | Emit an `AgentRun` from your existing Python, TypeScript, or Go service and run your first gate. Start here. |
-| [Test your agent]({% link usage/test-your-agent.md %}) | Mode 3 against *your* agent via `--runner http` or `--runner exec` — no Go |
+| [Getting started]({% link usage/getting-started.md %}) | Install, offline analyze, and a minimal live eval in ~15 minutes. **Start here.** |
+| [Integrate your app]({% link usage/integrate-your-app.md %}) | Emit an `AgentRun` from your existing Python, TypeScript, or Go service and run your first gate |
+| [Go library]({% link usage/go-library.md %}) | Embed Analyze in `go test` via the stable `pkg/gust` API |
+| [Test your agent]({% link usage/test-your-agent.md %}) | Mode 3 against *your* agent via `--runner http`, `exec`, or `trigger` — no Go |
 | [Live-agent demo]({% link usage/live-agent-demo.md %}) | Worked Mode 3 example: fixtures, recovery, forbidden tool, recorded N=20 results |
 | [Modes cookbook]({% link usage/modes-cookbook.md %}) | Recipes per mode, all assertion types, fixtures, and policies |
 | [Tuning the gate]({% link usage/tuning.md %}) | Policy, criticality, hard-constraint counts, retry, `gust.yaml`, and CLI knobs |
@@ -86,6 +88,8 @@ The result is a single static binary with no runtime dependencies. Drop it on a 
 # Exit code 0 = gate passed, 1 = gate failed. That's your CI step.
 echo $?
 ```
+
+Prefer a guided path with Python and TypeScript copy-paste? Use [Getting started]({% link usage/getting-started.md %}).
 
 Everything else in these docs is a variation on that: where the run comes from, how many times you sample it, and what policy decides "pass".
 

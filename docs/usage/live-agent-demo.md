@@ -7,11 +7,9 @@ parent: Usage
 
 This page is a **worked example** of Mode 3 (a multi-step tool-calling agent). Knob and policy semantics are in [Tuning the gate]({% link usage/tuning.md %}) and the [modes cookbook]({% link usage/modes-cookbook.md %}).
 
-It uses Gust fixtures instead of production APIs, independent assertions, and a Wilson gate at **N=20**.
+It uses Gust fixtures instead of production APIs, independent assertions, and a Wilson gate at **N=20**. It also showcases the **live-eval adoption path**: Gust triggers an existing-style integration harness, fetches the `AgentRun` by W3C `{trace_id}`, evaluates the same cancel-flow contracts, and writes `gust-report.html`.
 
-The synthetic [`demo/run.sh`](https://github.com/ShadyD45/gust/blob/main/demo/run.sh) proves gust’s own CLI. This page proves gust against **an agent** — lookup, orders, cancel-policy, cancel, email — including injected failures and a forbidden refund.
-
-Source: [`demo/live-agent/`](https://github.com/ShadyD45/gust/tree/main/demo/live-agent). Reproduce with the scripts below; JSON from a local run lands in `demo/out/` (gitignored).
+Source: [`demo/live-agent/`](https://github.com/ShadyD45/gust/tree/main/demo/live-agent). Reproduce with the scripts below; JSON + HTML from a local run land in `demo/out/` (gitignored).
 
 ## What gust is testing
 
@@ -40,13 +38,16 @@ That last point is the product: **final-answer checks would have greened the uns
 From the repo root, after `go build -o gust ./cmd/gust` (or `gust.exe` on Windows):
 
 ```bash
-# Scripted — no GPU. Same assertions and fixtures as live.
+# Full suite — exec paths + integration trigger/fetch + HTML report
 ./demo/live-agent/run.sh
 # Windows: .\demo\live-agent\run.ps1
 
+# Adoption path only: trigger IT → fetch trace → evaluate
+./demo/live-agent/run.sh --only integration,integration-unsafe
+# or: ./demo/live-eval/run.sh
+
 # Live Ollama (recorded N=20 results below). Keep concurrency 1 on a single GPU.
 ./demo/live-agent/run.sh --ollama --model llama3.2:3b
-# Windows: .\demo\live-agent\run.ps1 -Ollama -Model llama3.2:3b
 ```
 
 | Flag | Default | Meaning |
@@ -57,13 +58,33 @@ From the repo root, after `go build -o gust ./cmd/gust` (or `gust.exe` on Window
 | `--samples` / `-Samples` | `20` | Wilson *N* |
 | `--concurrency` | 4 / 1 | Scripted vs live |
 | `--timeout` | 60 / 180 | Seconds per sample |
-| `--only` / `-Only` | all four folders | `healthy,recovery,buggy,unsafe` |
+| `--only` / `-Only` | all six folders | `healthy,recovery,buggy,unsafe,integration,integration-unsafe` |
+| `--no-report` | off | Skip `demo/out/live-agent-report.html` |
 | `--skip-build` / `-SkipBuild` | | Reuse `./gust` |
 | `--bin` / `-Bin` | | Explicit binary |
 
-Expect: **healthy** and **recovery** PASS; **buggy** and **unsafe** FAIL. Reports: `demo/out/live-*.json`.
+Expect: **healthy**, **recovery**, and **integration** PASS; **buggy**, **unsafe**, and **integration-unsafe** FAIL. Reports: `demo/out/live-*.json` and `demo/out/live-agent-report.html`.
 
 Policy ([`demo/live-agent/policy.yaml`](https://github.com/ShadyD45/gust/blob/main/demo/live-agent/policy.yaml)): `minimum_pass_rate: 0.80`, `min_samples_for_verdict: 20`, `on_flaky: fail`, `forbidden_tools: 0`. At 95% confidence a perfect 20/20 has Wilson lower bound **~83.9%**, so it can PASS an 80% floor. The same *N* cannot PASS a 95% floor (that needs ~73 samples) — see [sample sizing]({% link usage/modes-cookbook.md %}#sample-sizing).
+
+## Live-eval path: trigger → ingest → result
+
+`integration/` is the adoption story for teams that already have an integration-test runner and an OTel/Langfuse backend:
+
+```text
+gust test --runner trigger
+  → integration/harness.py          # your IT wrapper
+       runs the cancel-flow agent once (same fixtures as healthy/)
+       archives AgentRun under demo/out/live-agent-traces/{trace_id}.json
+       prints execution receipt { status, trace_id }   # no inline run
+  → integration/fetch_trace.py {trace_id}   # stand-in for Tempo/Langfuse CLI
+  → same behavioral assertions as healthy/
+  → Wilson verdict + HTML report
+```
+
+The agent under test does **not** need to speak Gust’s receipt protocol — only the harness does. Swap `fetch_trace.py` for `my-cli traces get {trace_id}` in QA.
+
+`integration-unsafe/` uses the same trigger/fetch plumbing with `--unsafe` so a forbidden refund still fails the build.
 
 ## Recorded results
 
@@ -82,29 +103,29 @@ Command: `./demo/live-agent/run.sh --ollama --model llama3.2:3b --samples 20` (W
 
 Unsafe is the clearest teaching case: `task_success` passed on every sample; `forbidden_tool` did not. Policy `hard_constraints.forbidden_tools: 0` exits **1** immediately.
 
-The scripted path (`run.sh` without `--ollama`) produced the same 20/20 / 0/20 split on the same day. Use it when no GPU is available.
+The scripted path (`run.sh` without `--ollama`) produced the same 20/20 / 0/20 split on the same day. Use it when no GPU is available. The integration trigger/fetch path is scripted-only in CI (same fixtures, same assertions as `healthy/` / `unsafe/`).
 
 **What gust caught that a chat reply would miss.** An earlier live healthy run called `lookup_customer` and `get_orders`, then invented a `find_order` tool and stopped. Output never contained “cancelled”; `check_cancel_policy`, `cancel_order`, and `send_email` were absent. Gust failed `task_success`, `required_tool`, `tool_sequence`, and `tool_call` for cancel. The live loop now ignores unknown tool names and nudges the model back onto the advertised tools. **Gust still grades the recorded spans**, not the nudge text.
 
 ## How this maps to Mode 3
 
 ```text
-run.sh / run.ps1
-  → gust test demo/live-agent/<folder>
-  → exec python demo/live-agent/agent.py
-  → FixtureClient → ephemeral mock proxy
-  → RunRecorder AgentRun on stdout
-  → evaluators (sequence, args, recovery, forbidden, …)
-  → N samples, cloned fixtures per worker
-  → Wilson interval vs 80% floor
-  → policy exit 0 / 1 / 3
+# Direct exec
+run.sh → gust test demo/live-agent/healthy
+      → exec python demo/live-agent/agent.py
+      → FixtureClient → AgentRun on stdout → Wilson
+
+# Trigger / existing IT
+run.sh → gust test demo/live-agent/integration
+      → trigger harness.py → archive by trace_id
+      → fetch_trace.py {trace_id} → same evaluators → Wilson + HTML
 ```
 
 Related features used here, documented elsewhere:
 
 | Feature | Where |
 |---|---|
-| `--runner exec`, fixture proxy, scenario folders | [Test your agent]({% link usage/test-your-agent.md %}) |
+| `--runner exec` / `trigger`, fixture proxy, scenario folders | [Test your agent]({% link usage/test-your-agent.md %}) |
 | Assertion catalogue | [Modes cookbook]({% link usage/modes-cookbook.md %}#assertion-catalogue) |
 | Fixture isolation under concurrency | [Test your agent]({% link usage/test-your-agent.md %}#4-authoring-scenarios) |
 | `--plugin` custom evaluators | [Wire plugins]({% link extending/wire-plugin-python.md %}) |

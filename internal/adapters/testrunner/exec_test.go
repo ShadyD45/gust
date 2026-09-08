@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"gust/internal/ports"
 	"gust/pkg/api"
 )
 
@@ -30,6 +31,10 @@ func TestMain(m *testing.M) {
 		_ = json.NewEncoder(os.Stdout).Encode(run)
 		os.Exit(0)
 	}
+	if os.Getenv("GUST_TRIGGER_HELPER") == "1" {
+		writeTriggerHelperReceipt()
+		os.Exit(0)
+	}
 	os.Exit(m.Run())
 }
 
@@ -43,12 +48,14 @@ func TestExecRunner_Stdout(t *testing.T) {
 	os.Setenv("GUST_EXEC_HELPER", "1")
 	t.Cleanup(func() { os.Unsetenv("GUST_EXEC_HELPER") })
 
-	// The child inherits env; CommandContext also appends env. Set on parent so
-	// the helper TestMain branch is taken. ExecRunner copies os.Environ().
-	run, err := r.Run(context.Background(), api.TestScenario{
-		ID:   "exec",
-		Task: api.TaskInfo{ID: "t", Input: "do it"},
-	}, "http://fixtures")
+	run, err := r.Run(context.Background(), ports.SampleRequest{
+		Scenario: api.TestScenario{
+			ID:   "exec",
+			Task: api.TaskInfo{ID: "t", Input: "do it"},
+		},
+		FixtureEndpoint: "http://fixtures",
+		WorldMode:       api.WorldControlGust,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,10 +75,14 @@ func TestExecRunner_InjectsOTelEnv(t *testing.T) {
 	os.Setenv("GUST_EXEC_HELPER", "otel")
 	t.Cleanup(func() { os.Unsetenv("GUST_EXEC_HELPER") })
 
-	run, err := r.Run(context.Background(), api.TestScenario{
-		ID:   "exec",
-		Task: api.TaskInfo{ID: "t", Input: "do it"},
-	}, "http://fixtures")
+	run, err := r.Run(context.Background(), ports.SampleRequest{
+		Scenario: api.TestScenario{
+			ID:   "exec",
+			Task: api.TaskInfo{ID: "t", Input: "do it"},
+		},
+		FixtureEndpoint: "http://fixtures",
+		WorldMode:       api.WorldControlGust,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

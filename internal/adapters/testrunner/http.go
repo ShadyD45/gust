@@ -3,15 +3,12 @@ package testrunner
 import (
 	"bytes"
 	"context"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -23,12 +20,18 @@ var _ ports.TestRunner = (*HTTPRunner)(nil)
 
 // InvokeRequest is the JSON body gust POSTs to an HTTP agent.
 type InvokeRequest struct {
-	Input        string         `json:"input"`
-	Context      map[string]any `json:"context,omitempty"`
-	ToolEndpoint string         `json:"tool_endpoint"`
-	SampleID     string         `json:"sample_id"`
-	OTelEndpoint string         `json:"otel_endpoint,omitempty"`
-	IngestURL    string         `json:"ingest_url,omitempty"`
+	Input         string         `json:"input"`
+	Context       map[string]any `json:"context,omitempty"`
+	ToolEndpoint  string         `json:"tool_endpoint,omitempty"`
+	SampleID      string         `json:"sample_id"`
+	EvaluationID  string         `json:"evaluation_id,omitempty"`
+	ScenarioID    string         `json:"scenario_id,omitempty"`
+	TraceID       string         `json:"trace_id,omitempty"`
+	TraceParent   string         `json:"traceparent,omitempty"`
+	Baggage       string         `json:"baggage,omitempty"`
+	OTelEndpoint  string         `json:"otel_endpoint,omitempty"`
+	IngestURL     string         `json:"ingest_url,omitempty"`
+	WorldControl  string         `json:"world_control,omitempty"`
 }
 
 // HTTPRunner POSTs one sample to a user-owned agent endpoint and collects the trace.
@@ -62,26 +65,25 @@ func (r *HTTPRunner) WithOTelURL(url string) *HTTPRunner {
 	return r
 }
 
-func (r *HTTPRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
-	if fixtureEndpoint == "" {
-		fixtureEndpoint = os.Getenv(EnvFixtureEndpoint)
-	}
+func (r *HTTPRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
 	if r.URL == "" {
 		return api.AgentRun{}, fmt.Errorf("http runner: agent URL is required")
 	}
+	req = normalizeSampleRequest(req, r.OTelURL)
 
-	sampleID := newSampleID(scenario.ID)
-	ingestURL := ""
-	if r.OTelURL != "" {
-		ingestURL = strings.TrimRight(r.OTelURL, "/") + "/v1/runs"
-	}
 	payload, err := json.Marshal(InvokeRequest{
-		Input:        scenario.Task.Input,
-		Context:      scenario.Task.Context,
-		ToolEndpoint: fixtureEndpoint,
-		SampleID:     sampleID,
-		OTelEndpoint: r.OTelURL,
-		IngestURL:    ingestURL,
+		Input:        req.Scenario.Task.Input,
+		Context:      req.Scenario.Task.Context,
+		ToolEndpoint: req.FixtureEndpointOrEmpty(),
+		SampleID:     req.SampleID,
+		EvaluationID: req.EvaluationID,
+		ScenarioID:   req.ScenarioID,
+		TraceID:      req.TraceID,
+		TraceParent:  req.TraceParent,
+		Baggage:      req.Baggage,
+		OTelEndpoint: req.OTelEndpoint,
+		IngestURL:    req.IngestURL,
+		WorldControl: string(req.WorldMode),
 	})
 	if err != nil {
 		return api.AgentRun{}, err
@@ -92,14 +94,23 @@ func (r *HTTPRunner) Run(ctx context.Context, scenario api.TestScenario, fixture
 		invokeURL = invokeURL + "/invoke"
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, invokeURL, bytes.NewReader(payload))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, invokeURL, bytes.NewReader(payload))
 	if err != nil {
 		return api.AgentRun{}, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Gust-Sample-Id", sampleID)
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("X-Gust-Sample-Id", req.SampleID)
+	if req.EvaluationID != "" {
+		httpReq.Header.Set("X-Gust-Evaluation-Id", req.EvaluationID)
+	}
+	if req.TraceParent != "" {
+		httpReq.Header.Set("traceparent", req.TraceParent)
+	}
+	if req.Baggage != "" {
+		httpReq.Header.Set("baggage", req.Baggage)
+	}
 
-	resp, err := r.Client.Do(req)
+	resp, err := r.Client.Do(httpReq)
 	if err != nil {
 		return api.AgentRun{}, classifyInvokeErr(err)
 	}
@@ -112,18 +123,12 @@ func (r *HTTPRunner) Run(ctx context.Context, scenario api.TestScenario, fixture
 		return api.AgentRun{}, fmt.Errorf("invoke agent: HTTP %d: %s", resp.StatusCode, truncate(body, 512))
 	}
 
-	run, err := Collect(ctx, r.Collector, sampleID, body)
+	run, err := Collect(ctx, r.Collector, req.SampleID, body)
 	if err != nil {
 		return api.AgentRun{}, err
 	}
-	stampSampleMetadata(&run, sampleID)
+	stampSampleMetadata(&run, req)
 	return run, nil
-}
-
-func newSampleID(scenarioID string) string {
-	var b [8]byte
-	_, _ = rand.Read(b[:])
-	return fmt.Sprintf("%s-%d-%s", scenarioID, time.Now().UnixNano(), hex.EncodeToString(b[:]))
 }
 
 func truncate(b []byte, n int) string {

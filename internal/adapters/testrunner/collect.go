@@ -175,12 +175,3 @@ func waitFile(ctx context.Context, path string, timeout time.Duration) ([]byte, 
 		}
 	}
 }
-
-func stampSampleMetadata(run *api.AgentRun, sampleID string) {
-	if run.Metadata == nil {
-		run.Metadata = map[string]any{}
-	}
-	if sampleID != "" {
-		run.Metadata["sample_id"] = sampleID
-	}
-}

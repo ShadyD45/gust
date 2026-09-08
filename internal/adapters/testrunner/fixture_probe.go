@@ -30,7 +30,8 @@ type FixtureProbeRunner struct {
 
 func (r *FixtureProbeRunner) Name() string { return "fixture_probe" }
 
-func (r *FixtureProbeRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
+func (r *FixtureProbeRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
+	fixtureEndpoint := req.FixtureEndpointOrEmpty()
 	if r.FailFirst {
 		if _, loaded := r.failed.LoadOrStore(fixtureEndpoint, true); !loaded {
 			if r.ConsumeThenFail && len(r.Calls) > 0 {
@@ -94,11 +95,15 @@ func (r *FixtureProbeRunner) Run(ctx context.Context, scenario api.TestScenario,
 	if !allFound {
 		status = "failed"
 	}
-	return api.AgentRun{
+	runID := req.SampleID
+	if runID == "" {
+		runID = fmt.Sprintf("probe_%s_%d", req.Scenario.ID, time.Now().UnixNano())
+	}
+	run := api.AgentRun{
 		SchemaVersion: api.SchemaVersion,
-		RunID:         fmt.Sprintf("probe_%s_%d", scenario.ID, time.Now().UnixNano()),
+		RunID:         runID,
 		Agent:         api.AgentInfo{Name: "fixture-probe", Version: "1.0"},
-		Task:          scenario.Task,
+		Task:          req.Scenario.Task,
 		Trace:         spans,
 		Outcome: api.RunOutcome{
 			Status:     status,
@@ -110,7 +115,9 @@ func (r *FixtureProbeRunner) Run(ctx context.Context, scenario api.TestScenario,
 			"bodies":           bodies,
 			"all_found":        allFound,
 		},
-	}, nil
+	}
+	stampSampleMetadata(&run, req)
+	return run, nil
 }
 
 type toolCallJSON struct {

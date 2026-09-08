@@ -1,7 +1,8 @@
-"""One-sample harness so ``gust test --runner http|exec`` can drive a Python agent.
+"""One-sample harness so ``gust test --runner http|exec|trigger`` can drive a Python agent.
 
-End users implement a handler that runs the agent once and returns an AgentRun.
-gust owns sampling, fixtures, and the verdict.
+End users implement a handler that runs the agent once and returns an AgentRun,
+or a normal result when an existing tracer already captures the run.
+gust owns sampling, optional fixtures, and the verdict.
 """
 
 from __future__ import annotations
@@ -17,10 +18,31 @@ from gust_sdk.fixtures import FIXTURE_ENDPOINT_ENV, FixtureClient
 from gust_sdk.recorder import INGEST_URL_ENV, OTEL_ENDPOINT_ENV, RunRecorder, post_run
 
 SAMPLE_ID_ENV = "AGENTEVAL_SAMPLE_ID"
+EVALUATION_ID_ENV = "GUST_EVALUATION_ID"
+SCENARIO_ID_ENV = "GUST_SCENARIO_ID"
+TRACE_ID_ENV = "GUST_TRACE_ID"
+TRACEPARENT_ENV = "TRACEPARENT"
+BAGGAGE_ENV = "BAGGAGE"
+WORLD_CONTROL_ENV = "GUST_WORLD_CONTROL"
 RESOURCE_ATTRS_ENV = "OTEL_RESOURCE_ATTRIBUTES"
 SAMPLE_ID_ATTR = "gust.sample_id"
 
 SampleHandler = Callable[[Dict[str, Any], FixtureClient], Union[Dict[str, Any], RunRecorder]]
+
+
+def sample_context() -> Dict[str, Any]:
+    """Read the Gust sample context from process environment."""
+    return {
+        "evaluation_id": os.environ.get(EVALUATION_ID_ENV, ""),
+        "scenario_id": os.environ.get(SCENARIO_ID_ENV, ""),
+        "sample_id": os.environ.get(SAMPLE_ID_ENV, ""),
+        "trace_id": os.environ.get(TRACE_ID_ENV, ""),
+        "traceparent": os.environ.get(TRACEPARENT_ENV, ""),
+        "baggage": os.environ.get(BAGGAGE_ENV, ""),
+        "world_control": os.environ.get(WORLD_CONTROL_ENV, ""),
+        "tool_endpoint": os.environ.get(FIXTURE_ENDPOINT_ENV, ""),
+        "input": os.environ.get("AGENTEVAL_TASK_INPUT", ""),
+    }
 
 
 def apply_sample_id(run: Union[Dict[str, Any], RunRecorder], sample_id: str) -> Union[Dict[str, Any], RunRecorder]:
@@ -39,15 +61,11 @@ def apply_sample_id(run: Union[Dict[str, Any], RunRecorder], sample_id: str) -> 
 
 
 def read_invoke(stdin: Optional[IO[str]] = None) -> Dict[str, Any]:
-    """Read the invoke payload gust sends on stdin (exec runner)."""
+    """Read the invoke payload gust sends on stdin (exec/trigger runner)."""
     source = stdin if stdin is not None else sys.stdin
     raw = source.read()
     if not raw.strip():
-        return {
-            "input": os.environ.get("AGENTEVAL_TASK_INPUT", ""),
-            "sample_id": os.environ.get(SAMPLE_ID_ENV, ""),
-            "tool_endpoint": os.environ.get(FIXTURE_ENDPOINT_ENV, ""),
-        }
+        return sample_context()
     return json.loads(raw)
 
 
@@ -63,6 +81,17 @@ def apply_invoke_env(request: Dict[str, Any]) -> str:
     sample_id = str(request.get("sample_id") or os.environ.get(SAMPLE_ID_ENV, ""))
     if sample_id:
         os.environ[SAMPLE_ID_ENV] = sample_id
+    for key, env_name in (
+        ("evaluation_id", EVALUATION_ID_ENV),
+        ("scenario_id", SCENARIO_ID_ENV),
+        ("trace_id", TRACE_ID_ENV),
+        ("traceparent", TRACEPARENT_ENV),
+        ("baggage", BAGGAGE_ENV),
+        ("world_control", WORLD_CONTROL_ENV),
+    ):
+        val = request.get(key)
+        if val:
+            os.environ[env_name] = str(val)
     endpoint = request.get("tool_endpoint") or os.environ.get(FIXTURE_ENDPOINT_ENV) or None
     if endpoint:
         os.environ[FIXTURE_ENDPOINT_ENV] = str(endpoint)
@@ -103,6 +132,43 @@ def run_sample(handler: SampleHandler, stdin: Optional[IO[str]] = None, stdout: 
     return run
 
 
+def run_eval(handler: Callable[[Dict[str, Any]], Union[Dict[str, Any], RunRecorder, None]], stdin: Optional[IO[str]] = None, stdout: Optional[IO[str]] = None) -> Dict[str, Any]:
+    """Minimal eval entrypoint: one function over scenario input/context.
+
+    Use this when world control is ``existing`` (your own mocks/DI) and you either
+    return an AgentRun / RunRecorder or rely on OTel already capturing the run.
+    """
+
+    def _wrap(request: Dict[str, Any], fixtures: FixtureClient) -> Union[Dict[str, Any], RunRecorder]:
+        result = handler(request)
+        if result is None:
+            # Placeholder completed run when an external tracer owns observation.
+            rec = RunRecorder(
+                agent_name=os.environ.get("GUST_AGENT_NAME", "agent"),
+                agent_version=os.environ.get("GUST_AGENT_VERSION", "0"),
+                task_input=str(request.get("input") or ""),
+            )
+            rec.complete(output="traced-externally")
+            return rec
+        return result
+
+    return run_sample(_wrap, stdin=stdin, stdout=stdout)
+
+
+def execution_receipt(*, status: str = "completed", trace_id: str = "", run_id: str = "", run: Optional[Dict[str, Any]] = None, error: str = "") -> Dict[str, Any]:
+    """Build a trigger-runner completion receipt for remote QA / harness flows."""
+    out: Dict[str, Any] = {"status": status}
+    if trace_id:
+        out["trace_id"] = trace_id
+    if run_id:
+        out["run_id"] = run_id
+    if error:
+        out["error"] = error
+    if run is not None:
+        out["run"] = run
+    return out
+
+
 def serve_sample(handler: SampleHandler, host: str = "127.0.0.1", port: int = 8080) -> ThreadingHTTPServer:
     """Serve ``POST /invoke`` for ``--runner http``. Returns the started server.
 
@@ -127,6 +193,10 @@ def serve_sample(handler: SampleHandler, host: str = "127.0.0.1", port: int = 80
                 return
             if not request.get("sample_id"):
                 request["sample_id"] = self.headers.get("X-Gust-Sample-Id") or os.environ.get(SAMPLE_ID_ENV, "")
+            if not request.get("traceparent"):
+                request["traceparent"] = self.headers.get("traceparent") or ""
+            if not request.get("baggage"):
+                request["baggage"] = self.headers.get("baggage") or ""
             sample_id = apply_invoke_env(request)
             endpoint = request.get("tool_endpoint") or os.environ.get(FIXTURE_ENDPOINT_ENV) or None
             fixtures = FixtureClient(endpoint=endpoint)

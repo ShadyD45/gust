@@ -15,8 +15,8 @@ test("records required AgentRun fields", () => {
   const run = rec.toDict();
   assert.equal(run.schema_version, "0.5");
   assert.equal(run.run_id, "run-1");
-  assert.equal(run.agent.name, "support-agent");
-  assert.equal(run.outcome.status, "completed");
+  assert.equal((run.agent as { name: string }).name, "support-agent");
+  assert.equal((run.outcome as { status: string }).status, "completed");
 });
 
 test("tool arguments land in attributes.input", () => {
@@ -29,9 +29,9 @@ test("tool arguments land in attributes.input", () => {
   span.output = { ok: true };
   span.finish();
   rec.complete("cancelled");
-  const tool = rec.toDict().trace[0];
+  const tool = (rec.toDict().trace as Record<string, unknown>[])[0];
   assert.equal(tool.type, "tool");
-  assert.deepEqual(tool.attributes.input, { order_id: 123 });
+  assert.deepEqual((tool.attributes as { input: unknown }).input, { order_id: 123 });
 });
 
 test("complete is required before serialize", () => {
@@ -58,6 +58,6 @@ test("evaluator plugin manifest", () => {
   const plugin = new EvaluatorPlugin();
   plugin.name = "pii";
   const res = plugin.handle({ jsonrpc: "2.0", id: 1, method: "manifest" });
-  assert.equal(res.result.name, "pii");
-  assert.equal(res.result.kind, "evaluator");
+  assert.equal((res.result as { name: string }).name, "pii");
+  assert.equal((res.result as { kind: string }).kind, "evaluator");
 });

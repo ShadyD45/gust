@@ -53,7 +53,7 @@ func (r *SyntheticRunner) WithFixedOutcomes(outcomes []bool) *SyntheticRunner {
 
 func (r *SyntheticRunner) Name() string { return "synthetic" }
 
-func (r *SyntheticRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
+func (r *SyntheticRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
 	select {
 	case <-ctx.Done():
 		return api.AgentRun{}, ctx.Err()
@@ -72,15 +72,20 @@ func (r *SyntheticRunner) Run(ctx context.Context, scenario api.TestScenario, fi
 		errMsg = "synthetic failure"
 	}
 
+	sampleID := req.SampleID
+	if sampleID == "" {
+		sampleID = fmt.Sprintf("synthetic_%s_%d", req.Scenario.ID, n)
+	}
+
 	now := time.Now().UTC()
 	run := api.AgentRun{
 		SchemaVersion: api.SchemaVersion,
-		RunID:         fmt.Sprintf("synthetic_%s_%d", scenario.ID, n),
+		RunID:         sampleID,
 		Agent: api.AgentInfo{
 			Name:    r.AgentName,
 			Version: r.AgentVersion,
 		},
-		Task: scenario.Task,
+		Task: req.Scenario.Task,
 		Trace: []api.Span{{
 			SpanID:    fmt.Sprintf("span_%d", n),
 			Name:      "synthetic_step",
@@ -96,10 +101,11 @@ func (r *SyntheticRunner) Run(ctx context.Context, scenario api.TestScenario, fi
 			DurationNs: time.Millisecond,
 		},
 		Metadata: map[string]any{
-			"fixture_endpoint": fixtureEndpoint,
+			"fixture_endpoint": req.FixtureEndpointOrEmpty(),
 			"runner":           r.Name(),
 		},
 	}
+	stampSampleMetadata(&run, req)
 	return run, nil
 }
 

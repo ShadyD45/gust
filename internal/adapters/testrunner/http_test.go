@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"gust/internal/ports"
 	"gust/pkg/api"
 )
 
@@ -37,7 +38,11 @@ func TestHTTPRunner_ResponseBody(t *testing.T) {
 		ID:   "cancel",
 		Task: api.TaskInfo{ID: "t", Input: "Cancel my latest order"},
 	}
-	run, err := r.Run(context.Background(), sc, "http://fixtures")
+	run, err := r.Run(context.Background(), ports.SampleRequest{
+		Scenario:        sc,
+		FixtureEndpoint: "http://fixtures",
+		WorldMode:       api.WorldControlGust,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,10 +61,12 @@ func TestHTTPRunner_InvalidRunIsError(t *testing.T) {
 	defer srv.Close()
 
 	r := NewHTTPRunner(srv.URL, CollectorConfig{Source: TraceSourceResponse})
-	_, err := r.Run(context.Background(), api.TestScenario{
-		ID:   "x",
-		Task: api.TaskInfo{ID: "t", Input: "in"},
-	}, "")
+	_, err := r.Run(context.Background(), ports.SampleRequest{
+		Scenario: api.TestScenario{
+			ID:   "x",
+			Task: api.TaskInfo{ID: "t", Input: "in"},
+		},
+	})
 	if err == nil {
 		t.Fatal("expected invalid run error")
 	}

@@ -4,48 +4,59 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
+	"gust/internal/adapters/testrunner"
 	"gust/internal/core/analyze"
 	"gust/internal/core/stats"
 	"gust/internal/ports"
 	"gust/pkg/api"
 )
 
-// ErrRunnerUnstable is returned when execution errors alone exceed the configured rate.
-var ErrRunnerUnstable = errors.New("runner unstable: execution error rate exceeds max_execution_error_rate")
+// ErrRunnerUnstable is returned when infrastructure errors alone exceed the configured rate.
+var ErrRunnerUnstable = errors.New("runner unstable: infrastructure error rate exceeds max_execution_error_rate")
+
+// ErrUnattainablePASS is returned when N samples cannot mathematically reach PASS.
+var ErrUnattainablePASS = errors.New("unattainable PASS: Wilson lower bound with perfect samples is below minimum_pass_rate")
 
 // FixtureProxyFactory starts an isolated mock-tool HTTP proxy for one sample's provider.
-// Core stays adapter-free: CLI and the validation suite supply the fixtures adapter.
 type FixtureProxyFactory func(provider ports.FixtureProvider) (endpoint string, closeFn func() error, err error)
 
 // SamplingConfig configures a Mode 3 probabilistic test run.
 type SamplingConfig struct {
-	Scenario        api.TestScenario
-	Runner          ports.TestRunner
-	Evaluators      []ports.Evaluator
-	Concurrency     int
-	Endpoint        string                // runner-specific (ollama / http agent URL)
-	FixtureEndpoint string                // shared mock proxy fallback when samples cannot be isolated
-	FixtureProvider ports.FixtureProvider // optional; cloned per sample when possible
-	MinSamples      int                   // override for INSUFFICIENT_SAMPLES; 0 → use policy default 5
-	EvalContext     ports.EvaluationContext
-	// MaxExecutionErrorRate aborts the scenario when exec errors / samples exceeds this.
-	// Nil uses default 0.20; explicit 0 is zero tolerance.
+	Scenario              api.TestScenario
+	Runner                ports.TestRunner
+	Evaluators            []ports.Evaluator
+	Concurrency           int
+	Endpoint              string
+	FixtureEndpoint       string
+	FixtureProvider       ports.FixtureProvider
+	MinSamples            int
+	EvalContext           ports.EvaluationContext
 	MaxExecutionErrorRate *float64
-	// HasOrderedFixtures forces concurrency=1 when the provider cannot be cloned.
-	HasOrderedFixtures bool
-	// ProxyFactory, when set, starts a per-sample proxy bound to the cloned provider.
-	ProxyFactory    FixtureProxyFactory
-	Retry           api.RetryPolicy
-	HardConstraints api.HardConstraints
+	HasOrderedFixtures    bool
+	ProxyFactory          FixtureProxyFactory
+	Retry                 api.RetryPolicy
+	HardConstraints       api.HardConstraints
+	EvaluationID          string
+	OTelURL               string
+	// FailUnattainable aborts before sampling when PASS is mathematically impossible.
+	FailUnattainable bool
+	// OnUnattainable is called with a warning when PASS is unattainable and FailUnattainable is false.
+	OnUnattainable func(message string)
 }
 
 // ClonableFixtureProvider is a FixtureProvider that can isolate per-sample state.
 type ClonableFixtureProvider interface {
 	ports.FixtureProvider
 	Clone() ports.FixtureProvider
+}
+
+// CallLedgerProvider optionally exposes per-sample fixture call evidence.
+type CallLedgerProvider interface {
+	CallLedger() []api.FixtureCallEvidence
 }
 
 // Sampler orchestrates parallel sampling and Wilson classification.
@@ -72,11 +83,14 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 		concurrency = 4
 	}
 
-	isolate := fixtureIsolationReady(cfg)
-	if cfg.HasOrderedFixtures && !isolate && concurrency > 1 {
-		// Shared sequence counters plus concurrency is incorrect even when the
-		// provider happens to implement Clone() — the clone is unused without a
-		// per-sample proxy. Force serial execution instead of racing.
+	worldMode := cfg.Scenario.Environment.EffectiveWorldControl()
+	if cfg.Scenario.Environment.WorldControl == "" && (cfg.FixtureProvider != nil || cfg.FixtureEndpoint != "") {
+		// Sampling configs that supply fixtures/proxy endpoints are Gust-controlled
+		// even when the scenario YAML omitted world_control.
+		worldMode = api.WorldControlGust
+	}
+	isolate := fixtureIsolationReady(cfg) && worldMode == api.WorldControlGust
+	if cfg.HasOrderedFixtures && !isolate && concurrency > 1 && worldMode == api.WorldControlGust {
 		concurrency = 1
 	}
 
@@ -91,11 +105,26 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 	}
 	maxExecRate := api.EffectiveMaxExecutionErrorRate(cfg.MaxExecutionErrorRate)
 	retry := cfg.Retry.Effective()
+	evaluationID := cfg.EvaluationID
+	if evaluationID == "" {
+		evaluationID = testrunner.NewEvaluationID()
+	}
+
+	if ok, lower, err := stats.AttainablePASS(n, minPass, confidence); err == nil && !ok {
+		msg := fmt.Sprintf(
+			"scenario %s: with samples=%d confidence=%.2f the best Wilson lower bound is %.4f < minimum_pass_rate=%.4f",
+			cfg.Scenario.ID, n, confidence, lower, minPass,
+		)
+		if cfg.FailUnattainable {
+			return nil, fmt.Errorf("%w: %s", ErrUnattainablePASS, msg)
+		}
+		if cfg.OnUnattainable != nil {
+			cfg.OnUnattainable(msg)
+		}
+	}
 
 	type slot struct {
-		passed  bool
-		evals   []api.EvaluationResult
-		execErr error
+		sample api.SampleResult
 	}
 	results := make([]slot, n)
 
@@ -106,18 +135,29 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 		}
 
 		sampleProvider := cfg.FixtureProvider
+		var closer func() error
 		if isolate {
 			c := cfg.FixtureProvider.(ClonableFixtureProvider)
 			sampleProvider = c.Clone()
-			ep, closer, err := cfg.ProxyFactory(sampleProvider)
+			ep, closeFn, err := cfg.ProxyFactory(sampleProvider)
 			if err != nil {
-				results[idx].execErr = err
+				results[idx].sample = infraSample(evaluationID, cfg.Scenario.ID, "", api.FailureFixture, err)
 				return
 			}
-			if closer != nil {
-				defer func() { _ = closer() }()
-			}
+			closer = closeFn
 			fixtureEndpoint = ep
+		}
+		if closer != nil {
+			defer func() { _ = closer() }()
+		}
+
+		req := testrunner.NewSampleRequest(evaluationID, cfg.Scenario, fixtureEndpoint, cfg.OTelURL)
+		if worldMode == api.WorldControlExisting {
+			req.FixtureEndpoint = ""
+			req.WorldMode = api.WorldControlExisting
+		} else {
+			req.WorldMode = api.WorldControlGust
+			req.FixtureEndpoint = fixtureEndpoint
 		}
 
 		reset := func() {
@@ -126,19 +166,30 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 			}
 		}
 
-		run, err := runWithRetry(ctx, cfg.Runner, cfg.Scenario, fixtureEndpoint, retry, reset)
+		run, err := runWithRetry(ctx, cfg.Runner, req, retry, reset)
 		if err != nil {
-			results[idx].execErr = err
+			results[idx].sample = classifyRunnerError(evaluationID, cfg.Scenario.ID, req, err)
 			return
 		}
 		if !isolate && sampleProvider != nil {
 			_ = sampleProvider.Reset()
 		}
+
 		report, err := s.analyzeEngine.AnalyzeRun(ctx, run, cfg.Scenario.Assertions, withScenarioID(cfg.EvalContext, cfg.Scenario.ID))
 		if err != nil {
-			results[idx].execErr = err
+			results[idx].sample = api.SampleResult{
+				SampleID:        req.SampleID,
+				EvaluationID:    evaluationID,
+				ScenarioID:      cfg.Scenario.ID,
+				TraceID:         req.TraceID,
+				RunID:           run.RunID,
+				Status:          api.SampleStatusInfraError,
+				FailureCategory: api.FailureEvaluator,
+				Message:         err.Error(),
+			}
 			return
 		}
+
 		evals := make([]api.EvaluationResult, len(report.Results))
 		for j, r := range report.Results {
 			evals[j] = api.EvaluationResult{
@@ -152,17 +203,41 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 				Criticality:      r.Criticality,
 			}
 		}
-		results[idx].passed = report.Passed
-		results[idx].evals = evals
+
+		sample := api.SampleResult{
+			SampleID:     req.SampleID,
+			EvaluationID: evaluationID,
+			ScenarioID:   cfg.Scenario.ID,
+			TraceID:      req.TraceID,
+			RunID:        run.RunID,
+			Passed:       report.Passed,
+			Evaluations:  evals,
+		}
+		if ledger, ok := sampleProvider.(CallLedgerProvider); ok {
+			sample.FixtureCalls = ledger.CallLedger()
+		}
+		if run.Outcome.Status == "failed" || run.Outcome.Status == "timeout" || run.Outcome.Status == "cancelled" {
+			sample.Passed = false
+			sample.Status = api.SampleStatusAgentFailed
+			sample.FailureCategory = api.FailureAgentRuntime
+			sample.Message = run.Outcome.Error
+			if sample.Message == "" {
+				sample.Message = "agent outcome status=" + run.Outcome.Status
+			}
+		} else if report.Passed {
+			sample.Status = api.SampleStatusPassed
+		} else {
+			sample.Status = api.SampleStatusFailed
+			sample.FailureCategory = api.FailureAssertion
+			sample.Message = "one or more hard assertions failed"
+		}
+		results[idx].sample = sample
 	}
 
-	// Concurrency 1 must run samples in index order. A size-1 semaphore still
-	// launches all goroutines at once, so call-order runners (and ordered
-	// fixtures without isolation) map outcomes to sample indexes by scheduler.
 	if concurrency <= 1 {
 		for i := 0; i < n; i++ {
 			if err := ctx.Err(); err != nil {
-				results[i].execErr = err
+				results[i].sample = infraSample(evaluationID, cfg.Scenario.ID, "", api.FailureTrigger, err)
 				continue
 			}
 			runOne(i)
@@ -176,7 +251,7 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 				defer wg.Done()
 				select {
 				case <-ctx.Done():
-					results[idx].execErr = ctx.Err()
+					results[idx].sample = infraSample(evaluationID, cfg.Scenario.ID, "", api.FailureTrigger, ctx.Err())
 					return
 				case sem <- struct{}{}:
 				}
@@ -188,52 +263,82 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 	}
 
 	passes := 0
-	execErrors := 0
+	completed := 0
+	behavioralFailures := 0
+	infraErrors := 0
 	perRun := make([]api.EvaluationResult, 0, n)
+	samples := make([]api.SampleResult, 0, n)
+
 	for _, sl := range results {
-		if sl.execErr != nil {
-			execErrors++
+		sample := sl.sample
+		samples = append(samples, sample)
+		if sample.FailureCategory.IsInfrastructure() {
+			infraErrors++
 			continue
 		}
-		if sl.passed {
+		completed++
+		if sample.Passed {
 			passes++
+		} else {
+			behavioralFailures++
 		}
-		perRun = append(perRun, sl.evals...)
+		perRun = append(perRun, sample.Evaluations...)
 	}
 
 	counts := api.CountPolicyHardFailures(perRun)
 	hardFail := api.HardConstraintsExceeded(cfg.HardConstraints, counts)
 
-	if float64(execErrors)/float64(n) > maxExecRate {
-		return nil, fmt.Errorf("%w: %d/%d samples (max rate %.2f)", ErrRunnerUnstable, execErrors, n, maxExecRate)
+	if float64(infraErrors)/float64(n) > maxExecRate {
+		return nil, fmt.Errorf("%w: %d/%d samples (max rate %.2f)", ErrRunnerUnstable, infraErrors, n, maxExecRate)
 	}
 
-	interval, err := stats.CalculateWilsonScore(passes, n, confidence)
-	if err != nil {
-		return nil, err
+	var interval stats.WilsonInterval
+	var verdict api.VerdictType
+	if completed <= 0 {
+		interval = stats.WilsonInterval{}
+		verdict = api.VerdictInsufficientSamples
+	} else {
+		var err error
+		interval, err = stats.CalculateWilsonScore(passes, completed, confidence)
+		if err != nil {
+			return nil, err
+		}
+		verdict = stats.ClassifyVerdict(interval, completed, minPass, minSamples)
 	}
-	verdict := stats.ClassifyVerdict(interval, n, minPass, minSamples)
 
 	return &api.ReliabilityResult{
+		EvaluationID:         evaluationID,
 		ScenarioID:           cfg.Scenario.ID,
 		Samples:              n,
+		SamplesRequested:     n,
+		SamplesCompleted:     completed,
 		Passes:               passes,
+		BehavioralFailures:   behavioralFailures,
+		InfrastructureErrors: infraErrors,
 		ObservedPassRate:     interval.ObservedPassRate,
 		ConfidenceInterval:   [2]float64{interval.LowerBound, interval.UpperBound},
 		Verdict:              verdict,
 		PerRunEvidence:       perRun,
+		SampleResults:        samples,
 		HardConstraintFailed: hardFail,
-		ExecutionErrors:      execErrors,
+		ExecutionErrors:      infraErrors,
 	}, nil
 }
 
-func runWithRetry(ctx context.Context, runner ports.TestRunner, scenario api.TestScenario, fixtureEndpoint string, retry api.RetryPolicy, reset func()) (api.AgentRun, error) {
+func runWithRetry(ctx context.Context, runner ports.TestRunner, req ports.SampleRequest, retry api.RetryPolicy, reset func()) (api.AgentRun, error) {
 	var lastErr error
 	for attempt := 1; attempt <= retry.MaxAttempts; attempt++ {
 		if attempt > 1 && reset != nil {
 			reset()
 		}
-		run, err := runner.Run(ctx, scenario, fixtureEndpoint)
+		// Fresh sample identity on retries so concurrent correlation stays unambiguous.
+		if attempt > 1 {
+			req.SampleID = testrunner.NewSampleID(req.ScenarioID)
+			req.TraceID = testrunner.NewTraceID()
+			req.TraceParent = testrunner.BuildTraceParent(req.TraceID)
+			req.Baggage = testrunner.BuildBaggage(req.EvaluationID, req.ScenarioID, req.SampleID)
+		}
+		run, err := runner.Run(ctx, req)
 		if err == nil {
 			return run, nil
 		}
@@ -250,14 +355,49 @@ func runWithRetry(ctx context.Context, runner ports.TestRunner, scenario api.Tes
 	return api.AgentRun{}, lastErr
 }
 
+func classifyRunnerError(evaluationID, scenarioID string, req ports.SampleRequest, err error) api.SampleResult {
+	cat := api.FailureTrigger
+	msg := err.Error()
+	lower := strings.ToLower(msg)
+	switch {
+	case errors.Is(err, context.DeadlineExceeded) || strings.Contains(lower, "timed out") || strings.Contains(lower, "timeout"):
+		cat = api.FailureTimeout
+	case strings.Contains(lower, "fixture"):
+		cat = api.FailureFixture
+	case strings.Contains(lower, "otel") || strings.Contains(lower, "trace") || strings.Contains(lower, "ingest") || strings.Contains(lower, "agent run"):
+		cat = api.FailureTraceIngest
+	}
+	return api.SampleResult{
+		SampleID:        req.SampleID,
+		EvaluationID:    evaluationID,
+		ScenarioID:      scenarioID,
+		TraceID:         req.TraceID,
+		Status:          api.SampleStatusInfraError,
+		FailureCategory: cat,
+		Message:         msg,
+	}
+}
+
+func infraSample(evaluationID, scenarioID, sampleID string, cat api.FailureCategory, err error) api.SampleResult {
+	msg := ""
+	if err != nil {
+		msg = err.Error()
+	}
+	return api.SampleResult{
+		SampleID:        sampleID,
+		EvaluationID:    evaluationID,
+		ScenarioID:      scenarioID,
+		Status:          api.SampleStatusInfraError,
+		FailureCategory: cat,
+		Message:         msg,
+	}
+}
+
 func withScenarioID(evalCtx ports.EvaluationContext, scenarioID string) ports.EvaluationContext {
 	evalCtx.ScenarioID = scenarioID
 	return evalCtx
 }
 
-// fixtureIsolationReady is true only when each sample can bind a cloned
-// provider to its own mock-tool proxy. Clone without a proxy still shares the
-// HTTP endpoint (and therefore sequence state).
 func fixtureIsolationReady(cfg SamplingConfig) bool {
 	if cfg.ProxyFactory == nil || cfg.FixtureProvider == nil {
 		return false

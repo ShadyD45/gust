@@ -40,7 +40,14 @@ from gust_sdk.recorder import (
     post_run,
     resolve_ingest_url,
 )
-from gust_sdk.sample import apply_sample_id, run_sample, serve_sample
+from gust_sdk.sample import (
+    apply_sample_id,
+    execution_receipt,
+    run_eval,
+    run_sample,
+    sample_context,
+    serve_sample,
+)
 from gust_sdk.wire import EvaluatorPlugin, serve
 
 __all__ = [
@@ -60,7 +67,10 @@ __all__ = [
     "SpanHandle",
     "apply_sample_id",
     "create_judge",
+    "execution_receipt",
+    "run_eval",
     "run_sample",
+    "sample_context",
     "serve",
     "serve_sample",
     "post_run",

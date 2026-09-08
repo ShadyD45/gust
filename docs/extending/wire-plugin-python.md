@@ -80,7 +80,7 @@ gust deliberately constrains plugin processes:
 | Per-call timeout | Default 60s for `evaluate` when the caller has no deadline; hung plugins fail the call and the process is killed |
 | Line size bound | Protocol lines over 16 MiB are rejected and the connection is closed |
 | Process isolation | Crashes are contained; the process is killed on close |
-| Not yet | CPU / memory caps and network isolation (cgroups / Job Objects / network namespaces) — planned for the Phase 8.5 trust boundary |
+| Not yet | CPU / memory caps and network isolation (cgroups / Job Objects / network namespaces) |
 
 The scrubbed environment is intentional: an evaluator that needs production credentials is not deterministic and does not belong in a CI gate. If your plugin needs configuration, pass it through `context.config` in the assertion, not the environment.
 

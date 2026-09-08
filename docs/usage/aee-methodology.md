@@ -29,7 +29,7 @@ Maintainer/CI only — end users install **`gust`**, not `gust-aee`.
 Or in tests:
 
 ```bash
-go test ./internal/core/aee/ -count=1
+go test ./... -count=1
 ```
 
 ## Gust Validation Suite
@@ -41,23 +41,21 @@ Complementary adversarial catalog (`gust-aee validate`) — crafted cases answer
 ./gust-aee validate --out benchmarks/fixtures/gust_validation.json \
   --doc benchmarks/VALIDATION.md \
   --site-doc docs/benchmarks/validation.md
-go test ./internal/core/validation/ -count=1
 ```
 
 See [Validation Suite]({% link benchmarks/validation.md %}).
-```
 
 ## Inputs
 
 | Input | Measurement | Gate |
 |-------|-------------|------|
-| Detection rate | Mutation engine on `mutate.BuildGoldenSuite()` | >= 90% |
+| Detection rate | Mutation engine on the golden suite | >= 90% |
 | False positive rate | Same golden suite, unmutated | <= 5% |
 | Deterministic evaluator throughput | In-process evaluator calls only (no `llm_judge`, not `gust test`) | >= 1,000 evaluator calls/sec |
-| Reproducibility | JCS hash of analyze results (timing excluded) over 20 trials | 100% identical |
-| H7 (reliability engine) | Wilson vectors 100/100->PASS, 20/20->FLAKY, 17/20->FAIL | all correct |
+| Reproducibility | Canonical hash of analyze results (timing excluded) over 20 trials | 100% identical |
+| Reliability engine | Wilson vectors 100/100→PASS, 20/20→FLAKY, 17/20→FAIL | all correct |
 
-Composite `aee_score` is a weighted blend documented in `internal/core/aee/report.go` (`compositeScore`). The boolean `passed` field is what CI should gate on.
+Composite `aee_score` is a weighted blend of the gates above. The boolean `passed` field is what CI should gate on.
 
 Latest numbers: [Latest results]({% link benchmarks/results.md %}) (also [`benchmarks/RESULTS.md`](../../benchmarks/RESULTS.md) in the repo) · [benchmark workflow runs](https://github.com/ShadyD45/gust/actions/workflows/benchmark.yml).
 

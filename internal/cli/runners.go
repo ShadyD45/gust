@@ -13,21 +13,22 @@ import (
 
 // runnerFlags is the merged CLI + scenario configuration for Mode 3.
 type runnerFlags struct {
-	Name           string
-	Endpoint       string
-	Model          string
-	PassProb       float64
-	Command        []string
-	TraceSource    string
-	TracePath      string
-	OTelListen     string
-	OTelGRPCListen string
-	Timeout        time.Duration
-	WaitTimeout    time.Duration
-	Receiver       testrunner.OTelWaiter
-	OTelURL        string
-	EndpointSet    bool
-	NameSet        bool
+	Name              string
+	Endpoint          string
+	Model             string
+	PassProb          float64
+	Command           []string
+	TraceFetchCommand []string
+	TraceSource       string
+	TracePath         string
+	OTelListen        string
+	OTelGRPCListen    string
+	Timeout           time.Duration
+	WaitTimeout       time.Duration
+	Receiver          testrunner.OTelWaiter
+	OTelURL           string
+	EndpointSet       bool
+	NameSet           bool
 }
 
 func mergeRunnerFlags(flags runnerFlags, sc api.TestScenario) runnerFlags {
@@ -43,6 +44,9 @@ func mergeRunnerFlags(flags runnerFlags, sc api.TestScenario) runnerFlags {
 	}
 	if len(flags.Command) == 0 && len(spec.Command) > 0 {
 		flags.Command = spec.Command
+	}
+	if len(flags.TraceFetchCommand) == 0 && len(spec.TraceFetchCommand) > 0 {
+		flags.TraceFetchCommand = spec.TraceFetchCommand
 	}
 	if spec.TimeoutSeconds > 0 && flags.Timeout == 0 {
 		flags.Timeout = time.Duration(spec.TimeoutSeconds) * time.Second
@@ -109,6 +113,17 @@ func resolveRunner(flags runnerFlags) (ports.TestRunner, error) {
 		}
 		if flags.Timeout > 0 {
 			r.Timeout = flags.Timeout
+		}
+		return r, nil
+	case "trigger":
+		if len(flags.Command) == 0 {
+			return nil, fmt.Errorf("trigger runner requires a command (--command or args after --)")
+		}
+		r := testrunner.NewTriggerRunner(flags.Command, collectorFromFlags(flags))
+		r.TraceFetchCommand = flags.TraceFetchCommand
+		if flags.Timeout > 0 {
+			r.Timeout = flags.Timeout
+			r.FetchTimeout = flags.Timeout
 		}
 		return r, nil
 	default:

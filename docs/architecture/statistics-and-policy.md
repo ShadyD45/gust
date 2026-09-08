@@ -28,9 +28,9 @@ Given minimum pass rate *P_min* (often 0.95) and minimum samples *n_min* (defaul
 | `FAIL` | *p_upper* &lt; *P_min* |
 | `FLAKY` | *p_lower* &lt; *P_min* ≤ *p_upper* |
 
-### Corrected Hypothesis H7 sample sizes
+### Sample sizes that can PASS a 95% floor
 
-With *P_min* = 0.95 and 95% confidence, **N = 20 can never produce `PASS`** (even 20/20 has lower bound ≈ 0.84). Valid verification vectors:
+With *P_min* = 0.95 and 95% confidence, **N = 20 can never produce `PASS`** (even 20/20 has lower bound ≈ 0.84). Useful reference points:
 
 | Intent | Example | Why |
 |--------|---------|-----|
@@ -38,7 +38,7 @@ With *P_min* = 0.95 and 95% confidence, **N = 20 can never produce `PASS`** (eve
 | `FLAKY` | 20/20 | Interval straddles 0.95 |
 | `FAIL` | 17/20 or 40/100 | Upper &lt; 0.95 |
 
-Synthetic H7 proofs must use rates and *N* that land in these buckets under the rules above—not the outdated “N=20 → PASS for p=0.99” wording in early phase drafts.
+At an 80% floor, a perfect N=20 run can PASS (lower bound ≈ 0.839). See [Tuning the gate]({% link usage/tuning.md %}) and [sample sizing]({% link usage/modes-cookbook.md %}#sample-sizing).
 
 ## Hard vs soft constraints
 

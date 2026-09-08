@@ -36,13 +36,32 @@ func PrintReplayTerminal(run *api.AgentRun) {
 
 // PrintReliabilityTerminal renders Mode 3 with distinct FLAKY badge.
 func PrintReliabilityTerminal(res *api.ReliabilityResult) {
+	completed := res.SamplesCompleted
+	if completed == 0 && res.ExecutionErrors == 0 {
+		completed = res.Samples
+	}
+	requested := res.SamplesRequested
+	if requested == 0 {
+		requested = res.Samples
+	}
 	fmt.Printf("\nScenario: %s\n", res.ScenarioID)
-	fmt.Printf("  %d/%d passed  (observed pass rate: %.1f%%)\n",
-		res.Passes, res.Samples, res.ObservedPassRate*100)
+	if res.EvaluationID != "" {
+		fmt.Printf("  evaluation: %s\n", res.EvaluationID)
+	}
+	fmt.Printf("  %d/%d passed of %d completed  (observed pass rate: %.1f%%)\n",
+		res.Passes, completed, completed, res.ObservedPassRate*100)
+	fmt.Printf("  requested samples: %d\n", requested)
 	fmt.Printf("  95%% confidence interval: [%.1f%%, %.1f%%]\n",
 		res.ConfidenceInterval[0]*100, res.ConfidenceInterval[1]*100)
-	if res.ExecutionErrors > 0 {
-		fmt.Printf("  execution errors: %d/%d (counted as failed samples)\n", res.ExecutionErrors, res.Samples)
+	infra := res.InfrastructureErrors
+	if infra == 0 {
+		infra = res.ExecutionErrors
+	}
+	if infra > 0 {
+		fmt.Printf("  infrastructure errors excluded from Wilson: %d/%d\n", infra, requested)
+	}
+	if res.BehavioralFailures > 0 {
+		fmt.Printf("  behavioral failures: %d\n", res.BehavioralFailures)
 	}
 
 	switch res.Verdict {

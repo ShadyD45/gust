@@ -39,23 +39,27 @@ func (r *ExecRunner) WithOTelURL(url string) *ExecRunner {
 	return r
 }
 
-func (r *ExecRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
-	if fixtureEndpoint == "" {
-		fixtureEndpoint = os.Getenv(EnvFixtureEndpoint)
-	}
+func (r *ExecRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
 	if len(r.Argv) == 0 {
 		return api.AgentRun{}, fmt.Errorf("exec runner: command is required")
 	}
+	req = normalizeSampleRequest(req, r.OTelURL)
 
-	sampleID := newSampleID(scenario.ID)
 	payload, err := json.Marshal(map[string]any{
-		"id":            scenario.ID,
-		"task":          scenario.Task,
-		"input":         scenario.Task.Input,
-		"context":       scenario.Task.Context,
-		"tool_endpoint": fixtureEndpoint,
-		"sample_id":     sampleID,
-		"otel_endpoint": r.OTelURL,
+		"id":             req.Scenario.ID,
+		"evaluation_id":  req.EvaluationID,
+		"scenario_id":    req.ScenarioID,
+		"task":           req.Scenario.Task,
+		"input":          req.Scenario.Task.Input,
+		"context":        req.Scenario.Task.Context,
+		"tool_endpoint":  req.FixtureEndpointOrEmpty(),
+		"sample_id":      req.SampleID,
+		"trace_id":       req.TraceID,
+		"traceparent":    req.TraceParent,
+		"baggage":        req.Baggage,
+		"otel_endpoint":  req.OTelEndpoint,
+		"ingest_url":     req.IngestURL,
+		"world_control":  string(req.WorldMode),
 	})
 	if err != nil {
 		return api.AgentRun{}, err
@@ -69,20 +73,16 @@ func (r *ExecRunner) Run(ctx context.Context, scenario api.TestScenario, fixture
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	cmd.Env = append(os.Environ(),
-		EnvFixtureEndpoint+"="+fixtureEndpoint,
-		EnvSampleID+"="+sampleID,
-	)
-	cmd.Env = ApplyOTelEnv(cmd.Env, r.OTelURL, sampleID)
+	cmd.Env = applySampleEnv(append([]string{}, os.Environ()...), req)
 
 	if err := cmd.Run(); err != nil {
 		return api.AgentRun{}, fmt.Errorf("exec %v: %w\nstderr: %s", r.Argv, err, truncate(stderr.Bytes(), 1024))
 	}
 
-	run, err := Collect(runCtx, r.Collector, sampleID, stdout.Bytes())
+	run, err := Collect(runCtx, r.Collector, req.SampleID, stdout.Bytes())
 	if err != nil {
 		return api.AgentRun{}, err
 	}
-	stampSampleMetadata(&run, sampleID)
+	stampSampleMetadata(&run, req)
 	return run, nil
 }

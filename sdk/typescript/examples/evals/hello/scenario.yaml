@@ -1,0 +1,25 @@
+id: hello_existing_ts
+version: "1.0"
+description: "Minimal existing-world Mode 3 scenario for the TypeScript SDK"
+task:
+  id: hello-001
+  input: "say hello"
+environment:
+  world_control: existing
+  fixtures: []
+assertions:
+  - id: completes
+    type: task_success
+reliability:
+  samples: 5
+  minimum_pass_rate: 0.6
+  confidence: 0.95
+runner:
+  type: exec
+  command: ["node", "--import", "tsx", "sdk/typescript/examples/minimal_eval.ts"]
+  traces:
+    source: response
+provenance:
+  source: authored
+  extracted_at: 2026-09-08T00:00:00Z
+  reviewed_by: "gust"

@@ -17,6 +17,7 @@ type MemoryFixtureProvider struct {
 	exactFixtures map[string]api.Fixture   // key: tool_name + ":" + input_hash
 	seqFixtures   map[string][]api.Fixture // key: tool_name -> list of sequential fixtures
 	seqCounters   map[string]int           // key: tool_name -> current sequence index
+	ledger        []api.FixtureCallEvidence
 }
 
 // NewMemoryFixtureProvider creates an empty MemoryFixtureProvider.
@@ -80,6 +81,13 @@ func (p *MemoryFixtureProvider) Lookup(ctx context.Context, call ports.ToolCall)
 	}
 
 	if matchedFx == nil {
+		p.ledger = append(p.ledger, api.FixtureCallEvidence{
+			Tool:      call.Name,
+			Arguments: call.Arguments,
+			Found:     false,
+			Status:    "error",
+			Error:     fmt.Sprintf("no fixture found for tool %q", call.Name),
+		})
 		return api.RecordedResponse{}, false, nil
 	}
 
@@ -92,29 +100,71 @@ func (p *MemoryFixtureProvider) Lookup(ctx context.Context, call ports.ToolCall)
 		}
 	}
 
+	mode := string(matchedFx.Mode)
+	if mode == "" {
+		mode = string(api.FailureModeSuccess)
+	}
+
 	switch matchedFx.Mode {
 	case api.FailureModeTimeout:
 		// Hang until context deadline
 		<-ctx.Done()
+		p.ledger = append(p.ledger, api.FixtureCallEvidence{
+			Tool:      call.Name,
+			Arguments: call.Arguments,
+			FixtureID: matchedFx.FixtureID,
+			Mode:      mode,
+			Found:     true,
+			Status:    "error",
+			Error:     ctx.Err().Error(),
+		})
 		return api.RecordedResponse{}, false, ctx.Err()
 
 	case api.FailureModePartialFailure:
-		return api.RecordedResponse{
+		resp := api.RecordedResponse{
 			Status:     "error",
 			StatusCode: 500,
 			Error:      "injected simulated server error (partial_failure)",
-		}, true, nil
+		}
+		p.appendLedger(call, *matchedFx, mode, resp, true)
+		return resp, true, nil
 
 	case api.FailureModeMalformed:
-		return api.RecordedResponse{
+		resp := api.RecordedResponse{
 			Status: "success",
 			Body:   `{"broken": truncated json...`,
-		}, true, nil
+		}
+		p.appendLedger(call, *matchedFx, mode, resp, true)
+		return resp, true, nil
 
 	default:
 		// Normal success or configured recorded response
+		p.appendLedger(call, *matchedFx, mode, matchedFx.RecordedResponse, true)
 		return matchedFx.RecordedResponse, true, nil
 	}
+}
+
+func (p *MemoryFixtureProvider) appendLedger(call ports.ToolCall, fx api.Fixture, mode string, resp api.RecordedResponse, found bool) {
+	p.ledger = append(p.ledger, api.FixtureCallEvidence{
+		Tool:       call.Name,
+		Arguments:  call.Arguments,
+		FixtureID:  fx.FixtureID,
+		Mode:       mode,
+		Status:     resp.Status,
+		StatusCode: resp.StatusCode,
+		Body:       resp.Body,
+		Error:      resp.Error,
+		Found:      found,
+	})
+}
+
+// CallLedger returns a copy of recorded fixture resolutions for this provider.
+func (p *MemoryFixtureProvider) CallLedger() []api.FixtureCallEvidence {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	out := make([]api.FixtureCallEvidence, len(p.ledger))
+	copy(out, p.ledger)
+	return out
 }
 
 // Record saves a new tool call and response into the provider.
@@ -156,11 +206,12 @@ func (p *MemoryFixtureProvider) Replace(fixtures []api.Fixture) error {
 	return p.LoadFixtures(fixtures)
 }
 
-// Reset clears sequence counters for stateful mocks.
+// Reset clears sequence counters and the call ledger for stateful mocks.
 func (p *MemoryFixtureProvider) Reset() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.seqCounters = make(map[string]int)
+	p.ledger = nil
 	return nil
 }
 

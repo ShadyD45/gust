@@ -61,6 +61,24 @@ func CalculateWilsonScore(passes, total int, confidence float64) (WilsonInterval
 	}, nil
 }
 
+// BestCaseLowerBound returns the Wilson lower bound if every sample passed.
+func BestCaseLowerBound(total int, confidence float64) (float64, error) {
+	interval, err := CalculateWilsonScore(total, total, confidence)
+	if err != nil {
+		return 0, err
+	}
+	return interval.LowerBound, nil
+}
+
+// AttainablePASS reports whether a perfect run can reach PASS at minPassRate.
+func AttainablePASS(total int, minPassRate, confidence float64) (bool, float64, error) {
+	lower, err := BestCaseLowerBound(total, confidence)
+	if err != nil {
+		return false, 0, err
+	}
+	return lower >= minPassRate, lower, nil
+}
+
 // ClassifyVerdict maps the Wilson interval and sample count into a definitive verdict.
 func ClassifyVerdict(interval WilsonInterval, total int, minPassRate float64, minSamples int) api.VerdictType {
 	if total < minSamples {

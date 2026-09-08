@@ -60,7 +60,8 @@ type chatResponse struct {
 	Error   string      `json:"error,omitempty"`
 }
 
-func (r *OllamaRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
+func (r *OllamaRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
+	fixtureEndpoint := req.FixtureEndpointOrEmpty()
 	if fixtureEndpoint == "" {
 		fixtureEndpoint = os.Getenv("AGENTEVAL_FIXTURE_ENDPOINT")
 	}
@@ -72,7 +73,7 @@ func (r *OllamaRunner) Run(ctx context.Context, scenario api.TestScenario, fixtu
 			Role: "user",
 			Content: fmt.Sprintf(
 				"You are an agent under test. Task: %s\nFixture endpoint (route tool calls here): %s\nRespond with a short completion status.",
-				scenario.Task.Input, fixtureEndpoint,
+				req.Scenario.Task.Input, fixtureEndpoint,
 			),
 		}},
 		Stream: false,
@@ -83,14 +84,14 @@ func (r *OllamaRunner) Run(ctx context.Context, scenario api.TestScenario, fixtu
 		return api.AgentRun{}, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		return api.AgentRun{}, err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Content-Type", "application/json")
 
 	start := time.Now()
-	resp, err := r.HTTPClient.Do(req)
+	resp, err := r.HTTPClient.Do(httpReq)
 	if err != nil {
 		return api.AgentRun{}, fmt.Errorf("ollama request failed: %w", err)
 	}
@@ -119,14 +120,18 @@ func (r *OllamaRunner) Run(ctx context.Context, scenario api.TestScenario, fixtu
 		status = "failed"
 	}
 
-	return api.AgentRun{
+	runID := req.SampleID
+	if runID == "" {
+		runID = fmt.Sprintf("ollama_%s_%d", req.Scenario.ID, start.UnixNano())
+	}
+	run := api.AgentRun{
 		SchemaVersion: api.SchemaVersion,
-		RunID:         fmt.Sprintf("ollama_%s_%d", scenario.ID, start.UnixNano()),
+		RunID:         runID,
 		Agent: api.AgentInfo{
 			Name:    r.AgentName,
 			Version: r.Model,
 		},
-		Task: scenario.Task,
+		Task: req.Scenario.Task,
 		Trace: []api.Span{{
 			SpanID:    "llm_1",
 			Name:      r.Model,
@@ -144,5 +149,7 @@ func (r *OllamaRunner) Run(ctx context.Context, scenario api.TestScenario, fixtu
 			Output:     output,
 			DurationNs: time.Since(start),
 		},
-	}, nil
+	}
+	stampSampleMetadata(&run, req)
+	return run, nil
 }

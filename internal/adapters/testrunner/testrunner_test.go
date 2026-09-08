@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"gust/internal/ports"
 	"gust/pkg/api"
 )
 
@@ -20,7 +21,7 @@ func TestSyntheticRunner_Probability(t *testing.T) {
 		},
 		Provenance: api.TestScenarioProvenance{Source: "test", ExtractedAt: time.Now().UTC()},
 	}
-	run, err := r.Run(context.Background(), sc, "")
+	run, err := r.Run(context.Background(), ports.SampleRequest{Scenario: sc})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +44,7 @@ func TestSyntheticRunner_FixedOutcomes(t *testing.T) {
 	}
 	var statuses []string
 	for i := 0; i < 3; i++ {
-		run, err := r.Run(context.Background(), sc, "")
+		run, err := r.Run(context.Background(), ports.SampleRequest{Scenario: sc})
 		if err != nil {
 			t.Fatal(err)
 		}

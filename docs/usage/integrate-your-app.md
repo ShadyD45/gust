@@ -23,7 +23,7 @@ flowchart LR
 
 You only need step one — recording an `AgentRun` — to get value. Everything else consumes that artifact.
 
-When you are ready for Mode 3 (N samples against fixtures), the [live-agent demo]({% link usage/live-agent-demo.md %}) is the in-tree template: `FixtureClient` + `run_sample` + scenario folders.
+Prefer a shorter path? [Getting started]({% link usage/getting-started.md %}) covers install → analyze → minimal live eval. When you are ready for Mode 3 with Gust fixtures, the [live-agent demo]({% link usage/live-agent-demo.md %}) is the in-tree template: `FixtureClient` + `run_sample` / `runSample` + scenario folders.
 
 ## Step 1: Record an AgentRun
 
@@ -211,7 +211,7 @@ run := api.AgentRun{
 if err := run.Validate(); err != nil { /* fail fast in your recorder, not in CI */ }
 ```
 
-You can also embed the engines instead of shelling out to the binary — see [Embedding gust as a Go library]({% link usage/modes-cookbook.md %}#embedding-gust-as-a-go-library).
+You can also embed Analyze in Go tests via the stable library API — see [Go library]({% link usage/go-library.md %}).
 
 ## Step 2: Declare what "correct" means
 
@@ -287,9 +287,13 @@ VERDICT: [?] FLAKY (Inconclusive)
 
 That verdict is the point: at 100 samples with a 95% floor, 97% observed is *not* enough evidence to call it passing. Details on runners, sample sizing, and what each verdict means are in [Mode 3: Test]({% link usage/modes-cookbook.md %}#mode-3-test).
 
-## Step 5 (optional): Use the Python SDK
+## Step 5 (optional): Use an SDK
 
-If you are in Python, [`sdk/python`](https://github.com/ShadyD45/gust/tree/main/sdk/python) packages the recorder above so you do not maintain span plumbing yourself:
+The SDKs capture and invoke; the Go binary remains the evaluation authority.
+
+### Python
+
+[`sdk/python`](https://github.com/ShadyD45/gust/tree/main/sdk/python):
 
 ```bash
 pip install -e sdk/python
@@ -311,10 +315,40 @@ rec.complete(output=final_answer)
 rec.write("run.json")
 ```
 
-The SDK captures and invokes; the Go binary remains the evaluation authority. Full reference: [Python SDK](https://github.com/ShadyD45/gust/blob/main/sdk/python/README.md).
+### TypeScript
+
+[`sdk/typescript`](https://github.com/ShadyD45/gust/tree/main/sdk/typescript) — TypeScript sources compiled to ESM:
+
+```bash
+npm install ./sdk/typescript
+```
+
+```ts
+import { writeFileSync } from "node:fs";
+import { RunRecorder } from "gust-sdk";
+
+const rec = new RunRecorder({
+  agentName: "my-agent",
+  agentVersion: "1.4",
+  taskId: "task-001",
+  taskInput: userMessage,
+});
+
+const lookupSpan = rec.tool("lookup", { key: "item-42" });
+lookupSpan.output = await lookup({ key: "item-42" });
+lookupSpan.finish();
+
+const applySpan = rec.tool("apply", { id: 123 });
+applySpan.output = await apply({ id: 123 });
+applySpan.finish();
+
+rec.complete(finalAnswer);
+writeFileSync("run.json", rec.toJSON());
+```
 
 ## Where to go next
 
+- Fastest path with copy-paste examples: [Getting started]({% link usage/getting-started.md %})
 - Sample *your* live agent N times in CI / QA (not prod): [Test your agent]({% link usage/test-your-agent.md %})
 - Recipes for every mode, fixture matching, and failure injection: [Modes cookbook]({% link usage/modes-cookbook.md %})
 - Already emitting OTel spans: [OTel ingestion]({% link usage/otel-ingest.md %})

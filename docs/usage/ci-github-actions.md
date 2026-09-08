@@ -76,8 +76,15 @@ If you consume gust from another repository, replace the build step with a downl
 
 ```yaml
       - name: Reliability gate
-        run: ./gust test tests/ --runner synthetic --samples 100 --policy tests/_shared/policy.yaml
-```
+        run: |
+          ./gust test tests/ --runner synthetic --samples 100 --policy tests/_shared/policy.yaml
+          # writes ./gust-report.html by default
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gust-report
+          path: gust-report.html```
 
 | Scenario | Samples | Pass Rate | 95% CI | Verdict |
 |---|---|---|---|---|

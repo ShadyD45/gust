@@ -134,12 +134,12 @@ type errOnceRunner struct {
 
 func (r *errOnceRunner) Name() string { return "validation_err_once" }
 
-func (r *errOnceRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
+func (r *errOnceRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
 	n := int(r.calls.Add(1))
 	if n <= r.failFirstN {
 		return api.AgentRun{}, fmt.Errorf("transient sample %d", n)
 	}
-	return r.inner.Run(ctx, scenario, fixtureEndpoint)
+	return r.inner.Run(ctx, req)
 }
 
 func runInfra(ctx context.Context, evals []ports.Evaluator, c Case) (bool, string, error) {

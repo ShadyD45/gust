@@ -13,9 +13,14 @@
     "verdict"
   ],
   "properties": {
+    "evaluation_id": { "type": "string" },
     "scenario_id": { "type": "string" },
     "samples": { "type": "integer", "minimum": 1 },
+    "samples_requested": { "type": "integer", "minimum": 0 },
+    "samples_completed": { "type": "integer", "minimum": 0 },
     "passes": { "type": "integer", "minimum": 0 },
+    "behavioral_failures": { "type": "integer", "minimum": 0 },
+    "infrastructure_errors": { "type": "integer", "minimum": 0 },
     "observed_pass_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
     "confidence_interval": {
       "type": "array",
@@ -28,6 +33,10 @@
       "enum": ["PASS", "FAIL", "FLAKY", "INSUFFICIENT_SAMPLES"]
     },
     "per_run_evidence": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "sample_results": {
       "type": "array",
       "items": { "type": "object" }
     },

@@ -1,0 +1,25 @@
+id: integration_compat
+version: "1.0"
+description: "Compatibility path: wrap an ordinary pytest case via trigger runner"
+task:
+  id: it-001
+  input: "cancel latest order"
+environment:
+  world_control: existing
+  fixtures: []
+assertions:
+  - id: completes
+    type: task_success
+reliability:
+  samples: 3
+  minimum_pass_rate: 0.5
+  confidence: 0.95
+runner:
+  type: trigger
+  command: ["python", "-m", "examples.trigger_harness"]
+  traces:
+    source: response
+provenance:
+  source: authored
+  extracted_at: 2026-09-08T00:00:00Z
+  reviewed_by: "gust"

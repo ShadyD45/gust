@@ -48,7 +48,7 @@ CI acceptance gate:
 - Reliability defaults (`default_minimum_pass_rate` applied when a scenario omits `minimum_pass_rate`), `on_flaky`, optional `max_execution_error_rate` (omit → 0.20; `0` → zero tolerance), optional `retry`
 - Regression thresholds (pass-rate drop, latency increase). Unmeasurable baseline latency omits `latency_increase_ratio` rather than reporting `0.0`.
 
-Project-level execution knobs (`concurrency`, timeouts, retry) live in `gust.yaml`. `internal/adapters/storage/filesystem` is a **mutable local cache** (overwrite by ID is expected) and is not the immutability contract of `gust dataset bundle`.
+Project-level execution knobs (`concurrency`, timeouts, retry) live in `gust.yaml`. Local filesystem caches for scenarios/runs are mutable by ID; content-addressed immutability is `gust dataset bundle` / `verify`.
 
 ## ReliabilityResult
 

@@ -124,12 +124,12 @@ type errOnceRunner struct {
 
 func (r *errOnceRunner) Name() string { return "err_once" }
 
-func (r *errOnceRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
+func (r *errOnceRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
 	n := int(r.calls.Add(1))
 	if n <= r.failFirstN {
 		return api.AgentRun{}, fmt.Errorf("infra sample %d", n)
 	}
-	return r.inner.Run(ctx, scenario, fixtureEndpoint)
+	return r.inner.Run(ctx, req)
 }
 
 func TestExecErrorCountsAsFailedSample(t *testing.T) {
@@ -197,11 +197,11 @@ type transientOnceRunner struct {
 
 func (r *transientOnceRunner) Name() string { return "transient_once" }
 
-func (r *transientOnceRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
+func (r *transientOnceRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
 	if r.calls.Add(1) == 1 {
 		return api.AgentRun{}, fmt.Errorf("%w: blip", ports.ErrTransient)
 	}
-	return r.inner.Run(ctx, scenario, fixtureEndpoint)
+	return r.inner.Run(ctx, req)
 }
 
 func TestRetryTransientThenSuccess(t *testing.T) {
@@ -419,8 +419,8 @@ type capturingRunner struct {
 
 func (r *capturingRunner) Name() string { return "capturing" }
 
-func (r *capturingRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
-	run, err := r.inner.Run(ctx, scenario, fixtureEndpoint)
+func (r *capturingRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
+	run, err := r.inner.Run(ctx, req)
 	if err != nil {
 		return api.AgentRun{}, err
 	}

@@ -1,11 +1,10 @@
 /**
- * Record an agent run. Compile-free: run the JS equivalent or execute with
- * Node's type stripping (Node 22+).
+ * Record an agent run and write AgentRun JSON for `gust analyze`.
  *
- *   node --experimental-strip-types sdk/typescript/examples/record_and_analyze.ts
+ *   npx tsx sdk/typescript/examples/record_and_analyze.ts
  */
-import { writeFileSync } from "node:fs";
-import { RunRecorder } from "../src/index.js";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { RunRecorder } from "../lib/index.js";
 
 const rec = new RunRecorder({
   agentName: "support-agent",
@@ -26,5 +25,6 @@ cancel.output = { ok: true };
 cancel.finish();
 
 rec.complete("Order 123 cancelled successfully.");
+mkdirSync("out", { recursive: true });
 writeFileSync("out/run.json", rec.toJSON());
 console.log("wrote out/run.json");

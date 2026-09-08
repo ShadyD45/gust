@@ -1,23 +1,29 @@
-export const FIXTURE_ENDPOINT_ENV = "AGENTEVAL_FIXTURE_ENDPOINT";
+export const FIXTURE_ENDPOINT_ENV = "AGENTEVAL_FIXTURE_ENDPOINT" as const;
 
 export class FixtureError extends Error {
-  constructor(message) {
+  constructor(message: string) {
     super(message);
     this.name = "FixtureError";
   }
 }
 
 export class FixtureClient {
-  constructor({ endpoint, timeoutMs = 30000 } = {}) {
+  endpoint: string;
+  private timeoutMs: number;
+
+  constructor({
+    endpoint,
+    timeoutMs = 30000,
+  }: { endpoint?: string; timeoutMs?: number } = {}) {
     this.endpoint = (endpoint || process.env[FIXTURE_ENDPOINT_ENV] || "").replace(/\/$/, "");
     this.timeoutMs = timeoutMs;
   }
 
-  get enabled() {
+  get enabled(): boolean {
     return Boolean(this.endpoint);
   }
 
-  async call(tool, arguments_ = {}) {
+  async call(tool: string, arguments_: Record<string, unknown> = {}): Promise<unknown> {
     if (!this.enabled) {
       throw new FixtureError(`no fixture endpoint configured; set ${FIXTURE_ENDPOINT_ENV}`);
     }
@@ -34,7 +40,11 @@ export class FixtureClient {
       if (!resp.ok) {
         throw new FixtureError(`fixture proxy returned ${resp.status} for ${tool}: ${text}`);
       }
-      const body = JSON.parse(text);
+      const body = JSON.parse(text) as {
+        status?: string;
+        error?: string;
+        body?: unknown;
+      };
       if (body.status === "error") {
         throw new FixtureError(body.error || `fixture error for tool ${tool}`);
       }

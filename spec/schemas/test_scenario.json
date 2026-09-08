@@ -31,6 +31,11 @@
     "environment": {
       "type": "object",
       "properties": {
+        "world_control": {
+          "type": "string",
+          "enum": ["existing", "gust"],
+          "description": "existing = user harness owns mocks; gust = fixture proxy owns selected tools"
+        },
         "fixture_strategy": {
           "type": "string",
           "enum": ["exact_hash", "ordered_sequence", "prefer_exact_then_sequence"]
@@ -100,11 +105,16 @@
       "type": "object",
       "description": "Optional end-user Mode 3 hook. CLI flags override these fields.",
       "properties": {
-        "type": { "type": "string", "enum": ["http", "exec"] },
+        "type": { "type": "string", "enum": ["http", "exec", "trigger"] },
         "url": { "type": "string" },
         "command": {
           "type": "array",
           "items": { "type": "string" }
+        },
+        "trace_fetch_command": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Command that prints an AgentRun or OTLP export for {trace_id}"
         },
         "timeout_seconds": { "type": "integer", "minimum": 1 },
         "traces": {

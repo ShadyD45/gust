@@ -7,7 +7,7 @@ parent: Benchmarks
 
 Each AEE metric answers one question about gust’s **deterministic evaluation suite** (Analyze / Replay path). LLM judge latency and agent pass rates are excluded on purpose.
 
-Composite `aee_score` is a documented weighted blend in `internal/core/aee/report.go`. CI gates on the boolean `passed` field, not the score alone.
+Composite `aee_score` is a documented weighted blend of the self-benchmark gates. CI should gate on the boolean `passed` field, not the score alone.
 
 ## Detection rate (DR)
 

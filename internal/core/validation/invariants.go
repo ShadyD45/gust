@@ -45,11 +45,11 @@ type crashThenOkRunner struct {
 
 func (r *crashThenOkRunner) Name() string { return "crash_then_ok" }
 
-func (r *crashThenOkRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
+func (r *crashThenOkRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
 	if r.calls.Add(1) == 1 {
 		return api.AgentRun{}, fmt.Errorf("agent process crashed")
 	}
-	return r.inner.Run(ctx, scenario, fixtureEndpoint)
+	return r.inner.Run(ctx, req)
 }
 
 func runS2NonTransient(ctx context.Context, evals []ports.Evaluator) (bool, string, error) {
@@ -86,8 +86,8 @@ type tallyRunner struct {
 
 func (r *tallyRunner) Name() string { return "tally" }
 
-func (r *tallyRunner) Run(ctx context.Context, scenario api.TestScenario, fixtureEndpoint string) (api.AgentRun, error) {
-	run, err := r.inner.Run(ctx, scenario, fixtureEndpoint)
+func (r *tallyRunner) Run(ctx context.Context, req ports.SampleRequest) (api.AgentRun, error) {
+	run, err := r.inner.Run(ctx, req)
 	if err != nil {
 		return api.AgentRun{}, err
 	}

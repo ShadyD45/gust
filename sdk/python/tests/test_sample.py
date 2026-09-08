@@ -61,3 +61,29 @@ def test_apply_invoke_env_stamps_otel(monkeypatch):
     assert os.environ["AGENTEVAL_INGEST_URL"] == "http://127.0.0.1:4318/v1/runs"
     assert "gust.sample_id=s1" in os.environ["OTEL_RESOURCE_ATTRIBUTES"]
     monkeypatch.delenv("AGENTEVAL_INGEST_URL", raising=False)
+
+
+def test_run_eval_and_receipt(monkeypatch):
+    from gust_sdk.sample import execution_receipt, run_eval, sample_context
+
+    monkeypatch.delenv("AGENTEVAL_INGEST_URL", raising=False)
+    monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
+    monkeypatch.setenv("GUST_EVALUATION_ID", "e1")
+    monkeypatch.setenv("AGENTEVAL_SAMPLE_ID", "s1")
+    ctx = sample_context()
+    assert ctx["evaluation_id"] == "e1"
+    assert ctx["sample_id"] == "s1"
+
+    stdin = io.StringIO(json.dumps({"input": "hi", "sample_id": "s2"}))
+    stdout = io.StringIO()
+
+    def handle(request):
+        rec = RunRecorder(agent_name="a", agent_version="1", task_input=request.get("input") or "")
+        rec.complete(output="ok")
+        return rec
+
+    run = run_eval(handle, stdin=stdin, stdout=stdout)
+    assert run["run_id"] == "s2"
+    receipt = execution_receipt(status="completed", trace_id="abc", run=run)
+    assert receipt["trace_id"] == "abc"
+    assert receipt["run"]["run_id"] == "s2"

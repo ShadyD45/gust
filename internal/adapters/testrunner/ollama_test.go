@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"gust/internal/ports"
 	"gust/pkg/api"
 )
 
@@ -30,7 +31,7 @@ func TestOllamaRunner_SkipIfUnavailable(t *testing.T) {
 		},
 		Provenance: api.TestScenarioProvenance{Source: "test", ExtractedAt: time.Now().UTC()},
 	}
-	run, err := r.Run(context.Background(), sc, "")
+	run, err := r.Run(context.Background(), ports.SampleRequest{Scenario: sc})
 	if err != nil {
 		t.Fatalf("ollama run: %v", err)
 	}

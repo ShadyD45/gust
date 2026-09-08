@@ -357,20 +357,17 @@ The in-tree [live-agent demo]({% link usage/live-agent-demo.md %}) (`demo/live-a
 
 ## Embedding gust as a Go library
 
-The CLI is a thin wrapper. If you are already in Go, call the engines directly:
+Call the **stable** library API from ordinary `go test` code:
 
 ```go
 import (
     "context"
 
-    "gust/internal/adapters/evaluators"
-    "gust/internal/core/analyze"
-    "gust/internal/ports"
     "gust/pkg/api"
+    "gust/pkg/gust"
 )
 
-engine := analyze.NewEngine(evaluators.AllBuiltinEvaluators())
-report, err := engine.AnalyzeRun(ctx, run, assertions, ports.EvaluationContext{ScenarioID: run.RunID})
+report, err := gust.Analyze(ctx, run, assertions, gust.WithScenarioID(run.RunID))
 if err != nil {
     return err
 }
@@ -379,5 +376,5 @@ if !report.Passed {
 }
 ```
 
-That makes gust usable as an assertion library inside an ordinary `go test` run, with the same evaluators the CLI uses. To register your own evaluator alongside the built-ins, see [Custom evaluator]({% link extending/custom-evaluator-go.md %}).
+Do not import `gust/internal/...` from application code. Full guide: [Go library]({% link usage/go-library.md %}). Custom evaluators: [Custom evaluator]({% link extending/custom-evaluator-go.md %}).
 

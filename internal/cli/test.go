@@ -12,6 +12,8 @@ import (
 
 	"gust/internal/adapters/fixtures"
 	"gust/internal/adapters/ingest/otel"
+	"gust/internal/adapters/report"
+	"gust/internal/adapters/testrunner"
 	"gust/internal/core/policy"
 	coretest "gust/internal/core/test"
 	"gust/pkg/api"
@@ -28,6 +30,7 @@ func newTestCmd() *cobra.Command {
 	var asJSON bool
 	var fixturesDir string
 	var command string
+	var traceFetchCommand string
 	var traceSource string
 	var tracePath string
 	var otelListen string
@@ -39,6 +42,9 @@ func newTestCmd() *cobra.Command {
 	var retryMaxAttempts int
 	var retryBackoffMs int
 	var maxExecRate float64
+	var reportPath string
+	var noReport bool
+	var failUnattainable bool
 
 	cmd := &cobra.Command{
 		Use:   "test <scenario.yaml|dir> [-- command...]",
@@ -122,17 +128,35 @@ func newTestCmd() *cobra.Command {
 			if command != "" {
 				base.Command = strings.Fields(command)
 			}
+			if traceFetchCommand != "" {
+				base.TraceFetchCommand = strings.Fields(traceFetchCommand)
+			}
 			if len(args) > 1 {
 				base.Command = args[1:]
 			}
 
 			provider := fixtures.NewMemoryFixtureProvider()
-			proxy, err := fixtures.NewMockToolProxyServer(provider)
-			if err != nil {
-				return fmt.Errorf("start fixture proxy: %w", err)
+			var fixtureEndpoint string
+			var proxy *fixtures.MockToolProxyServer
+			needsGustFixtures := false
+			for _, path := range paths {
+				sc, err := loadScenario(path)
+				if err != nil {
+					return err
+				}
+				if sc.Environment.EffectiveWorldControl() == api.WorldControlGust {
+					needsGustFixtures = true
+					break
+				}
 			}
-			fixtureEndpoint := proxy.Start()
-			defer proxy.Close()
+			if needsGustFixtures {
+				proxy, err = fixtures.NewMockToolProxyServer(provider)
+				if err != nil {
+					return fmt.Errorf("start fixture proxy: %w", err)
+				}
+				fixtureEndpoint = proxy.Start()
+				defer proxy.Close()
+			}
 
 			var receiver *otel.Receiver
 			ensureReceiver := func(flags runnerFlags) error {
@@ -166,6 +190,7 @@ func newTestCmd() *cobra.Command {
 				}
 			}()
 
+			evaluationID := testrunner.NewEvaluationID()
 			sampler := coretest.NewSampler(activeEvaluators())
 			results := make([]*api.ReliabilityResult, 0, len(paths))
 
@@ -212,6 +237,12 @@ func newTestCmd() *cobra.Command {
 					EvalContext:           evalContextFromPolicy(pol, sc.ID),
 					Retry:                 retry,
 					HardConstraints:       pol.HardConstraints,
+					EvaluationID:          evaluationID,
+					OTelURL:               flags.OTelURL,
+					FailUnattainable:      failUnattainable,
+					OnUnattainable: func(message string) {
+						fmt.Fprintf(os.Stderr, "warning: %s\n", message)
+					},
 				})
 				if err != nil {
 					return fmt.Errorf("%s: %w", sc.ID, err)
@@ -225,10 +256,31 @@ func newTestCmd() *cobra.Command {
 			eng := policy.NewEngine()
 			verdict := eng.Evaluate(pol, results)
 
+			if !noReport {
+				out := reportPath
+				if out == "" {
+					out = "gust-report.html"
+				}
+				if err := report.WriteHTML(out, report.SuiteReport{
+					EvaluationID: evaluationID,
+					GeneratedAt:  time.Now().UTC(),
+					PolicyName:   pol.Name,
+					Overall:      verdict,
+					Results:      results,
+				}); err != nil {
+					fmt.Fprintf(os.Stderr, "warning: failed to write HTML report %s: %v\n", out, err)
+				} else if !asJSON {
+					fmt.Printf("\nWrote HTML report: %s\n", out)
+				}
+			}
+
 			if asJSON {
 				enc := json.NewEncoder(os.Stdout)
 				enc.SetIndent("", "  ")
-				payload := map[string]any{"policy": verdict}
+				payload := map[string]any{
+					"evaluation_id": evaluationID,
+					"policy":        verdict,
+				}
 				if len(results) == 1 {
 					payload["reliability"] = results[0]
 				} else {
@@ -252,14 +304,15 @@ func newTestCmd() *cobra.Command {
 	}
 	cmd.Flags().IntVar(&samples, "samples", 0, "override scenario sample count")
 	cmd.Flags().IntVar(&concurrency, "concurrency", 0, "parallel workers (default: gust.yaml or 4)")
-	cmd.Flags().StringVar(&runnerName, "runner", "synthetic", "test runner: synthetic|ollama|http|exec")
+	cmd.Flags().StringVar(&runnerName, "runner", "synthetic", "test runner: synthetic|ollama|http|exec|trigger")
 	cmd.Flags().StringVar(&endpoint, "endpoint", "", "agent URL (http) or Ollama URL (ollama)")
 	cmd.Flags().StringVar(&model, "model", "llama3.1:8b", "ollama model")
 	cmd.Flags().Float64Var(&passProb, "pass-probability", 1.0, "synthetic runner pass probability")
 	cmd.Flags().StringVar(&policyPath, "policy", "", "policy YAML/JSON")
 	cmd.Flags().BoolVar(&asJSON, "json", false, "machine-readable JSON output")
 	cmd.Flags().StringVar(&fixturesDir, "fixtures", "", "extra fixture JSON directory overlaid on every scenario")
-	cmd.Flags().StringVar(&command, "command", "", "exec runner command (or pass args after --)")
+	cmd.Flags().StringVar(&command, "command", "", "exec/trigger runner command (or pass args after --)")
+	cmd.Flags().StringVar(&traceFetchCommand, "trace-fetch-command", "", "trigger runner: command that prints AgentRun/OTLP for {trace_id}")
 	cmd.Flags().StringVar(&traceSource, "trace-source", "", "how to collect the trace: auto|response|file|otel|otel-file")
 	cmd.Flags().StringVar(&tracePath, "trace-path", "", "per-sample file path; may contain {sample_id}")
 	cmd.Flags().StringVar(&otelListen, "otel-listen", "", "in-process OTLP/HTTP bind (default 127.0.0.1:0 when otel collection is on)")
@@ -270,7 +323,10 @@ func newTestCmd() *cobra.Command {
 	cmd.Flags().StringVar(&retryOn, "retry-on", "", "retry runner errors: none|transient|all (default: transient)")
 	cmd.Flags().IntVar(&retryMaxAttempts, "retry-max-attempts", 0, "total Run attempts including the first (default: 2)")
 	cmd.Flags().IntVar(&retryBackoffMs, "retry-backoff-ms", 0, "backoff before a retry in milliseconds (default: 50)")
-	cmd.Flags().Float64Var(&maxExecRate, "max-execution-error-rate", 0, "abort when exec-error fraction exceeds this (default: 0.20; 0 = zero tolerance when flag set)")
+	cmd.Flags().Float64Var(&maxExecRate, "max-execution-error-rate", 0, "abort when infra-error fraction exceeds this (default: 0.20; 0 = zero tolerance when flag set)")
+	cmd.Flags().StringVar(&reportPath, "report", "", "HTML report path (default: ./gust-report.html)")
+	cmd.Flags().BoolVar(&noReport, "no-report", false, "skip writing gust-report.html")
+	cmd.Flags().BoolVar(&failUnattainable, "fail-unattainable", false, "abort when N samples cannot mathematically reach PASS")
 	return cmd
 }
 
@@ -302,7 +358,7 @@ func shouldStartReceiver(flags runnerFlags) bool {
 		return false
 	}
 	switch flags.Name {
-	case "http", "exec":
+	case "http", "exec", "trigger":
 		return true
 	default:
 		return false

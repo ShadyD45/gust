@@ -17,7 +17,9 @@ host="${OLLAMA_HOST:-http://127.0.0.1:11434}"
 samples=20
 concurrency=""
 timeout=""
-only="healthy,recovery,buggy,unsafe"
+only="healthy,recovery,buggy,unsafe,integration,integration-unsafe"
+no_report=0
+REPORT="$OUT_DIR/live-agent-report.html"
 
 usage() {
   cat <<'EOF'
@@ -27,6 +29,10 @@ Run the live-agent demo against Mode 3 fixtures. Default is the scripted
 path (no GPU). Use --ollama to drive a local model through the same
 scenarios.
 
+Also proves the live-eval adoption path: Gust triggers an existing-style
+integration harness, fetches the AgentRun by {trace_id}, evaluates it, and
+writes an HTML report.
+
   --scripted          Scripted agent (default). Unsets GUST_LIVE_AGENT.
   --ollama            Real Ollama model (sets GUST_LIVE_AGENT=1)
   --model <name>      Ollama model (default: llama3.2:3b)
@@ -34,13 +40,15 @@ scenarios.
   --samples <n>       Wilson sample count (default: 20)
   --concurrency <n>   Workers (default: 4 scripted, 1 ollama)
   --timeout <sec>     Per-sample timeout (default: 60 scripted, 180 ollama)
-  --only <list>       Comma list: healthy,recovery,buggy,unsafe
+  --only <list>       healthy,recovery,buggy,unsafe,integration,integration-unsafe
+  --no-report         Skip writing live-agent-report.html
   --skip-build        Reuse ./gust (or GUST_BIN)
   --bin <path>        Use this binary (implies skip build)
   -h, --help
 
-Expects: healthy + recovery PASS; buggy + unsafe FAIL (hard / reliability).
-JSON reports land in demo/out/.
+Expects: healthy + recovery + integration PASS;
+         buggy + unsafe + integration-unsafe FAIL.
+JSON + HTML land in demo/out/.
 
 Env: GUST_BIN, SKIP_BUILD=1, GUST_OLLAMA_MODEL, OLLAMA_HOST
 EOF
@@ -85,6 +93,10 @@ while [[ $# -gt 0 ]]; do
       only="${2:-}"
       [[ -n "$only" ]] || { echo "--only requires a list" >&2; exit 2; }
       shift 2
+      ;;
+    --no-report)
+      no_report=1
+      shift
       ;;
     --skip-build)
       skip_build=1
@@ -177,6 +189,7 @@ want() {
 
 GUST="$(resolve_gust)"
 mkdir -p "$OUT_DIR"
+rm -rf "$OUT_DIR/live-agent-traces"
 
 if [[ "$mode" == "ollama" ]]; then
   export GUST_LIVE_AGENT=1
@@ -189,17 +202,28 @@ else
 fi
 echo "==> Using binary: $GUST"
 echo "==> samples=$samples concurrency=$concurrency timeout=${timeout}s policy=$POLICY"
+echo "==> HTML report: $REPORT"
+
+report_args() {
+  if [[ "$no_report" -eq 1 ]]; then
+    echo --no-report
+  else
+    echo --report "$REPORT"
+  fi
+}
 
 run_pass() {
   local name="$1"
   local json="$OUT_DIR/live-${name}.json"
   echo ""
   echo "==> $name (expect PASS)"
+  # shellcheck disable=SC2046
   "$GUST" test "$LIVE/$name" \
     --policy "$POLICY" \
     --samples "$samples" \
     --concurrency "$concurrency" \
     --timeout "$timeout" \
+    $(report_args) \
     --json | tee "$json"
 }
 
@@ -209,11 +233,13 @@ run_fail() {
   echo ""
   echo "==> $name (expect FAIL)"
   set +e
+  # shellcheck disable=SC2046
   "$GUST" test "$LIVE/$name" \
     --policy "$POLICY" \
     --samples "$samples" \
     --concurrency "$concurrency" \
     --timeout "$timeout" \
+    $(report_args) \
     --json | tee "$json"
   local rc=$?
   set -e
@@ -228,6 +254,12 @@ if want healthy; then run_pass healthy; fi
 if want recovery; then run_pass recovery; fi
 if want buggy; then run_fail buggy; fi
 if want unsafe; then run_fail unsafe; fi
+if want integration; then run_pass integration; fi
+if want integration-unsafe; then run_fail integration-unsafe; fi
 
 echo ""
+if [[ "$no_report" -eq 0 ]]; then
+  [[ -f "$REPORT" ]] || { echo "expected HTML report at $REPORT" >&2; exit 1; }
+  echo "HTML report: $REPORT"
+fi
 echo "Live-agent demo complete ($mode, N=$samples). Reports in $OUT_DIR/"

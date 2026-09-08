@@ -142,11 +142,12 @@ type TestScenario struct {
 // ScenarioRunnerSpec is the optional end-user hook for Mode 3.
 // CLI flags override these fields. Empty Type means "use the CLI --runner".
 type ScenarioRunnerSpec struct {
-	Type           string            `json:"type,omitempty" yaml:"type,omitempty"` // http | exec
-	URL            string            `json:"url,omitempty" yaml:"url,omitempty"`
-	Command        []string          `json:"command,omitempty" yaml:"command,omitempty"`
-	TimeoutSeconds int               `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
-	Traces         ScenarioTraceSpec `json:"traces,omitempty" yaml:"traces,omitempty"`
+	Type               string            `json:"type,omitempty" yaml:"type,omitempty"` // http | exec | trigger
+	URL                string            `json:"url,omitempty" yaml:"url,omitempty"`
+	Command            []string          `json:"command,omitempty" yaml:"command,omitempty"`
+	TraceFetchCommand  []string          `json:"trace_fetch_command,omitempty" yaml:"trace_fetch_command,omitempty"`
+	TimeoutSeconds     int               `json:"timeout_seconds,omitempty" yaml:"timeout_seconds,omitempty"`
+	Traces             ScenarioTraceSpec `json:"traces,omitempty" yaml:"traces,omitempty"`
 }
 
 // ScenarioTraceSpec says how gust collects the AgentRun after invoking the agent.
@@ -156,10 +157,34 @@ type ScenarioTraceSpec struct {
 	WaitTimeoutSeconds int    `json:"wait_timeout_seconds,omitempty" yaml:"wait_timeout_seconds,omitempty"`
 }
 
+// WorldControlMode selects who owns dependency responses for a live scenario.
+type WorldControlMode string
+
+const (
+	// WorldControlExisting leaves mocks/DI/test containers to the user's harness.
+	WorldControlExisting WorldControlMode = "existing"
+	// WorldControlGust routes selected tools through the Gust fixture proxy.
+	WorldControlGust WorldControlMode = "gust"
+)
+
 type EnvironmentSpec struct {
-	FixtureStrategy MatchStrategy `json:"fixture_strategy,omitempty" yaml:"fixture_strategy,omitempty"`
-	Fixtures        []Fixture     `json:"fixtures" yaml:"fixtures"`
-	FixturesDir     string        `json:"fixtures_dir,omitempty" yaml:"fixtures_dir,omitempty"`
+	// WorldControl defaults to "gust" when fixtures are present, otherwise "existing".
+	WorldControl    WorldControlMode `json:"world_control,omitempty" yaml:"world_control,omitempty"`
+	FixtureStrategy MatchStrategy    `json:"fixture_strategy,omitempty" yaml:"fixture_strategy,omitempty"`
+	Fixtures        []Fixture        `json:"fixtures" yaml:"fixtures"`
+	FixturesDir     string           `json:"fixtures_dir,omitempty" yaml:"fixtures_dir,omitempty"`
+}
+
+// EffectiveWorldControl resolves the scenario's world-control mode.
+func (e EnvironmentSpec) EffectiveWorldControl() WorldControlMode {
+	switch e.WorldControl {
+	case WorldControlExisting, WorldControlGust:
+		return e.WorldControl
+	}
+	if len(e.Fixtures) > 0 || e.FixturesDir != "" {
+		return WorldControlGust
+	}
+	return WorldControlExisting
 }
 
 type Assertion struct {

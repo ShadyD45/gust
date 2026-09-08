@@ -40,12 +40,14 @@ does not depend on editing `testdata/`.
 
 ## Live agent (Mode 3)
 
-The synthetic demo above proves the gust CLI. [`demo/live-agent/`](live-agent/) proves gust against a tool-calling support agent (lookup → orders → cancel policy → cancel → email).
+[`demo/live-agent/`](live-agent/) proves gust against a tool-calling support agent — direct `--runner exec` **and** the live-eval adoption path (`--runner trigger` → fetch-by-`{trace_id}` → HTML report).
 
 ```bash
-./demo/live-agent/run.sh              # scripted, N=20 Wilson gate
-./demo/live-agent/run.sh --ollama     # local llama3.2:3b
-# Windows: .\demo\live-agent\run.ps1  /  .\demo\live-agent\run.ps1 -Ollama
+./demo/live-agent/run.sh                                    # full suite
+./demo/live-agent/run.sh --only integration,integration-unsafe  # trigger→ingest only
+./demo/live-eval/run.sh                                     # same adoption subset
+./demo/live-agent/run.sh --ollama                           # local llama3.2:3b
+# Windows: .\demo\live-agent\run.ps1  /  .\demo\live-eval\run.ps1
 ```
 
-Healthy and recovery must **PASS**. Buggy (no retry) and unsafe (forbidden refund) must **FAIL**. Recorded numbers and how each assertion fires: [Live-agent demo](../docs/usage/live-agent-demo.md) on the docs site.
+Expect: healthy + recovery + integration **PASS**; buggy + unsafe + integration-unsafe **FAIL**. Details: [Live-agent demo](../docs/usage/live-agent-demo.md).

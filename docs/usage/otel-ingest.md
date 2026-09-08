@@ -30,6 +30,8 @@ rec.complete(output="done")
 rec.export()  # AGENTEVAL_INGEST_URL or http://127.0.0.1:4318/v1/runs
 ```
 
+Canonical topology and schedule diagrams: [Execution topologies]({% link architecture/execution-topologies.md %}). Component model: [How Gust works]({% link architecture/how-gust-works.md %}).
+
 ## Mode 3 — CI starts the listener
 
 `gust test --runner exec|http` starts the same receiver in-process (HTTP + gRPC) and injects the exporter env into the child (or puts the URLs on the `/invoke` body). The job is the only place gust listens:

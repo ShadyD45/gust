@@ -22,7 +22,12 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 
 | Goal | Guide |
 |------|--------|
-| Wire gust into an agent you already run | [Integrate your app]({% link usage/integrate-your-app.md %}) |
+| First useful gate in ~15 minutes | [Getting started]({% link usage/getting-started.md %}) |
+| Prove live-eval adoption (trigger→fetch→HTML) | [`demo/live-agent` integration](https://github.com/ShadyD45/gust/tree/main/demo/live-agent/integration) |
+| What Gust is (and is not) | [What Gust is]({% link architecture/what-gust-is.md %}) |
+| Wire Gust into an agent you already run | [Integrate your app]({% link usage/integrate-your-app.md %}) |
+| Embed Analyze in Go tests | [Go library]({% link usage/go-library.md %}) |
+| Live N-sample eval against your agent | [Test your agent]({% link usage/test-your-agent.md %}) |
 | Run the live-agent Mode 3 demo (N=20 Wilson) | [Live-agent demo]({% link usage/live-agent-demo.md %}) |
 | Learn Analyze / Replay / Test / Compare | [Modes cookbook]({% link usage/modes-cookbook.md %}) |
 | Tune policy, criticality, and CI knobs | [Tuning the gate]({% link usage/tuning.md %}) |
@@ -45,7 +50,8 @@ A **trace is not a test**. A captured `AgentRun` is evidence of what happened on
 go build -o gust ./cmd/gust
 ./gust analyze testdata/runs/golden_cancel.json --policy testdata/policy.yaml
 ./demo/run.sh                 # synthetic MVP CLI demo
-./demo/live-agent/run.sh      # Mode 3 live-agent demo (N=20)
+./demo/live-agent/run.sh      # Mode 3: exec + trigger/IT ingest + HTML (N=20)
+./demo/live-eval/run.sh       # adoption subset (integration,integration-unsafe)
 ```
 
 ## Source & contributing

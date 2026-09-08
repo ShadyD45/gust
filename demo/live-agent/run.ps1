@@ -8,7 +8,8 @@ param(
   [int]$Samples = 20,
   [int]$Concurrency = 0,
   [int]$Timeout = 0,
-  [string]$Only = "healthy,recovery,buggy,unsafe"
+  [string[]]$Only = @("healthy", "recovery", "buggy", "unsafe", "integration", "integration-unsafe"),
+  [switch]$NoReport
 )
 
 $ErrorActionPreference = "Stop"
@@ -19,6 +20,13 @@ $Live = Join-Path $Root "demo\live-agent"
 $DefaultBin = Join-Path $Root "gust.exe"
 $Policy = Join-Path $Live "policy.yaml"
 $OutDir = Join-Path $Root "demo\out"
+$Report = Join-Path $OutDir "live-agent-report.html"
+
+# Allow -Only "a,b" or -Only a,b
+$OnlyNames = @()
+foreach ($part in $Only) {
+  $OnlyNames += ($part -split ",") | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+}
 
 if ($Ollama -and $Scripted) {
   Write-Error "use either -Ollama or -Scripted, not both"
@@ -67,11 +75,11 @@ if ($Bin) {
 }
 
 function Test-Wanted([string]$Name) {
-  $parts = $Only.Split(",") | ForEach-Object { $_.Trim() }
-  return $parts -contains $Name
+  return $OnlyNames -contains $Name
 }
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+Remove-Item -Recurse -Force (Join-Path $OutDir "live-agent-traces") -ErrorAction SilentlyContinue
 
 if ($Mode -eq "ollama") {
   $env:GUST_LIVE_AGENT = "1"
@@ -84,6 +92,12 @@ if ($Mode -eq "ollama") {
 }
 Write-Host "==> Using binary: $Gust"
 Write-Host "==> samples=$Samples concurrency=$Concurrency timeout=${Timeout}s policy=$Policy"
+Write-Host "==> HTML report: $Report"
+
+function Get-ReportArgs {
+  if ($NoReport) { return @("--no-report") }
+  return @("--report", $Report)
+}
 
 function Invoke-Pass([string]$Name) {
   $json = Join-Path $OutDir "live-$Name.json"
@@ -94,6 +108,7 @@ function Invoke-Pass([string]$Name) {
     --samples $Samples `
     --concurrency $Concurrency `
     --timeout $Timeout `
+    @(Get-ReportArgs) `
     --json | Tee-Object -FilePath $json
   if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
@@ -107,6 +122,7 @@ function Invoke-Fail([string]$Name) {
     --samples $Samples `
     --concurrency $Concurrency `
     --timeout $Timeout `
+    @(Get-ReportArgs) `
     --json | Tee-Object -FilePath $json
   if ($LASTEXITCODE -eq 0) {
     Write-Error "expected $Name to fail"
@@ -119,7 +135,16 @@ if (Test-Wanted "healthy") { Invoke-Pass "healthy" }
 if (Test-Wanted "recovery") { Invoke-Pass "recovery" }
 if (Test-Wanted "buggy") { Invoke-Fail "buggy" }
 if (Test-Wanted "unsafe") { Invoke-Fail "unsafe" }
+if (Test-Wanted "integration") { Invoke-Pass "integration" }
+if (Test-Wanted "integration-unsafe") { Invoke-Fail "integration-unsafe" }
 
 Write-Host ""
+if (-not $NoReport) {
+  if (-not (Test-Path $Report)) {
+    Write-Error "expected HTML report at $Report"
+    exit 1
+  }
+  Write-Host "HTML report: $Report"
+}
 Write-Host "Live-agent demo complete ($Mode, N=$Samples). Reports in $OutDir/"
 exit 0

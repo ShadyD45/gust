@@ -6,15 +6,87 @@ has_mermaid: true
 ---
 # Test your own agent (Mode 3)
 
-You do not write Go and you do not fork gust. You keep a one-sample hook in **your** repo. gust starts a fixture proxy, calls that hook N times, and collects each trace by a per-sample id.
+You do not write Go and you do not fork Gust. Gust is a **behavioral evaluation harness**: it repeats a scenario N times, collects traces, evaluates behavioral contracts, and writes a Wilson reliability verdict plus `gust-report.html`.
+
+New here? Start with [Getting started]({% link usage/getting-started.md %}). Product model: [What Gust is]({% link architecture/what-gust-is.md %}). Deeper context: [How Gust works]({% link architecture/how-gust-works.md %}), [Mocking]({% link architecture/mocking-and-fixtures.md %}), [Topologies]({% link architecture/execution-topologies.md %}).
+
+## Fastest path (existing mocks, no Gust fixtures)
+
+```bash
+# Python
+gust test evals/hello --runner exec --samples 5 -- python -m my_agent.gust_eval
+
+# TypeScript
+gust test evals/hello --runner exec --samples 5 -- node --import tsx my_agent/gust_eval.ts
+```
+
+### Python hook
+
+```python
+from gust_sdk import RunRecorder, run_eval
+
+def handle(request):
+    rec = RunRecorder(agent_name="my-agent", agent_version="1.0",
+                      task_input=request.get("input") or "")
+    # use your own DI / fakes here
+    rec.complete(output="done")
+    return rec
+
+if __name__ == "__main__":
+    run_eval(handle)
+```
+
+### TypeScript hook
+
+```ts
+import { RunRecorder, runEval } from "gust-sdk";
+
+async function handle(request: { input?: string }) {
+  const rec = new RunRecorder({
+    agentName: "my-agent",
+    agentVersion: "1.0",
+    taskInput: request.input || "",
+  });
+  rec.complete("done");
+  return rec;
+}
+
+await runEval(handle);
+```
+
+```yaml
+environment:
+  world_control: existing
+```
+
+Gust writes `./gust-report.html` by default (`--no-report` to skip, `--report path` to override).
 
 If you only need to gate one captured run, use [`analyze`]({% link usage/integrate-your-app.md %}) instead. This page is for reliability sampling: *is today's live agent reliable on this scenario?*
 
-A complete worked example — scripts, fixtures, assertions, and recorded N=20 results — is the [live-agent demo]({% link usage/live-agent-demo.md %}). Copy that folder shape; swap in your hook.
+A complete worked example with Gust fixtures — scripts, fixtures, assertions, and recorded N=20 results — is the [live-agent demo]({% link usage/live-agent-demo.md %}). Copy that folder shape when you want `world_control: gust`.
+
+Prove the adoption features (trigger IT → fetch `{trace_id}` → evaluate → HTML) with the live-agent integration scenarios:
+
+```bash
+./demo/live-agent/run.sh --only integration,integration-unsafe
+# Windows: .\demo\live-agent\run.ps1 -Only integration,integration-unsafe
+```
+
+In-tree hello evals:
+
+```bash
+# from sdk/python
+gust test examples/evals/hello --runner exec --samples 5 -- \
+  python -m examples.minimal_eval
+
+# from repo root
+gust test sdk/typescript/examples/evals/hello --runner exec --samples 5 -- \
+  node --import tsx sdk/typescript/examples/minimal_eval.ts
+```
 
 ## Where this runs (not production)
 
-Mode 3 is a **CI (or laptop) session**. gust is the evaluator; the agent under test is a **dev/QA** build. Production does not run gust and does not export to it.
+Mode 3 is a **CI (or laptop) session**. Gust is the evaluator; the agent under test is a **dev/QA** build. Production does not run Gust and does not export to it.
 
 ```mermaid
 flowchart TB
@@ -33,17 +105,20 @@ flowchart TB
   prod -.->|no gust no OTEL to CI| gustBin
 ```
 
-| Topology | When to use | How traces reach gust |
+| Topology | When to use | How traces reach Gust |
 |---|---|---|
-| **Same CI job** (`--runner exec`) | Default. Agent code + fixtures in the pipeline. | gust injects `OTEL_*` / `AGENTEVAL_INGEST_URL` on localhost and Wait()s |
-| **QA on the same network** (`--runner http`) | Self-hosted runner or compose in the QA VPC so the agent can dial gust | Invoke body carries `otel_endpoint`; agent exports OTLP or `POST /v1/runs` |
-| **QA cannot reach the CI runner** | GitHub-hosted runners have no inbound ports | Agent returns an `AgentRun` on `/invoke` (`--trace-source response`), or CI pulls from Langfuse |
+| **Same CI job** (`--runner exec`) | Default. Agent code + optional fixtures in the pipeline. | Gust injects `OTEL_*` / `AGENTEVAL_INGEST_URL` on localhost and Wait()s, or reads AgentRun from stdout |
+| **QA on the same network** (`--runner http`) | Self-hosted runner or compose in the QA VPC so the agent can dial Gust | Invoke body carries `otel_endpoint`; agent exports OTLP or `POST /v1/runs` |
+| **QA cannot reach the CI runner** | GitHub-hosted runners have no inbound ports | Agent returns an `AgentRun` on `/invoke` (`--trace-source response`), or CI pulls from Langfuse / `--trace-fetch-command` |
+| **Existing OTel backend** (`--runner trigger`) | No Gust code in the agent; harness propagates W3C trace context | Trigger prints a receipt; Gust fetches `{trace_id}` via `--trace-fetch-command` |
 
-Do not run `gust ingest otel serve` as a production sidecar. That turns gust into a store. Full job YAML: [CI integration]({% link usage/ci-github-actions.md %}).
+Full topology matrix: [Execution topologies]({% link architecture/execution-topologies.md %}). Do not run `gust ingest otel serve` as a production sidecar. That turns Gust into a store. Full job YAML: [CI integration]({% link usage/ci-github-actions.md %}).
 
 ## 1. Instrument the agent
 
-Record an `AgentRun` with the [Python SDK](https://github.com/ShadyD45/gust/tree/main/sdk/python), the [TypeScript SDK](https://github.com/ShadyD45/gust/tree/main/sdk/typescript), or point an existing OTel exporter at gust — see [OTel ingestion]({% link usage/otel-ingest.md %}). Route tools through `FixtureClient` so Mode 3 never hits **production APIs** (the agent itself is still the real code, running in CI or QA).
+Record an `AgentRun` with the [Python SDK](https://github.com/ShadyD45/gust/tree/main/sdk/python), the [TypeScript SDK](https://github.com/ShadyD45/gust/tree/main/sdk/typescript), or point an existing OTel exporter at Gust — see [OTel ingestion]({% link usage/otel-ingest.md %}). For Gust-controlled tools, route selected calls through `FixtureClient` so Mode 3 never hits **production APIs**.
+
+### Python
 
 ```python
 from gust_sdk import FixtureClient, RunRecorder
@@ -56,9 +131,26 @@ def get_orders(customer_id):
     return orders_api.list(customer_id)
 ```
 
+### TypeScript
+
+```ts
+import { FixtureClient } from "gust-sdk";
+
+const fixtures = new FixtureClient(); // AGENTEVAL_FIXTURE_ENDPOINT
+
+async function getOrders(customerId: number) {
+  if (fixtures.enabled) {
+    return fixtures.call("get_orders", { customer_id: customerId });
+  }
+  return ordersApi.list(customerId);
+}
+```
+
 ## 2. Expose one sample
 
-### Exec — gust starts the process
+### Exec — Gust starts the process
+
+**Python**
 
 ```python
 from gust_sdk import run_sample
@@ -74,17 +166,40 @@ if __name__ == "__main__":
     run_sample(handle)
 ```
 
-```bash
-gust test tests/scenario.yaml --runner exec -- python -m my_agent.sample
+**TypeScript**
+
+```ts
+import { RunRecorder, runSample } from "gust-sdk";
+
+await runSample(async (request, fixtures) => {
+  const rec = new RunRecorder({
+    agentName: "my-agent",
+    agentVersion: "1.4",
+    taskInput: String(request.input || ""),
+  });
+  // ... run once; await fixtures.call(...) when world_control=gust ...
+  rec.complete("done");
+  return rec;
+});
 ```
 
-gust writes the scenario JSON on stdin and sets `AGENTEVAL_FIXTURE_ENDPOINT`, `AGENTEVAL_SAMPLE_ID`, and (when the in-process receiver is up) the `OTEL_EXPORTER_OTLP_*` / `AGENTEVAL_INGEST_URL` variables. Your process can print one `AgentRun` on stdout, `RunRecorder.export()` it, or emit OTLP.
+```bash
+gust test tests/scenario.yaml --runner exec -- python -m my_agent.sample
+gust test tests/scenario.yaml --runner exec -- node --import tsx my_agent/sample.ts
+```
 
-### HTTP — gust POSTs to a running service
+Gust writes the scenario JSON on stdin and sets `AGENTEVAL_FIXTURE_ENDPOINT`, `AGENTEVAL_SAMPLE_ID`, and (when the in-process receiver is up) the `OTEL_EXPORTER_OTLP_*` / `AGENTEVAL_INGEST_URL` variables. Your process can print one `AgentRun` on stdout, `export()` it, or emit OTLP.
+
+### HTTP — Gust POSTs to a running service
 
 ```python
 from gust_sdk import serve_sample
 serve_sample(handle, port=8080).serve_forever()
+```
+
+```ts
+import { serveSample } from "gust-sdk";
+serveSample(handler, { port: 8080 });
 ```
 
 ```bash
@@ -104,11 +219,24 @@ POST `/invoke` body:
 }
 ```
 
-Respond with an `AgentRun`, or write a file / export OTel and tell gust how to collect it.
+Respond with an `AgentRun`, or write a file / export OTel and tell Gust how to collect it.
+
+### Trigger — remote QA, no Gust import in the agent
+
+Your harness starts the sample and prints a receipt; Gust fetches the trace by ID from your existing backend:
+
+```bash
+gust test evals/ \
+  --runner trigger \
+  --trace-fetch-command 'my-cli traces get {trace_id}' \
+  -- -- python harness.py
+```
+
+See [OTel ingestion]({% link usage/otel-ingest.md %}) and [Execution topologies]({% link architecture/execution-topologies.md %}).
 
 ## 3. Collect the trace
 
-| `--trace-source` | What gust uses |
+| `--trace-source` | What Gust uses |
 |---|---|
 | `auto` (default) | Valid `AgentRun` on the HTTP body / stdout, else `{trace-path}`, else the in-process OTLP buffer |
 | `response` | HTTP body or exec stdout must be an `AgentRun` |
@@ -153,6 +281,7 @@ task:
   id: refund-001
   input: "Cancel my latest order"
 environment:
+  world_control: gust
   fixtures: []
   fixtures_dir: fixtures          # or omit; a sibling fixtures/ is loaded automatically
 assertion_files:
@@ -185,16 +314,21 @@ Policy counts, criticality, sample size, and `on_flaky` are documented in [Tunin
 
 `gust scenario from-run run.json --layout dir --output tests/new_case/` writes this folder shape with empty assertions.
 
-`gust test` always starts fixture proxies from resolved fixtures and `--fixtures`. Each sample clones a clonable provider and gets an ephemeral mock-tool proxy so ordered sequences cannot interleave under concurrency. If a provider cannot be cloned, the sampler caps concurrency to 1.
+`gust test` starts fixture proxies when the resolved scenario needs Gust world control (or you pass `--fixtures`). Each sample clones a clonable provider and gets an ephemeral mock-tool proxy so ordered sequences cannot interleave under concurrency. If a provider cannot be cloned, the sampler caps concurrency to 1.
 
-No gust process in production; the job is the listener. See [CI integration]({% link usage/ci-github-actions.md %}).
+No Gust process in production; the job is the listener. See [CI integration]({% link usage/ci-github-actions.md %}).
 
 The [live-agent demo]({% link usage/live-agent-demo.md %}) is this layout in-tree (`healthy/`, `recovery/`, `buggy/`, `unsafe/`) with `run.sh` / `run.ps1` wrapping `gust test`. More YAML compositions across domains: [Scenario examples]({% link usage/examples.md %}).
 
 ## Agent failures vs infrastructure errors
 
-A failed agent run is `outcome.status: "failed"` and counts toward the Wilson interval. If the hook crashes, returns invalid JSON, or the fixture proxy is unreachable, the whole sampling run aborts.
+| Kind | Examples | Effect |
+|------|----------|--------|
+| **Behavioral** | Wrong tool, failed task, forbidden call | Counts in Wilson pass rate |
+| **Infrastructure** | Hook crash, invalid JSON, unreachable fixture proxy, trace fetch timeout | Excluded from Wilson; gated by max infrastructure-error rate |
 
-## Embedders only
+Use `--fail-unattainable` when the requested PASS floor is mathematically impossible at the configured sample size.
 
-Implementing `ports.TestRunner` in Go is for people who embed gust as a library. That path is documented in [Custom test runner]({% link extending/custom-test-runner.md %}).
+## Embedders (Go library)
+
+For offline Analyze inside `go test`, use the stable API — [Go library]({% link usage/go-library.md %}). Live Mode 3 stays on the CLI runners above; do not import `gust/internal/...`.

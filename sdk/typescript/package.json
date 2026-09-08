@@ -3,16 +3,26 @@
   "version": "0.5.0",
   "description": "Capture agent runs for gust, the test infrastructure for autonomous software",
   "type": "module",
-  "main": "src/index.js",
-  "types": "src/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "exports": {
-    ".": "./src/index.js"
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./lib/index.js"
+    }
   },
   "files": [
+    "lib",
     "src"
   ],
   "scripts": {
-    "test": "node --test src/*.test.js"
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test lib/recorder.test.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
   },
   "engines": {
     "node": ">=18"
@@ -22,7 +32,8 @@
     "llm",
     "agents",
     "testing",
-    "evaluation"
+    "evaluation",
+    "typescript"
   ],
   "repository": {
     "type": "git",

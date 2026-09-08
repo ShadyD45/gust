@@ -7,6 +7,7 @@
 /demo/out/*
 !/demo/out/.gitkeep
 /out/
+gust-report.html
 
 # IDE / OS
 .idea/
@@ -25,3 +26,9 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+
+# TypeScript SDK build output is committed under lib/ (package entrypoint).
+# Keep ignoring accidental caches dropped into sdk/typescript.
+sdk/typescript/node_modules/
+sdk/typescript/.pytest_cache/
+sdk/typescript/pytest-cache-files-*/
