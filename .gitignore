@@ -28,7 +28,10 @@ build/
 dist/
 
 # TypeScript SDK build output is committed under lib/ (package entrypoint).
-# Keep ignoring accidental caches dropped into sdk/typescript.
+# Keep ignoring accidental caches and tsc side-products.
 sdk/typescript/node_modules/
 sdk/typescript/.pytest_cache/
 sdk/typescript/pytest-cache-files-*/
+sdk/typescript/**/*.map
+sdk/typescript/**/*.tsbuildinfo
+sdk/typescript/lib/**/*.test.d.ts
