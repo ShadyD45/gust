@@ -41,4 +41,3 @@ export declare function serveSample(handler: SampleHandler, { host, port }?: {
     host?: string;
     port?: number;
 }): http.Server;
-//# sourceMappingURL=sample.d.ts.map

@@ -12,4 +12,3 @@ export declare class FixtureClient {
     get enabled(): boolean;
     call(tool: string, arguments_?: Record<string, unknown>): Promise<unknown>;
 }
-//# sourceMappingURL=fixtures.d.ts.map

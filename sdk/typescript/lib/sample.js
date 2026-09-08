@@ -168,4 +168,3 @@ export function serveSample(handler, { host = "127.0.0.1", port = 8080 } = {}) {
     server.listen(port, host);
     return server;
 }
-//# sourceMappingURL=sample.js.map

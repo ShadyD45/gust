@@ -21,4 +21,3 @@ export declare function serve(plugin: EvaluatorPlugin, { input, output, }?: {
     input?: Readable;
     output?: Writable;
 }): void;
-//# sourceMappingURL=wire.d.ts.map

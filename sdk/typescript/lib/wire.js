@@ -81,4 +81,3 @@ export function serve(plugin, { input = process.stdin, output = process.stdout, 
         output.write(JSON.stringify(plugin.handle(request)) + "\n");
     });
 }
-//# sourceMappingURL=wire.js.map
