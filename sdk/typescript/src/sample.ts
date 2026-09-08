@@ -141,8 +141,9 @@ export async function runSample(
   { input, output }: { input?: Readable; output?: Writable } = {},
 ): Promise<Record<string, unknown>> {
   const chunks: Buffer[] = [];
-  const stream = input || process.stdin;
-  if (stream !== process.stdin || !stream.isTTY) {
+  const stream = input ?? process.stdin;
+  const skipRead = input == null && Boolean(process.stdin.isTTY);
+  if (!skipRead) {
     for await (const chunk of stream) chunks.push(Buffer.from(chunk));
   }
   const raw = Buffer.concat(chunks).toString("utf8").trim();

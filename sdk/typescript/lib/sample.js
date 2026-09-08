@@ -76,7 +76,7 @@ export function sampleContext() {
         input: process.env.AGENTEVAL_TASK_INPUT || "",
     };
 }
-export function executionReceipt({ status = "completed", trace_id = "", run_id = "", run, error = "" } = {}) {
+export function executionReceipt({ status = "completed", trace_id = "", run_id = "", run, error = "", } = {}) {
     const out = { status };
     if (trace_id)
         out.trace_id = trace_id;
@@ -95,13 +95,14 @@ async function maybeExport(run) {
 }
 export async function runSample(handler, { input, output } = {}) {
     const chunks = [];
-    const stream = input || process.stdin;
-    if (stream !== process.stdin || !stream.isTTY) {
+    const stream = input ?? process.stdin;
+    const skipRead = input == null && Boolean(process.stdin.isTTY);
+    if (!skipRead) {
         for await (const chunk of stream)
             chunks.push(Buffer.from(chunk));
     }
     const raw = Buffer.concat(chunks).toString("utf8").trim();
-    const request = raw ? JSON.parse(raw) : {};
+    const request = (raw ? JSON.parse(raw) : {});
     const sampleId = applyInvokeEnv(request);
     const endpoint = String(request.tool_endpoint || process.env[FIXTURE_ENDPOINT_ENV] || "");
     const fixtures = new FixtureClient({ endpoint });
@@ -167,3 +168,4 @@ export function serveSample(handler, { host = "127.0.0.1", port = 8080 } = {}) {
     server.listen(port, host);
     return server;
 }
+//# sourceMappingURL=sample.js.map

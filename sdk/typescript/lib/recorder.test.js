@@ -61,3 +61,4 @@ test("evaluator plugin manifest", () => {
     assert.equal(res.result.name, "pii");
     assert.equal(res.result.kind, "evaluator");
 });
+//# sourceMappingURL=recorder.test.js.map

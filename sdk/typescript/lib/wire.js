@@ -1,11 +1,10 @@
 import readline from "node:readline";
 export const PROTOCOL_VERSION = "1.0";
 export class EvaluatorPlugin {
-    constructor() {
-        this.name = "ts_evaluator";
-        this.version = "0.1.0";
-        this.description = "";
-    }
+    name = "ts_evaluator";
+    version = "0.1.0";
+    description = "";
+    capabilities;
     manifest() {
         const payload = {
             protocol_version: PROTOCOL_VERSION,
@@ -66,7 +65,7 @@ export class EvaluatorPlugin {
         return response;
     }
 }
-export function serve(plugin, { input = process.stdin, output = process.stdout } = {}) {
+export function serve(plugin, { input = process.stdin, output = process.stdout, } = {}) {
     const rl = readline.createInterface({ input });
     rl.on("line", (line) => {
         const trimmed = line.trim();
@@ -82,3 +81,4 @@ export function serve(plugin, { input = process.stdin, output = process.stdout }
         output.write(JSON.stringify(plugin.handle(request)) + "\n");
     });
 }
+//# sourceMappingURL=wire.js.map

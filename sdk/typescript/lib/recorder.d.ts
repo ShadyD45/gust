@@ -6,21 +6,23 @@ export type OutcomeStatus = "completed" | "failed" | "timeout" | "cancelled";
 export declare class AgentRunError extends Error {
     constructor(message: string);
 }
+type SpanRecord = {
+    span_id: string;
+    name: string;
+    type: string;
+    start_time: string;
+    end_time: string;
+    status: {
+        code: string;
+        message?: string;
+    };
+    parent_span_id?: string;
+    attributes?: Record<string, unknown>;
+};
 export declare class SpanHandle {
     output: unknown;
-    constructor(span: {
-        span_id: string;
-        name: string;
-        type: string;
-        start_time: string;
-        end_time: string;
-        status: {
-            code: string;
-            message?: string;
-        };
-        parent_span_id?: string;
-        attributes?: Record<string, unknown>;
-    });
+    private _span;
+    constructor(span: SpanRecord);
     get spanId(): string;
     setAttribute(key: string, value: unknown): void;
     finish(error?: unknown): void;
@@ -36,19 +38,24 @@ export type RunRecorderOptions = {
 };
 export declare class RunRecorder {
     runId: string;
-    constructor(opts: RunRecorderOptions);
-    span(name: string, opts?: {
+    private _agent;
+    private _task;
+    private _spans;
+    private _outcome;
+    private _metadata;
+    constructor({ agentName, agentVersion, taskInput, taskId, runId, gitCommit, taskContext, }: RunRecorderOptions);
+    span(name: string, { spanType, attributes, parentSpanId, }?: {
         spanType?: SpanType | string;
         attributes?: Record<string, unknown>;
         parentSpanId?: string;
     }): SpanHandle;
     tool(name: string, arguments_?: Record<string, unknown>, parentSpanId?: string): SpanHandle;
-    llm(name: string, opts?: {
+    llm(name: string, { model, parentSpanId, ...attributes }?: {
         model?: string;
         parentSpanId?: string;
         [key: string]: unknown;
     }): SpanHandle;
-    recordTool(name: string, arguments_?: Record<string, unknown>, opts?: {
+    recordTool(name: string, arguments_?: Record<string, unknown>, { output, error }?: {
         output?: unknown;
         error?: string;
     }): string;
@@ -62,3 +69,5 @@ export declare class RunRecorder {
 }
 export declare function resolveIngestUrl(url?: string): string;
 export declare function postRun(run: Record<string, unknown>, url?: string, timeoutMs?: number): Promise<Record<string, unknown>>;
+export {};
+//# sourceMappingURL=recorder.d.ts.map

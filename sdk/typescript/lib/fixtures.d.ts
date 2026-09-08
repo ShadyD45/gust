@@ -4,10 +4,12 @@ export declare class FixtureError extends Error {
 }
 export declare class FixtureClient {
     endpoint: string;
-    constructor(opts?: {
+    private timeoutMs;
+    constructor({ endpoint, timeoutMs, }?: {
         endpoint?: string;
         timeoutMs?: number;
     });
     get enabled(): boolean;
     call(tool: string, arguments_?: Record<string, unknown>): Promise<unknown>;
 }
+//# sourceMappingURL=fixtures.d.ts.map

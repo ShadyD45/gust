@@ -13,6 +13,8 @@ function now() {
     return new Date().toISOString().replace(/\.\d+Z$/, "Z");
 }
 export class SpanHandle {
+    output;
+    _span;
     constructor(span) {
         this._span = span;
         this.output = undefined;
@@ -37,7 +39,13 @@ export class SpanHandle {
     }
 }
 export class RunRecorder {
-    constructor({ agentName, agentVersion, taskInput, taskId, runId, gitCommit, taskContext }) {
+    runId;
+    _agent;
+    _task;
+    _spans;
+    _outcome;
+    _metadata;
+    constructor({ agentName, agentVersion, taskInput, taskId, runId, gitCommit, taskContext, }) {
         if (!agentName || !agentVersion) {
             throw new AgentRunError("agentName and agentVersion are required");
         }
@@ -58,7 +66,7 @@ export class RunRecorder {
         if (envSample)
             this._metadata.sample_id = envSample;
     }
-    span(name, { spanType = "agent", attributes, parentSpanId } = {}) {
+    span(name, { spanType = "agent", attributes, parentSpanId, } = {}) {
         if (!SPAN_TYPES.has(spanType)) {
             throw new AgentRunError(`unknown span type ${spanType}`);
         }
@@ -174,3 +182,4 @@ export async function postRun(run, url, timeoutMs = 10000) {
     }
     return run;
 }
+//# sourceMappingURL=recorder.js.map

@@ -6,7 +6,9 @@ export class FixtureError extends Error {
     }
 }
 export class FixtureClient {
-    constructor({ endpoint, timeoutMs = 30000 } = {}) {
+    endpoint;
+    timeoutMs;
+    constructor({ endpoint, timeoutMs = 30000, } = {}) {
         this.endpoint = (endpoint || process.env[FIXTURE_ENDPOINT_ENV] || "").replace(/\/$/, "");
         this.timeoutMs = timeoutMs;
     }
@@ -41,3 +43,4 @@ export class FixtureClient {
         }
     }
 }
+//# sourceMappingURL=fixtures.js.map

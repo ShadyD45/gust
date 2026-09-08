@@ -21,22 +21,24 @@ export type EvalHandler = (request: SampleRequest) => RunRecorder | Record<strin
 export declare function applySampleId(run: RunRecorder | Record<string, unknown>, sampleId: string): RunRecorder | Record<string, unknown>;
 export declare function applyInvokeEnv(request: SampleRequest): string;
 export declare function sampleContext(): Record<string, string>;
-export declare function executionReceipt(opts?: {
+export declare function executionReceipt({ status, trace_id, run_id, run, error, }?: {
     status?: string;
     trace_id?: string;
     run_id?: string;
     run?: Record<string, unknown>;
     error?: string;
 }): Record<string, unknown>;
-export declare function runSample(handler: SampleHandler, opts?: {
+export declare function runSample(handler: SampleHandler, { input, output }?: {
     input?: Readable;
     output?: Writable;
 }): Promise<Record<string, unknown>>;
+/** Minimal eval entrypoint when world_control is existing (your mocks/DI). */
 export declare function runEval(handler: EvalHandler, opts?: {
     input?: Readable;
     output?: Writable;
 }): Promise<Record<string, unknown>>;
-export declare function serveSample(handler: SampleHandler, opts?: {
+export declare function serveSample(handler: SampleHandler, { host, port }?: {
     host?: string;
     port?: number;
 }): http.Server;
+//# sourceMappingURL=sample.d.ts.map
