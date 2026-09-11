@@ -21,6 +21,9 @@ func TestMutationBenchmarkTargetMetrics(t *testing.T) {
 		&evaluators.MaxLatencyEvaluator{},
 		&evaluators.ErrorRecoveryEvaluator{},
 		&evaluators.SchemaValidationEvaluator{},
+		&evaluators.AgentHandoffEvaluator{},
+		&evaluators.RoleAdherenceEvaluator{},
+		&evaluators.CoordinationOrderEvaluator{},
 	}
 
 	mutList := mutators.AllBuiltinMutators()

@@ -7,6 +7,16 @@ parent: Architecture
 
 Primary types live in `pkg/api`. JSON Schema contracts (wire/public shape) live under `spec/schemas/`. Go `Validate()` methods enforce semantic invariants beyond structural shape — keep both aligned for closed enums (assertion types, failure modes, etc.).
 
+## Schema compatibility
+
+`AgentRun.schema_version` is currently **`0.5`** (`api.SchemaVersion`). On the **0.x** line, Gust requires an **exact** match — unknown or older versions are rejected by `Validate()`.
+
+Planned policy for a future **1.x** line:
+
+- Readers accept the same major version (forward-compatible within the major).
+- Writers emit one canonical version.
+- A migrate helper may appear when the schema actually bumps; until then, treat `0.5` as the only supported wire version.
+
 `max_steps` counts top-level `tool` and `agent` spans only (not nested `llm` / `retrieval` sub-steps).
 
 ## AgentRun

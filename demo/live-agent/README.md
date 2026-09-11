@@ -62,7 +62,7 @@ JSON + `demo/out/live-agent-report.html` land in `demo/out/`.
 
 ## Prerequisites
 
-- Go 1.23+, Python 3.10+
+- Go 1.26+, Python 3.10+
 - Optional: [Ollama](https://ollama.com) with `llama3.2:3b`
 
 ## Integration path (live-eval)

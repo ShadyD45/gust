@@ -78,5 +78,17 @@ func casesMode3() []Case {
 			Fixtures:  orderedPollFixtures(), Mode3Calls: pollCalls, Mode3FailFirst: true,
 			Mode3Samples: 8, Mode3Concurrency: 4, WantMode3Passes: 8, WantAllFound: true,
 		},
+		{
+			ID: "mode3_stateful_counter_stress", Category: CatMode3, Kind: KindMode3,
+			Question:  "Do concurrent samples isolate stateful get→inc→get counters?",
+			Rationale: "N=100 concurrency=16; each sample must see 0 then 1 with no cross-sample leakage",
+			Fixtures: []api.Fixture{
+				{FixtureID: "fx_get_0", Tool: "get_counter", MatchStrategy: api.MatchStrategyOrderedSequence, RecordedResponse: api.RecordedResponse{Status: "success", Body: "0"}, Provenance: api.ProvenanceRecorded},
+				{FixtureID: "fx_inc", Tool: "increment", MatchStrategy: api.MatchStrategyOrderedSequence, RecordedResponse: api.RecordedResponse{Status: "success", Body: "ok"}, Provenance: api.ProvenanceRecorded},
+				{FixtureID: "fx_get_1", Tool: "get_counter", MatchStrategy: api.MatchStrategyOrderedSequence, RecordedResponse: api.RecordedResponse{Status: "success", Body: "1"}, Provenance: api.ProvenanceRecorded},
+			},
+			Mode3Calls: []ports.ToolCall{{Name: "get_counter"}, {Name: "increment"}, {Name: "get_counter"}},
+			Mode3Samples: 100, Mode3Concurrency: 16, WantMode3Passes: 100, WantAllFound: true,
+		},
 	}
 }

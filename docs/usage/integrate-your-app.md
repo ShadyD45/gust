@@ -238,7 +238,7 @@ For anything long-lived, keep assertions in a separate file so your production r
 ./gust analyze run.json --assertions tests/assertions.json
 ```
 
-That file is a plain JSON array of the same objects. The full catalogue of the nine assertion types and their fields is in the [assertion catalogue]({% link usage/modes-cookbook.md %}#assertion-catalogue).
+That file is a plain JSON array of the same objects. The full catalogue of built-in assertion types and their fields is in the [assertion catalogue]({% link usage/modes-cookbook.md %}#assertion-catalogue).
 
 ## Step 3: Gate it
 

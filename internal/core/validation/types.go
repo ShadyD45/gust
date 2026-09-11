@@ -120,7 +120,7 @@ type CatStats struct {
 }
 
 // SuiteVersion bumps when case semantics change in a breaking way.
-const SuiteVersion = "1.2.0"
+const SuiteVersion = "1.3.0"
 
 // MinPassRate is the gate for publishing trust: every case must pass.
 const MinPassRate = 1.0

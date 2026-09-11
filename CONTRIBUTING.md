@@ -8,9 +8,11 @@ Thanks for considering a contribution. gust is test infrastructure — people wi
 git clone https://github.com/your-org/gust && cd gust
 go test ./...
 go build -o gust ./cmd/gust
-go build -o gust-aee ./cmd/gust-aee   # internal self-benchmarks (not for end users)
+go build -o gust-aee ./cmd/gust-aee   # internal self-benchmarks (not for end users; not in GitHub Releases)
 ./demo/run.sh            # Linux/macOS; ./demo/run.ps1 on Windows
 ```
+
+Tagged releases publish **only** the `gust` binary (see `.goreleaser.yaml` and `.github/workflows/release.yml`).
 
 Self-benchmark checks (maintainers/CI) — golden-suite / validation-catalog regression, not a field proof of Gust on arbitrary agents:
 
@@ -19,7 +21,7 @@ Self-benchmark checks (maintainers/CI) — golden-suite / validation-catalog reg
 ./gust-aee validate
 ```
 
-Requirements: Go 1.23+ (the module targets a newer toolchain; `go.mod` is authoritative). Ollama is optional and only needed for live Mode 3 runs — the `synthetic` runner covers everything else.
+Requirements: Go 1.26+ (`go.mod` is authoritative). Ollama is optional and only needed for live Mode 3 runs — the `synthetic` runner covers everything else.
 
 If `go test ./...` and the demo both pass on a fresh clone, your environment is ready.
 
@@ -36,7 +38,7 @@ These are not style preferences. A change that violates one will be asked to cha
 
 ## What to work on
 
-- **Roadmap and phase plans** live in [`.cursor/plans/`](.cursor/plans/) (maintainers / internal). Public product docs are under [`docs/`](docs/) and publish to GitHub Pages.
+- **Roadmap** is tracked in GitHub issues [#1](https://github.com/ShadyD45/gust/issues/1)–[#5](https://github.com/ShadyD45/gust/issues/5) (stats v2, continuous eval, clustering, multi-agent, releases). Public product docs are under [`docs/`](docs/) and publish to GitHub Pages.
 - **Good first contributions**: a new deterministic evaluator, a new mutation class, framework adapters or SDK improvements, docs that close a gap you hit while adopting gust.
 - **Discuss first**: anything touching the wire protocol, schema versions, verdict semantics, or the statistics engine. Open an issue before writing code — those changes ripple.
 

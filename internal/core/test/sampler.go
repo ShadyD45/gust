@@ -166,9 +166,14 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 			}
 		}
 
-		run, err := runWithRetry(ctx, cfg.Runner, req, retry, reset)
+		run, attempts, err := runWithRetry(ctx, cfg.Runner, req, retry, reset)
 		if err != nil {
-			results[idx].sample = classifyRunnerError(evaluationID, cfg.Scenario.ID, req, err)
+			sample := classifyRunnerError(evaluationID, cfg.Scenario.ID, req, err)
+			sample.Attempts = attempts
+			if attempts > 0 {
+				sample.RetryCount = attempts - 1
+			}
+			results[idx].sample = sample
 			return
 		}
 		if !isolate && sampleProvider != nil {
@@ -186,6 +191,8 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 				Status:          api.SampleStatusInfraError,
 				FailureCategory: api.FailureEvaluator,
 				Message:         err.Error(),
+				Attempts:        attempts,
+				RetryCount:      max(0, attempts-1),
 			}
 			return
 		}
@@ -211,6 +218,8 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 			TraceID:      req.TraceID,
 			RunID:        run.RunID,
 			Passed:       report.Passed,
+			Attempts:     attempts,
+			RetryCount:   max(0, attempts-1),
 			Evaluations:  evals,
 		}
 		if ledger, ok := sampleProvider.(CallLedgerProvider); ok {
@@ -325,7 +334,7 @@ func (s *Sampler) RunScenario(ctx context.Context, cfg SamplingConfig) (*api.Rel
 	}, nil
 }
 
-func runWithRetry(ctx context.Context, runner ports.TestRunner, req ports.SampleRequest, retry api.RetryPolicy, reset func()) (api.AgentRun, error) {
+func runWithRetry(ctx context.Context, runner ports.TestRunner, req ports.SampleRequest, retry api.RetryPolicy, reset func()) (api.AgentRun, int, error) {
 	var lastErr error
 	for attempt := 1; attempt <= retry.MaxAttempts; attempt++ {
 		if attempt > 1 && reset != nil {
@@ -340,19 +349,19 @@ func runWithRetry(ctx context.Context, runner ports.TestRunner, req ports.Sample
 		}
 		run, err := runner.Run(ctx, req)
 		if err == nil {
-			return run, nil
+			return run, attempt, nil
 		}
 		lastErr = err
 		if attempt == retry.MaxAttempts || !ports.IsRetryable(err, retry.On) {
-			return api.AgentRun{}, err
+			return api.AgentRun{}, attempt, err
 		}
 		select {
 		case <-ctx.Done():
-			return api.AgentRun{}, ctx.Err()
+			return api.AgentRun{}, attempt, ctx.Err()
 		case <-time.After(time.Duration(retry.BackoffMs) * time.Millisecond):
 		}
 	}
-	return api.AgentRun{}, lastErr
+	return api.AgentRun{}, retry.MaxAttempts, lastErr
 }
 
 func classifyRunnerError(evaluationID, scenarioID string, req ports.SampleRequest, err error) api.SampleResult {

@@ -55,6 +55,7 @@ How to wire the job: [CI integration]({% link usage/ci-github-actions.md %}). Ho
 | [Live-agent demo]({% link usage/live-agent-demo.md %}) | Worked Mode 3 example: fixtures, recovery, forbidden tool, recorded N=20 results |
 | [Modes cookbook]({% link usage/modes-cookbook.md %}) | Recipes per mode, all assertion types, fixtures, and policies |
 | [Tuning the gate]({% link usage/tuning.md %}) | Policy, criticality, hard-constraint counts, retry, `gust.yaml`, and CLI knobs |
+| [Privacy and redaction]({% link usage/privacy-and-redaction.md %}) | Gust does not auto-redact; `gust scenario propose` redacts by default |
 | [Scenario examples]({% link usage/examples.md %}) | Retail cancel, RAG, SRE incident, PR review, clinic booking, warehouse SQL |
 | [OTel ingestion]({% link usage/otel-ingest.md %}) | Point an existing OTLP exporter at gust, or pull a Langfuse trace |
 | [CI integration]({% link usage/ci-github-actions.md %}) | gust on the CI runner; agent in the job or QA; exit codes |
@@ -73,11 +74,12 @@ Custom evaluators, runners, and cross-language plugins: [Extending]({% link exte
 ## Install
 
 ```bash
-git clone https://github.com/your-org/gust && cd gust
+git clone https://github.com/ShadyD45/gust && cd gust
 go build -o gust ./cmd/gust
+# or: go install ./cmd/gust
 ```
 
-The result is a single static binary with no runtime dependencies. Drop it on a CI runner. Analyze and Replay need no network. Test mode talks only to a **dev/QA** (or in-job) agent — never to production.
+The result is a single static binary with no runtime dependencies. Drop it on a CI runner. Analyze and Replay need no network. Test mode talks only to a **dev/QA** (or in-job) agent — never to production. Do not use `gust-aee` for product installs.
 
 ## The 60-second version
 

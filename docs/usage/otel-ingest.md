@@ -30,7 +30,7 @@ rec.complete(output="done")
 rec.export()  # AGENTEVAL_INGEST_URL or http://127.0.0.1:4318/v1/runs
 ```
 
-Canonical topology and schedule diagrams: [Execution topologies]({% link architecture/execution-topologies.md %}). Component model: [How Gust works]({% link architecture/how-gust-works.md %}).
+Canonical topology and schedule diagrams: [Execution topologies]({% link architecture/execution-topologies.md %}). Component model: [How Gust works]({% link architecture/how-gust-works.md %}). Traces may contain PII — see [Privacy and redaction]({% link usage/privacy-and-redaction.md %}).
 
 ## Mode 3 — CI starts the listener
 

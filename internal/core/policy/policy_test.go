@@ -147,6 +147,23 @@ func TestRegressionSignificant(t *testing.T) {
 	}
 }
 
+// Drop exceeds max_pass_rate_drop but is not statistically significant → no regression.
+func TestRegressionDropAboveThresholdNotSignificant(t *testing.T) {
+	base := ExperimentStats{Name: "base", Passes: 10, Samples: 20, PassRate: 0.50}
+	cand := ExperimentStats{Name: "cand", Passes: 8, Samples: 20, PassRate: 0.40} // 10pp drop
+	pol := api.PolicyRegression{MaxPassRateDrop: 0.05, MaxLatencyIncreaseRatio: 0.15}
+	r := CompareRegression(base, cand, pol)
+	if r.PassRateDrop <= pol.MaxPassRateDrop {
+		t.Fatalf("expected drop > threshold, got %.4f", r.PassRateDrop)
+	}
+	if r.Regressed {
+		t.Fatalf("insignificant drop must not regress: significant=%v p=%.4f", r.Significant, r.PValue)
+	}
+	if r.BaselineSamples != 20 || r.CandidateSamples != 20 {
+		t.Fatalf("expected baseline/candidate sample counts in result: %+v", r)
+	}
+}
+
 func TestRegressionZeroBaselineLatency(t *testing.T) {
 	base := ExperimentStats{Name: "base", Passes: 95, Samples: 100, PassRate: 0.95, LatencyNs: 0}
 	cand := ExperimentStats{Name: "cand", Passes: 95, Samples: 100, PassRate: 0.95, LatencyNs: 1e9}

@@ -92,8 +92,39 @@ func BuildGoldenSuite() []GoldenCase {
 		{ID: "b5", Type: api.AssertForbiddenToolCall, Tool: "forbidden_admin_access"},
 	}
 
+	run3 := api.AgentRun{
+		SchemaVersion: api.SchemaVersion,
+		RunID:         "golden_multi_agent",
+		Agent:         api.AgentInfo{Name: "orchestrator", Version: "1.0"},
+		Task:          api.TaskInfo{ID: "t3", Input: "plan then execute"},
+		Trace: []api.Span{
+			{
+				SpanID: "ma1", Name: "planner", Type: api.SpanTypeAgent,
+				StartTime: now, EndTime: now.Add(5 * time.Millisecond),
+				Attributes: map[string]any{"role": "planner"},
+				Status:     api.SpanStatus{Code: "ok"},
+			},
+			{
+				SpanID: "ma2", Name: "executor", Type: api.SpanTypeAgent,
+				StartTime: now.Add(10 * time.Millisecond), EndTime: now.Add(20 * time.Millisecond),
+				Attributes: map[string]any{"role": "executor"},
+				Status:     api.SpanStatus{Code: "ok"},
+			},
+		},
+		Outcome: api.RunOutcome{Status: "completed", Output: "done"},
+	}
+	assertions3 := []api.Assertion{
+		{ID: "c1", Type: api.AssertTaskSuccess, Parameters: map[string]any{"expected_output": "done"}},
+		{ID: "c2", Type: api.AssertAgentHandoff, Parameters: map[string]any{"from": "planner", "to": "executor"}},
+		{ID: "c3", Type: api.AssertRoleAdherence, Parameters: map[string]any{"role": "planner"}},
+		{ID: "c4", Type: api.AssertCoordinationOrder, Parameters: map[string]any{"sequence": []any{"planner", "executor"}}},
+		{ID: "c5", Type: api.AssertForbiddenToolCall, Tool: "forbidden_admin_access"},
+		{ID: "c6", Type: api.AssertMaxSteps, Limit: 2},
+	}
+
 	return []GoldenCase{
 		{Run: run1, Assertions: assertions1},
 		{Run: run2, Assertions: assertions2},
+		{Run: run3, Assertions: assertions3},
 	}
 }

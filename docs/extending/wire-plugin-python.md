@@ -284,5 +284,5 @@ rl.on("line", (line) => {
 });
 ```
 
-A packaged TypeScript SDK and framework adapters (LangChain first) are planned; the protocol above is stable and usable today.
+A packaged [TypeScript SDK](https://github.com/ShadyD45/gust/tree/main/sdk/typescript) ships today (recorder + Mode 3 harness + wire plugin). A Python LangChain adapter lives under `sdk/python` and `demo/frameworks/langchain/`. A TypeScript LangChain adapter is not packaged yet; the wire protocol above is stable either way.
 

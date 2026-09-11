@@ -31,6 +31,7 @@ func NewRoot() *cobra.Command {
 	root := &cobra.Command{
 		Use:           "gust",
 		Short:         "Test infrastructure for autonomous agents",
+		Version:       Version(),
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -42,6 +43,7 @@ func NewRoot() *cobra.Command {
 			return nil
 		},
 	}
+	root.SetVersionTemplate(fmt.Sprintf("gust {{.Version}} (commit=%s date=%s)\n", commit, date))
 	root.AddCommand(
 		newInitCmd(),
 		newAnalyzeCmd(),
@@ -49,7 +51,9 @@ func NewRoot() *cobra.Command {
 		newTestCmd(),
 		newMutateCmd(),
 		newCompareCmd(),
+		newRecommendSamplesCmd(),
 		newScenarioCmd(),
+		newClusterCmd(),
 		newIngestCmd(),
 		newJudgeCmd(),
 		newDatasetCmd(),

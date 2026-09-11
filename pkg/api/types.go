@@ -8,6 +8,9 @@ import (
 )
 
 // SchemaVersion defines the current specification version.
+// Compatibility policy (0.x): readers and writers require an exact match.
+// A future 1.x line will accept same-major versions; writers emit one canonical version.
+// See docs/architecture/data-model.md.
 const SchemaVersion = "0.5"
 
 // Common errors
@@ -219,6 +222,9 @@ const (
 	AssertErrorRecovery     AssertionType = "error_recovery"
 	AssertLLMJudge          AssertionType = "llm_judge"
 	AssertJudgePanel        AssertionType = "judge_panel"
+	AssertAgentHandoff      AssertionType = "agent_handoff"
+	AssertRoleAdherence     AssertionType = "role_adherence"
+	AssertCoordinationOrder AssertionType = "coordination_order"
 )
 
 type ReliabilityConfig struct {
@@ -233,6 +239,7 @@ type TestScenarioProvenance struct {
 	SourceRunID string    `json:"source_run_id,omitempty" yaml:"source_run_id,omitempty"`
 	ExtractedAt time.Time `json:"extracted_at" yaml:"extracted_at"`
 	ReviewedBy  string    `json:"reviewed_by" yaml:"reviewed_by"`
+	ClusterID   string    `json:"cluster_id,omitempty" yaml:"cluster_id,omitempty"`
 }
 
 // Policy defines CI and evaluation acceptance gates.

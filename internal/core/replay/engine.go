@@ -9,7 +9,8 @@ import (
 	"gust/pkg/api"
 )
 
-// ReplayEngine re-executes agent trajectories deterministically against recorded fixtures.
+// ReplayEngine reconstructs a recorded agent trajectory against deterministic fixtures.
+// It does not invoke the LLM or make the agent choose tools again — use Test mode for that.
 type ReplayEngine struct {
 	fixtures ports.FixtureProvider
 }

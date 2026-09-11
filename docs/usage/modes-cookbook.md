@@ -54,6 +54,9 @@ Built-in assertion types, the evaluator each one resolves to, and the fields tha
 | `schema_valid` | `schema_validation` | `parameters.schema` (JSON Schema for `outcome.output`) | Output must be JSON matching the declared schema; if no schema is given, only the AgentRun envelope is checked (explicitly reported) |
 | `llm_judge` | `llm_judge` | `parameters.rubric`, optional threshold; requires `allow_llm_judge` | Soft, opt-in judge signal until calibrated |
 | `judge_panel` | `judge_panel` | `parameters.judges`, `aggregation`, optional `threshold` / `rubric` | Aggregated votes from named judge evaluators; see [LLM judge]({% link usage/llm-judge.md %}) |
+| `agent_handoff` | `agent_handoff` | `parameters.from`, `parameters.to` | An `agent` span named `from` appears before one named `to` (uses `attributes.role` / `agent.name` when set) |
+| `role_adherence` | `role_adherence` | `parameters.role` or `tool` | The named role/agent participates in the trace |
+| `coordination_order` | `coordination_order` | `parameters.sequence: [names]`, optional `parameters.match` (`subsequence` default, or `exact`) | Agent names satisfy the expected order |
 
 `criticality: hard` (the default except for judges) fails the **sample** and moves the Wilson pass rate. `criticality: soft` is evidence and score only.
 

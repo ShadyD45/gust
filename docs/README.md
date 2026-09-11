@@ -4,7 +4,7 @@ This directory is the source for the **gust** documentation site, built with [Ju
 
 - **Live site:** https://shadyd45.github.io/gust/
 - **Public sections:** Usage, Benchmarks, Extending, Architecture
-- **Not published:** engineering phase plans live under `.cursor/plans/` (internal)
+- **Roadmap:** GitHub issues [#1](https://github.com/ShadyD45/gust/issues/1)–[#5](https://github.com/ShadyD45/gust/issues/5) (maintainers track implementation there)
 
 ## Preview locally
 

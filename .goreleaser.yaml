@@ -1,0 +1,67 @@
+# Goreleaser config — publishes the end-user `gust` CLI only.
+# `gust-aee` is maintainer/CI-only and must never appear in release assets.
+version: 2
+
+project_name: gust
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: gust
+    main: ./cmd/gust
+    binary: gust
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w -X gust/internal/cli.version={{.Version}} -X gust/internal/cli.commit={{.ShortCommit}} -X gust/internal/cli.date={{.Date}}
+
+archives:
+  - id: gust
+    builds: [gust]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE*
+      - README.md
+      - CHANGELOG.md
+
+checksum:
+  name_template: SHA256SUMS
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  github:
+    owner: ShadyD45
+    name: gust
+  draft: false
+  prerelease: auto
+  name_template: "gust {{.Version}}"

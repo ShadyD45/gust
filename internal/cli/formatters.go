@@ -48,20 +48,20 @@ func PrintReliabilityTerminal(res *api.ReliabilityResult) {
 	if res.EvaluationID != "" {
 		fmt.Printf("  evaluation: %s\n", res.EvaluationID)
 	}
-	fmt.Printf("  %d/%d passed of %d completed  (observed pass rate: %.1f%%)\n",
-		res.Passes, completed, completed, res.ObservedPassRate*100)
-	fmt.Printf("  requested samples: %d\n", requested)
-	fmt.Printf("  95%% confidence interval: [%.1f%%, %.1f%%]\n",
-		res.ConfidenceInterval[0]*100, res.ConfidenceInterval[1]*100)
 	infra := res.InfrastructureErrors
 	if infra == 0 {
 		infra = res.ExecutionErrors
 	}
+	fmt.Printf("  samples requested: %d\n", requested)
+	fmt.Printf("  agent passes: %d\n", res.Passes)
+	fmt.Printf("  agent failures: %d\n", res.BehavioralFailures)
+	fmt.Printf("  execution errors: %d\n", infra)
+	fmt.Printf("  observed reliability: %d/%d = %.1f%%\n",
+		res.Passes, completed, res.ObservedPassRate*100)
+	fmt.Printf("  95%% confidence interval: [%.1f%%, %.1f%%]\n",
+		res.ConfidenceInterval[0]*100, res.ConfidenceInterval[1]*100)
 	if infra > 0 {
-		fmt.Printf("  infrastructure errors excluded from Wilson: %d/%d\n", infra, requested)
-	}
-	if res.BehavioralFailures > 0 {
-		fmt.Printf("  behavioral failures: %d\n", res.BehavioralFailures)
+		fmt.Printf("  note: execution errors are excluded from the Wilson denominator\n")
 	}
 
 	switch res.Verdict {
@@ -104,12 +104,26 @@ func PrintRegressionTerminal(reg *policy.RegressionResult) {
 		status = "REGRESSION"
 	}
 	fmt.Printf("Compare → %s\n", status)
+	if reg.BaselineSamples > 0 || reg.CandidateSamples > 0 {
+		fmt.Printf("  Baseline:  %d/%d = %.1f%%\n",
+			reg.BaselinePasses, reg.BaselineSamples, reg.BaselinePassRate*100)
+		fmt.Printf("  Candidate: %d/%d = %.1f%%\n",
+			reg.CandidatePasses, reg.CandidateSamples, reg.CandidatePassRate*100)
+		fmt.Printf("  Delta:     %+.1f pp (policy max_drop=%.1f pp)\n",
+			-reg.PassRateDrop*100, reg.MaxPassRateDrop*100)
+	}
 	lat := "n/a"
 	if reg.LatencyIncreaseRatio != nil {
 		lat = fmt.Sprintf("%.4f", *reg.LatencyIncreaseRatio)
 	}
-	fmt.Printf("  pass_rate_drop=%.4f  latency_increase_ratio=%s  p=%.4f significant=%v\n",
-		reg.PassRateDrop, lat, reg.PValue, reg.Significant)
+	fmt.Printf("  Significance: p=%.4f significant=%v\n", reg.PValue, reg.Significant)
+	fmt.Printf("  Effect size:  Cohen's d=%.3f (%s)\n", reg.CohensD, reg.EffectSize)
+	if reg.BootstrapReplicates > 0 {
+		fmt.Printf("  Bootstrap Δ CI [%d reps]: [%.4f, %.4f]\n",
+			reg.BootstrapReplicates, reg.BootstrapDiffLower, reg.BootstrapDiffUpper)
+	}
+	fmt.Printf("  Latency increase ratio: %s\n", lat)
+	fmt.Printf("  Verdict: %s\n", status)
 	fmt.Printf("  %s\n", reg.Message)
 }
 

@@ -80,6 +80,8 @@ type SampleResult struct {
 	FailureCategory  FailureCategory       `json:"failure_category,omitempty"`
 	Message          string                `json:"message,omitempty"`
 	Passed           bool                  `json:"passed"`
+	Attempts         int                   `json:"attempts,omitempty"`    // total runner tries including the first
+	RetryCount       int                   `json:"retry_count,omitempty"` // Attempts - 1 when Attempts > 0
 	Evaluations      []EvaluationResult    `json:"evaluations,omitempty"`
 	FixtureCalls     []FixtureCallEvidence `json:"fixture_calls,omitempty"`
 }

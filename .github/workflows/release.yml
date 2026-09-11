@@ -1,0 +1,37 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Smoke-build gust only
+        run: |
+          go build -o /tmp/gust ./cmd/gust
+          /tmp/gust --help >/dev/null
+          # Guardrail: gust-aee must not be a release artifact path
+          test -d cmd/gust-aee
+          ! grep -R "cmd/gust-aee" .goreleaser.yaml
+
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

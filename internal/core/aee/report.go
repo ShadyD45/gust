@@ -47,6 +47,9 @@ type Report struct {
 		AllCorrect bool   `json:"all_correct"`
 	} `json:"h7"`
 
+	// Hardening holds issue #4 extras (informational; not part of the composite gate).
+	Hardening *HardeningExtras `json:"hardening,omitempty"`
+
 	// Score is a simple documented composite in [0,1].
 	Score  float64  `json:"aee_score"`
 	Passed bool     `json:"passed"`
@@ -75,6 +78,9 @@ func Run(ctx context.Context) (*Report, error) {
 		return nil, err
 	}
 	measureH7(rep)
+	if err := rep.attachHardening(ctx, mutReport.ClassBreakdown); err != nil {
+		return nil, err
+	}
 
 	rep.Score = compositeScore(rep)
 	rep.Passed = rep.DetectionRate >= MinDetectionRate &&
@@ -107,10 +113,12 @@ func deterministicEvaluators() []ports.Evaluator {
 	all := evaluators.AllBuiltinEvaluators()
 	out := make([]ports.Evaluator, 0, len(all))
 	for _, e := range all {
-		if e.Name() == "llm_judge" {
+		switch e.Name() {
+		case "llm_judge", "judge_panel":
 			continue
+		default:
+			out = append(out, e)
 		}
-		out = append(out, e)
 	}
 	return out
 }

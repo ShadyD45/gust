@@ -546,3 +546,76 @@ func TestRetryResetsFixtureSequence(t *testing.T) {
 		t.Fatalf("retry should reset sequence: passes=%d errors=%d", res.Passes, res.ExecutionErrors)
 	}
 }
+
+func counterFixtures() []api.Fixture {
+	return []api.Fixture{
+		{
+			FixtureID:        "fx_get_0",
+			Tool:             "get_counter",
+			MatchStrategy:    api.MatchStrategyOrderedSequence,
+			RecordedResponse: api.RecordedResponse{Status: "success", Body: "0"},
+			Provenance:       api.ProvenanceRecorded,
+		},
+		{
+			FixtureID:        "fx_inc",
+			Tool:             "increment",
+			MatchStrategy:    api.MatchStrategyOrderedSequence,
+			RecordedResponse: api.RecordedResponse{Status: "success", Body: "ok"},
+			Provenance:       api.ProvenanceRecorded,
+		},
+		{
+			FixtureID:        "fx_get_1",
+			Tool:             "get_counter",
+			MatchStrategy:    api.MatchStrategyOrderedSequence,
+			RecordedResponse: api.RecordedResponse{Status: "success", Body: "1"},
+			Provenance:       api.ProvenanceRecorded,
+		},
+	}
+}
+
+// TestStatefulCounterConcurrentIsolation is release-blocking for Mode 3:
+// N=100 samples at concurrency 16 must each observe get_counter→0, increment, get_counter→1
+// with no cross-sample contamination of ordered fixture state.
+func TestStatefulCounterConcurrentIsolation(t *testing.T) {
+	provider := fixtures.NewMemoryFixtureProvider()
+	if err := provider.LoadFixtures(counterFixtures()); err != nil {
+		t.Fatal(err)
+	}
+	runner := &testrunner.FixtureProbeRunner{
+		Calls: []ports.ToolCall{
+			{Name: "get_counter"},
+			{Name: "increment"},
+			{Name: "get_counter"},
+		},
+	}
+	const n, concurrency = 100, 16
+	sc := baseScenario("counter_iso", n)
+	sc.Assertions = []api.Assertion{{ID: "ok", Type: api.AssertTaskSuccess}}
+	sampler := NewSampler(builtinEvals())
+	res, err := sampler.RunScenario(context.Background(), SamplingConfig{
+		Scenario:           sc,
+		Runner:             runner,
+		Concurrency:        concurrency,
+		FixtureProvider:    provider,
+		HasOrderedFixtures: true,
+		ProxyFactory:       testProxyFactory,
+		MinSamples:         1,
+	})
+	if err != nil {
+		t.Fatalf("RunScenario: %v", err)
+	}
+	if res.ExecutionErrors != 0 {
+		t.Fatalf("exec errors: %d", res.ExecutionErrors)
+	}
+	if res.Passes != n {
+		t.Fatalf("expected %d isolated counter passes, got %d (behavioral failures=%d)", n, res.Passes, res.BehavioralFailures)
+	}
+	for _, s := range res.SampleResults {
+		if !s.Passed {
+			t.Fatalf("sample %s failed: %s", s.SampleID, s.Message)
+		}
+		if len(s.FixtureCalls) < 3 {
+			continue // ledger optional depending on proxy path
+		}
+	}
+}

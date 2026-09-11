@@ -307,7 +307,36 @@ func (m *ChangeFinalOutputMutator) Mutate(ctx context.Context, run api.AgentRun)
 	}, nil
 }
 
-// AllBuiltinMutators returns the complete list of 9 MVP mutator instances.
+// 10. SwapAgentOrderMutator — breaks multi-agent coordination order.
+type SwapAgentOrderMutator struct{}
+
+func (m *SwapAgentOrderMutator) Name() string { return "swap_agent_order" }
+func (m *SwapAgentOrderMutator) Class() ports.MutationClass {
+	return ports.MutClassWrongTool // reuse class bucket; name is authoritative in breakdown
+}
+func (m *SwapAgentOrderMutator) Mutate(ctx context.Context, run api.AgentRun) (api.MutationOutcome, error) {
+	cloned := cloneRun(run)
+	idxs := make([]int, 0)
+	for i, sp := range cloned.Trace {
+		if sp.Type == api.SpanTypeAgent {
+			idxs = append(idxs, i)
+		}
+	}
+	if len(idxs) < 2 {
+		return api.MutationOutcome{
+			Status: api.MutationSkipped, Class: string(m.Class()), OriginalRun: run,
+			SkipReason: "need at least two agent spans",
+		}, nil
+	}
+	i, j := idxs[0], idxs[1]
+	cloned.Trace[i], cloned.Trace[j] = cloned.Trace[j], cloned.Trace[i]
+	return api.MutationOutcome{
+		Status: api.MutationApplied, Class: string(m.Class()), OriginalRun: run, MutatedRun: cloned,
+		Description: "swapped first two agent spans",
+	}, nil
+}
+
+// AllBuiltinMutators returns the complete list of mutator instances.
 func AllBuiltinMutators() []ports.Mutator {
 	return []ports.Mutator{
 		&RemoveRequiredToolMutator{},
@@ -319,5 +348,6 @@ func AllBuiltinMutators() []ports.Mutator {
 		&ExcessiveToolCallsMutator{},
 		&IntroduceForbiddenToolMutator{},
 		&ChangeFinalOutputMutator{},
+		&SwapAgentOrderMutator{},
 	}
 }

@@ -8,7 +8,10 @@ math: true
 
 ## Wilson score interval
 
-Given *n* independent trials and *k* passes, with normal quantile *z* (95% → 1.95996):
+Given *n* approximately independent Bernoulli trials and *k* passes, with normal quantile *z* (95% → 1.95996):
+
+{: .note }
+Gust does not guarantee statistical independence between Mode 3 samples. Independence is an assumption of the reliability estimate and depends on the runner, model provider, environment, shared caches/rate limits, and fixture isolation. Concurrent samples (default concurrency 4) can be correlated in practice.
 
 $$
 p_{center} = \frac{k + z^2/2}{n + z^2},\quad
@@ -81,7 +84,27 @@ Default is two attempts with 50ms backoff. An agent process that exits with a ge
 
 ## Regression comparator
 
-Baseline vs candidate compares pass-rate drop and latency increase against policy caps. Tiny stochastic differences must not fail CI: require a statistically meaningful drop (e.g. two-proportion z-test or non-overlapping Wilson intervals) in addition to exceeding `max_pass_rate_drop`.
+`gust compare` runs a pooled two-proportion z-test on baseline vs candidate pass counts. A pass-rate drop fails CI only when **both**:
+
+1. The absolute drop exceeds `policy.regression.max_pass_rate_drop` (default 0.02), and
+2. The difference is statistically significant at *p* &lt; 0.05.
+
+Latency increases are gated separately by `max_latency_increase_ratio` when baseline latency is set. Tiny stochastic differences that exceed the drop cap but are not significant do **not** fail CI.
+
+### Stats v2 diagnostics (magnitude)
+
+Alongside the z-test gate, compare reports:
+
+- **Cohen's d** for two proportions (pooled Bernoulli SD) and a negligible/small/medium/large label
+- A **seedable bootstrap CI** on the pass-rate difference (`--bootstrap`, `--seed`)
+
+These do **not** replace Wilson for single-scenario Mode 3 verdicts. Wilson remains the default fast path for PASS/FAIL/FLAKY.
+
+### Sample-size recommendations
+
+`gust recommend-samples --min-pass-rate 0.95 --confidence 0.95 --expected-rate 1.0` returns the smallest *N* such that a perfect (or expected-rate) run can attain Wilson PASS — avoiding unattainable policies like N=20 at a 95% floor.
+
+Terminal output reports baseline/candidate rates, delta, p-value, significance, effect size, bootstrap Δ CI, policy threshold, and verdict.
 
 ## Exit codes
 

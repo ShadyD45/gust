@@ -18,6 +18,7 @@ How gust is structured and why. Read in this order:
 | [Execution modes]({% link architecture/execution-modes.md %}) | Analyze / Replay / Test, testing pyramid, and data flow |
 | [Hexagonal design]({% link architecture/hexagonal-design.md %}) | Ports, adapters, package map |
 | [Data model]({% link architecture/data-model.md %}) | Core types and content addressing |
+| [Invariants]({% link architecture/invariants.md %}) | Hard contracts: evidence vs tests, modes, fixture isolation |
 | [Statistics and policy]({% link architecture/statistics-and-policy.md %}) | Wilson intervals, verdicts, CI gating |
 | [Extension points]({% link architecture/extension-points.md %}) | Registry, plugins, adding components |
 

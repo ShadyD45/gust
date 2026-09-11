@@ -9,10 +9,21 @@ Goal: gate your agent’s **behavior** (tools, order, safety, success) in under 
 
 ## 1. Install the CLI
 
+**End users install `gust` only.** The `gust-aee` binary is for maintainers/CI self-benchmarks and is not an end-user install.
+
+Requires **Go 1.26+**.
+
 ```bash
 git clone https://github.com/ShadyD45/gust && cd gust
 go build -o gust ./cmd/gust
 # Windows: go build -o gust.exe ./cmd/gust
+# or: go install ./cmd/gust
+```
+
+Optional maintainer binary (CI/self-benchmark only, not for product installs):
+
+```bash
+go build -o gust-aee ./cmd/gust-aee
 ```
 
 Optional SDKs (record traces / Mode 3 hooks):

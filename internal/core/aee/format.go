@@ -2,6 +2,7 @@ package aee
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 )
@@ -48,6 +49,35 @@ func formatMarkdown(rep *Report, footer string) string {
 		h7 = "misclassified"
 	}
 	fmt.Fprintf(&b, "| Overall | **%s** |\n", h7)
+
+	if rep.Hardening != nil {
+		b.WriteString("\n### Hardening extras (informational)\n\n")
+		fmt.Fprintf(&b, "- Regression noise test: **%v**\n", rep.Hardening.RegressionNoiseOK)
+		fmt.Fprintf(&b, "- Replay identity (byte-stable): **%v**\n", rep.Hardening.ReplayIdentityOK)
+		if len(rep.Hardening.AnalyzeLatency) > 0 {
+			b.WriteString("\nAnalyze latency by trace size:\n\n")
+			b.WriteString("| Spans | p50 | p95 |\n| --- | --- | --- |\n")
+			for _, row := range rep.Hardening.AnalyzeLatency {
+				fmt.Fprintf(&b, "| %d | %s | %s |\n", row.Spans, formatNs(row.P50Ns), formatNs(row.P95Ns))
+			}
+		}
+		if len(rep.Hardening.MutatorBreakdown) > 0 {
+			b.WriteString("\nPer-mutator detection (catalog size, not field FNR):\n\n")
+			b.WriteString("| Mutator | Detected/Applied | Rate |\n| --- | --- | --- |\n")
+			names := make([]string, 0, len(rep.Hardening.MutatorBreakdown))
+			for k := range rep.Hardening.MutatorBreakdown {
+				names = append(names, k)
+			}
+			sort.Strings(names)
+			for _, k := range names {
+				v := rep.Hardening.MutatorBreakdown[k]
+				fmt.Fprintf(&b, "| `%s` | %d/%d | %.0f%% |\n", k, v.Detected, v.Applied, v.Rate*100)
+			}
+		}
+		if rep.Hardening.JudgeSpearmanNote != "" {
+			fmt.Fprintf(&b, "\n_%s_\n", rep.Hardening.JudgeSpearmanNote)
+		}
+	}
 
 	if len(rep.Notes) > 0 {
 		b.WriteString("\n### Notes\n\n")
@@ -117,4 +147,17 @@ func FormatThroughput(cps float64) string {
 	default:
 		return fmt.Sprintf("%.0f", cps)
 	}
+}
+
+func formatNs(ns int64) string {
+	if ns < 1_000 {
+		return fmt.Sprintf("%dns", ns)
+	}
+	if ns < 1_000_000 {
+		return fmt.Sprintf("%.1fµs", float64(ns)/1e3)
+	}
+	if ns < 1_000_000_000 {
+		return fmt.Sprintf("%.1fms", float64(ns)/1e6)
+	}
+	return fmt.Sprintf("%.2fs", float64(ns)/1e9)
 }

@@ -107,8 +107,9 @@ gust reads a JSON document describing what your agent did, so integration is a r
 | Guide                                                  | What it covers                                                                                                                                 |
 | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Integrate your app](docs/usage/integrate-your-app.md) | Emit an `AgentRun` from Python, TypeScript, or Go and run your first gate                                                                      |
-| [Modes cookbook](docs/usage/modes-cookbook.md)         | Every command, all nine assertion types, fixtures, failure injection, policies                                                                 |
+| [Modes cookbook](docs/usage/modes-cookbook.md)         | Every command, built-in assertions (tools, safety, latency, schema, recovery, judges), fixtures, failure injection, policies                    |
 | [OTel ingestion](docs/usage/otel-ingest.md)            | Point an existing OTLP exporter at gust (HTTP/gRPC), or pull a Langfuse trace                                                                  |
+| [Privacy and redaction](docs/usage/privacy-and-redaction.md) | Gust does not auto-redact; scrub before commit/CI                                                                                         |
 | [CI integration](docs/usage/ci-github-actions.md)      | Exit codes; gust on the runner, agent in the job or QA — not production                                                                        |
 | [AEE methodology](docs/usage/aee-methodology.md)       | How the self-benchmark is measured (golden suite / deterministic evaluators, not live agents) |
 | [Benchmarks (site)](docs/benchmarks/)                  | Metrics explained, latest numbers, more proof                                                                                                  |
@@ -160,7 +161,9 @@ benchmarks/               AEE + Validation Suite reports (updated locally as nee
 
 MVP Phases 1–9 complete (library, Mode 3, policy, scenario extraction, CLI, demo, CI).
 
-Phase 10–12, 17, 18, and 20 have landed (OTel ingest, SDKs, optional LLM judge / `judge_panel` / `--plugin`, AEE self-benchmark, semantic hardening, Mode 3 fixture isolation / retry / project config, [live-agent demo](docs/usage/live-agent-demo.md) with a scripted fallback). Remaining post-MVP feature work — stats v2, continuous eval, clustering, multi-agent — is tracked in internal engineering plans (maintainers only).
+Phase 10–12, 17, 18, and 20 have landed (OTel ingest, SDKs, optional LLM judge / `judge_panel` / `--plugin`, AEE self-benchmark, semantic hardening, Mode 3 fixture isolation / retry / project config, [live-agent demo](docs/usage/live-agent-demo.md) with a scripted fallback).
+
+Next: public roadmap issues [#1](https://github.com/ShadyD45/gust/issues/1)–[#5](https://github.com/ShadyD45/gust/issues/5) land in-tree (stats v2, continuous eval / propose + redaction, clustering, multi-agent + AEE hardening, CLI releases via GoReleaser). Further adoption work continues on those issues.
 
 ## Self-benchmark (AEE)
 
@@ -177,9 +180,19 @@ gust maintains an adversarial validation suite and mutation benchmark that conti
 
 ## Requirements
 
-- Go 1.23+
+- Go 1.26+
 - Optional: local [Ollama](https://ollama.com) for live Test-mode runs
 - Dependencies: Cobra (CLI), yaml.v3 (scenarios/policies). Live OTLP protobuf/gRPC ingest adds the official OTLP proto + gRPC libraries. Core engines remain stdlib-only.
+
+### Install `gust`
+
+```bash
+git clone https://github.com/ShadyD45/gust && cd gust
+go build -o gust ./cmd/gust
+# or: go install ./cmd/gust
+```
+
+`gust-aee` is maintainer/CI-only — build with `go build -o gust-aee ./cmd/gust-aee` when needed; it is not an end-user install.
 
 
 

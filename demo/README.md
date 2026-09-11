@@ -5,7 +5,7 @@ End-to-end verification of the MVP Definition of Done using the synthetic runner
 
 ## Prerequisites
 
-- Go 1.23+
+- Go 1.26+
 - Run from repo root
 
 ## What it runs
